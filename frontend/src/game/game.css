@@ -47,6 +47,38 @@
   image-rendering: pixelated;
 }
 
+/* Clouds drift across the pad sky. Each lane is as wide as the frame, so
+   translateX(100%) carries its cloud from just off the left edge to past the right. */
+.clouds {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.clouds__lane {
+  position: absolute;
+  inset: 0;
+  animation: cloud-drift linear infinite;
+  will-change: transform;
+}
+
+.clouds__cloud {
+  position: absolute;
+  left: 0;
+  width: var(--cloud-w);
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.clouds__cloud.is-flipped {
+  transform: scaleX(-1);
+}
+
+@keyframes cloud-drift {
+  from { transform: translateX(calc(-1 * var(--cloud-w))); }
+  to { transform: translateX(100%); }
+}
+
 .stage__mount {
   position: absolute;
   left: 34%;
@@ -395,6 +427,22 @@
 
 .meter {
   --meter: var(--ms-green);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Pixel icon on the left so younger players can tell the meters apart. */
+.meter__icon {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+}
+
+.meter__body {
+  flex: 1;
+  min-width: 0;
 }
 
 .meter.is-warn,
@@ -885,6 +933,11 @@
   .engineer,
   .crew__mover.is-patrol {
     animation: none;
+  }
+
+  /* Keep the clouds where they start instead of drifting. */
+  .clouds__lane {
+    animation-play-state: paused;
   }
 
   .meter__fill {

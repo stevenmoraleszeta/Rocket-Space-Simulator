@@ -7,6 +7,8 @@ import { SpaceBackground } from '../levels';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
 import { EMPTY_LOADOUT, PARTS, partCount, partMax } from './parts.js';
+import { METER_ICONS } from './meterIcons.js';
+import { PadClouds } from './PadClouds.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
@@ -80,6 +82,7 @@ export function GameScreen({ mission, onExit }) {
       <div className="stage">
         <div className="stage__frame">
           <img className="stage__bg" src={launchPad} alt="" />
+          <PadClouds />
           <div className="stage__mount">
             <div className="prep">
               <img className="prep__base" src={launchBase} alt="" />
@@ -204,20 +207,25 @@ function Meters({ meters }) {
       <div className="meters__grid">
         {meters.map((meter) => (
           <div key={meter.id} className={`meter is-${meter.tone}`}>
-            <div className="meter__top">
-              <span className="meter__label">{meter.label}</span>
-              <span className="meter__value">{meter.text}</span>
-            </div>
-            <div
-              className="meter__track"
-              role="meter"
-              aria-label={meter.label}
-              aria-valuemin={0}
-              aria-valuemax={meter.max}
-              aria-valuenow={meter.current}
-              aria-valuetext={`${meter.label}: ${meter.text}`}
-            >
-              <span className="meter__fill" style={{ clipPath: `inset(0 ${100 - meter.fill}% 0 0)` }} />
+            {METER_ICONS[meter.id] && (
+              <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />
+            )}
+            <div className="meter__body">
+              <div className="meter__top">
+                <span className="meter__label">{meter.label}</span>
+                <span className="meter__value">{meter.text}</span>
+              </div>
+              <div
+                className="meter__track"
+                role="meter"
+                aria-label={meter.label}
+                aria-valuemin={0}
+                aria-valuemax={meter.max}
+                aria-valuenow={meter.current}
+                aria-valuetext={`${meter.label}: ${meter.text}`}
+              >
+                <span className="meter__fill" style={{ clipPath: `inset(0 ${100 - meter.fill}% 0 0)` }} />
+              </div>
             </div>
           </div>
         ))}
