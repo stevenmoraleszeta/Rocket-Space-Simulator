@@ -42,7 +42,7 @@ copy backend\.env.example backend\.env
 
 `npm install` en la raíz instala la CLI de Firebase. El segundo instala el cliente. El entorno virtual de Python no se versiona.
 
-En [Firebase Console](https://console.firebase.google.com) crea un proyecto y sustituye `rocket-space-simulator` en `.firebaserc` por el id real. Pega la configuración web en `frontend/.env.local`. Con `VITE_USE_FIREBASE_EMULATORS=true`, el cliente puede usar los emuladores aunque esas claves sigan vacías.
+El proyecto de Firebase es `rocket-space-simulator`. La configuración web, incluida Analytics, está en `frontend/.env.example`; al copiarla a `frontend/.env.local` el cliente usa ese proyecto. Pon `VITE_USE_FIREBASE_EMULATORS=true` solo cuando quieras los emuladores locales.
 
 ```powershell
 npx firebase login

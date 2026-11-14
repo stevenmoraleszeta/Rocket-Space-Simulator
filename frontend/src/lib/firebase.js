@@ -1,3 +1,4 @@
+import { getAnalytics, isSupported } from 'firebase/analytics'
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import { connectAuthEmulator, getAuth } from 'firebase/auth'
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
@@ -15,6 +16,7 @@ const firebaseConfig = {
   messagingSenderId:
     import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || (useEmulators ? '000000000000' : ''),
   appId: import.meta.env.VITE_FIREBASE_APP_ID || (useEmulators ? '1:000000000000:web:demo' : ''),
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || '',
 }
 
 export const firebaseReady = Boolean(firebaseConfig.projectId && (useEmulators || firebaseConfig.apiKey))
@@ -23,10 +25,18 @@ export const app = firebaseReady ? (getApps().length ? getApp() : initializeApp(
 export const auth = app ? getAuth(app) : null
 export const db = app ? getFirestore(app) : null
 export const storage = app ? getStorage(app) : null
+export let analytics = null
 
 if (app && useEmulators && !globalThis.__FIREBASE_EMULATORS__) {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
   connectFirestoreEmulator(db, '127.0.0.1', 8080)
   connectStorageEmulator(storage, '127.0.0.1', 9199)
   globalThis.__FIREBASE_EMULATORS__ = true
+}
+
+if (app && firebaseConfig.measurementId && !useEmulators && !globalThis.__FIREBASE_ANALYTICS__) {
+  globalThis.__FIREBASE_ANALYTICS__ = true
+  isSupported().then((supported) => {
+    if (supported) analytics = getAnalytics(app)
+  })
 }
