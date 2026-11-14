@@ -25,11 +25,17 @@ const TIMED_PHASES = {
   ascent: { ms: ASCENT_MS, next: 'flight' },
 };
 
-export function GameScreen({ mission, onExit }) {
+/**
+ * Optional props used by MissionFlow:
+ *   onLaunch(equipped)  when given, Launch hands the built rocket to the next stage
+ *                       instead of playing the liftoff below
+ *   initialEquipped     loadout to start with (keeps the parts when coming back to the hangar)
+ */
+export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
   const [phase, setPhase] = useState('assemble');
   const [storyOpen, setStoryOpen] = useState(true);
   const [openPart, setOpenPart] = useState(null);
-  const [equipped, setEquipped] = useState(EMPTY_LOADOUT);
+  const [equipped, setEquipped] = useState(initialEquipped ?? EMPTY_LOADOUT);
 
   useEffect(() => {
     if (phase !== 'assemble' || (!storyOpen && !openPart)) return undefined;
@@ -52,6 +58,10 @@ export function GameScreen({ mission, onExit }) {
   }, [phase]);
 
   function startLaunch() {
+    if (onLaunch) {
+      onLaunch(equipped);
+      return;
+    }
     playSfx(SFX.liftoff);
     setStoryOpen(false);
     setOpenPart(null);

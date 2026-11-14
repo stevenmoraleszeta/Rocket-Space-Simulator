@@ -1,0 +1,163 @@
+/* LAUNCH TO ORBIT. The HUD reuses the hangar classes (game.css); panels match its part cards. */
+
+.orbit-level {
+  height: 100svh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #05061a;
+  background-size: cover;
+  background-position: center;
+  image-rendering: pixelated;
+}
+
+.orbit-level__hud { flex: none; }
+
+.orbit-level__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.orbit-stage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.orbit-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  image-rendering: pixelated;
+}
+.orbit-canvas--target { cursor: pointer; }
+.orbit-canvas--aim { cursor: crosshair; }
+
+/* Launch bases on top of the planet */
+.orbit-sites { position: absolute; inset: 0; pointer-events: none; }
+.orbit-site {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ms-text);
+  transform: translate(-14px, -50%);
+  pointer-events: auto;
+  cursor: pointer;
+  font-family: var(--ms-font);
+}
+span.orbit-site { cursor: default; }
+.orbit-site--left { flex-direction: row-reverse; transform: translate(calc(-100% + 14px), -50%); }
+.orbit-site__dot {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 4px solid #05061a;
+  background: #ff8fa6;
+  box-shadow: 0 0 0 3px #ff8fa6;
+}
+.orbit-site__name {
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(5, 6, 26, 0.85);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+button.orbit-site:hover .orbit-site__dot { background: var(--ms-accent); box-shadow: 0 0 0 3px var(--ms-accent); }
+button.orbit-site:focus-visible { outline: none; }
+button.orbit-site:focus-visible .orbit-site__name { outline: 3px solid var(--ms-yellow); }
+.orbit-site.is-selected .orbit-site__dot { background: var(--ms-yellow); box-shadow: 0 0 0 3px var(--ms-yellow); }
+.orbit-site.is-selected .orbit-site__name { color: var(--ms-yellow); }
+
+.orbit-panel {
+  box-sizing: border-box;
+  width: 380px;
+  flex: none;
+  overflow-y: auto;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 3px solid var(--ms-line);
+  background: rgba(11, 16, 48, 0.88);
+  color: var(--ms-text);
+  font-family: var(--ms-font);
+}
+
+.orbit-panel__title {
+  margin: 0 0 6px;
+  font-family: var(--ms-font-pixel);
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ms-yellow);
+}
+.orbit-panel__hint { margin: 0 0 12px; color: var(--ms-muted); font-size: 16px; line-height: 1.35; }
+.orbit-panel__actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
+.orbit-panel__actions .ms-btn { white-space: nowrap; }
+
+.orbit-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.orbit-option {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 3px solid var(--ms-line);
+  background: rgba(5, 6, 26, 0.6);
+  color: var(--ms-text);
+  font-family: var(--ms-font);
+  cursor: pointer;
+}
+.orbit-option:hover:not(:disabled) { border-color: var(--ms-accent); }
+.orbit-option.is-selected { border-color: var(--ms-yellow); background: rgba(255, 210, 63, 0.1); }
+.orbit-option:disabled { cursor: not-allowed; opacity: 0.55; }
+.orbit-option:focus-visible { outline: 4px solid var(--ms-yellow); outline-offset: 3px; }
+.orbit-option__name { font-family: var(--ms-font-pixel); font-size: 11px; line-height: 1.5; }
+.orbit-option__meta { font-size: 15px; color: var(--ms-muted); }
+.orbit-option__why { font-size: 15px; line-height: 1.3; }
+
+.orbit-badge { justify-self: start; margin: 4px 0 0; font-family: var(--ms-font-pixel); font-size: 9px; padding: 4px 8px; border-radius: 8px; }
+.orbit-badge--great { color: #06301f; background: var(--ms-green); }
+.orbit-badge--ok { color: #2a2000; background: var(--ms-yellow); }
+.orbit-badge--poor { color: #fff; background: #8a3a52; }
+
+.orbit-detail { margin-top: 12px; font-size: 17px; line-height: 1.4; }
+.orbit-detail__name { font-family: var(--ms-font-pixel); font-size: 12px; color: var(--ms-yellow); }
+.orbit-detail p { margin: 0 0 8px; }
+.orbit-detail b { color: var(--ms-accent); }
+
+.orbit-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 12px; }
+.orbit-stats div { padding: 8px 10px; border-radius: 12px; border: 2px solid var(--ms-line); background: rgba(5, 6, 26, 0.6); }
+.orbit-stats dt { font-family: var(--ms-font-pixel); font-size: 9px; color: var(--ms-muted); text-transform: uppercase; line-height: 1.5; }
+.orbit-stats dd { margin: 6px 0 0; font-family: var(--ms-font-pixel); font-size: 16px; color: var(--ms-green); }
+.orbit-stats dd.is-bad { color: #ff8fa6; }
+
+.orbit-prediction { margin: 0; padding: 10px 12px; border-radius: 12px; font-size: 17px; line-height: 1.35; border: 2px solid; }
+.orbit-prediction.is-good { color: var(--ms-green); border-color: rgba(61, 220, 151, 0.6); background: rgba(61, 220, 151, 0.08); }
+.orbit-prediction.is-warn { color: var(--ms-yellow); border-color: rgba(255, 210, 63, 0.6); background: rgba(255, 210, 63, 0.08); }
+.orbit-prediction.is-bad { color: #ff8fa6; border-color: rgba(255, 93, 115, 0.6); background: rgba(255, 93, 115, 0.08); }
+
+.orbit-result__stars { margin: 12px 0; text-align: center; }
+
+/* Phones: the Earth on top, the panel below */
+@media (max-width: 760px) {
+  .orbit-level__body { flex-direction: column; padding: 0 12px 12px; }
+  .orbit-stage { flex: 1 1 55%; }
+  .orbit-site__name { font-size: 13px; }
+  .orbit-site__dot { width: 22px; height: 22px; }
+  .orbit-panel { width: 100%; flex: 0 1 45%; }
+}

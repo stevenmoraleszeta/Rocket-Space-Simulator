@@ -1,5 +1,5 @@
 /**
- * ASSET MANIFEST — the only place where Level 0 image paths are declared.
+ * ASSET MANIFEST — the only place where the image paths of our levels are declared.
  *
  * Every entry describes a pixel-art sprite. An entry set to `null` is a PLACEHOLDER:
  * the scene draws a temporary shape with CSS until the real art is provided.
@@ -15,12 +15,22 @@
  *   frames       1 = still image; more than 1 = horizontal sprite sheet
  */
 import rocketOffUrl from '../../assets/images/rockets/rocket_off_32x32.png'
+import rocketLitUrl from '../../assets/images/rockets/rocket_32x32.png'
 import launchBaseUrl from '../../assets/images/rockets/launch_base.png'
+import explosionSheetUrl from '../../assets/images/rockets/animations/explosion_sheet.png'
+import earthPlanetUrl from '../../assets/images/planets/earth.svg'
+import spaceBackgroundUrl from '../../assets/images/backgrounds/space.svg'
 
 export const ASSETS = Object.freeze({
   // Rocket waiting on the pad: engine off (cold nozzle), like in the hangar before liftoff.
   rocketIdle: { src: rocketOffUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
+  // Rocket with the engine burning (flight).
+  rocketLit: { src: rocketLitUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
   launchBase: { src: launchBaseUrl, frameWidth: 48, frameHeight: 24, frames: 1 },
+  // 8 frames of 32 x 32 in the first row.
+  explosion: { src: explosionSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
+  earthPlanet: { src: earthPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
+  spaceBackground: { src: spaceBackgroundUrl, frameWidth: 320, frameHeight: 180, frames: 1 },
 
   // PLACEHOLDER entries: no art provided yet.
   launchTower: null,

@@ -1,0 +1,101 @@
+/**
+ * REAL LAUNCH SITES — coordinates are the real ones (degrees, north and east positive).
+ *
+ * In the 2D orbit view every site is drawn on the rim of the Earth at its LONGITUDE
+ * (the view looks down from above the North Pole). The latitude still matters physically:
+ *   - an orbit can never be tilted less than the site's latitude (minimum inclination = |latitude|),
+ *   - the Earth's spin pushes the rocket by ω·R·cos(inclination) (see rotationBoostForInclination).
+ *
+ * allowsEastward / allowsPolar say whether rockets can fly in that direction safely,
+ * over the sea or empty land instead of over towns.
+ */
+export const LAUNCH_SITES = [
+  {
+    id: 'vandenberg',
+    name: 'Vandenberg',
+    country: 'USA',
+    latitudeDeg: 34.7,
+    longitudeDeg: -120.6,
+    allowsEastward: false,
+    allowsPolar: true,
+    why: 'Rockets fly south over the Pacific Ocean, so they reach polar orbits without passing over cities.',
+    whatFor: 'Polar and sun-synchronous orbits. Landsat Earth-imaging satellites launch from here.',
+  },
+  {
+    id: 'cape-canaveral',
+    name: 'Cape Canaveral',
+    country: 'USA',
+    latitudeDeg: 28.5,
+    longitudeDeg: -80.6,
+    allowsEastward: true,
+    allowsPolar: false,
+    why: 'Rockets fly east over the Atlantic and get a push from the spin of the Earth.',
+    whatFor: 'The space station, the Moon and high orbits. Polar launches would fly over towns.',
+  },
+  {
+    id: 'kourou',
+    name: 'Kourou',
+    country: 'French Guiana',
+    latitudeDeg: 5.2,
+    longitudeDeg: -52.8,
+    allowsEastward: true,
+    allowsPolar: true,
+    why: 'Very close to the equator, where the spin of the Earth gives the biggest push. Open ocean to the north and east.',
+    whatFor: 'Low-tilt orbits, big communication satellites and polar orbits too.',
+  },
+  {
+    id: 'plesetsk',
+    name: 'Plesetsk',
+    country: 'Russia',
+    latitudeDeg: 62.9,
+    longitudeDeg: 40.6,
+    allowsEastward: true,
+    allowsPolar: true,
+    why: 'Far in the north, so its rockets naturally go into steep, almost polar orbits.',
+    whatFor: 'Polar and high-tilt orbits. It cannot reach orbits tilted less than 62.9°.',
+  },
+  {
+    id: 'baikonur',
+    name: 'Baikonur',
+    country: 'Kazakhstan',
+    latitudeDeg: 45.9,
+    longitudeDeg: 63.3,
+    allowsEastward: true,
+    allowsPolar: false,
+    why: 'The first spaceport in the world, in a flat steppe. Its latitude matches the tilt of the space station orbit.',
+    whatFor: 'Crews and cargo for the International Space Station.',
+  },
+  {
+    id: 'sriharikota',
+    name: 'Sriharikota',
+    country: 'India',
+    latitudeDeg: 13.7,
+    longitudeDeg: 80.2,
+    allowsEastward: true,
+    allowsPolar: true,
+    why: 'An island on the Bay of Bengal: rockets go east or south over the sea.',
+    whatFor: 'India launches its Earth-imaging satellites into polar orbits from here.',
+  },
+  {
+    id: 'jiuquan',
+    name: 'Jiuquan',
+    country: 'China',
+    latitudeDeg: 41.0,
+    longitudeDeg: 100.3,
+    allowsEastward: true,
+    allowsPolar: true,
+    why: 'In the Gobi Desert, far from cities, so used rocket stages fall on empty land.',
+    whatFor: 'Crews to the Tiangong station and many Earth-observation satellites.',
+  },
+  {
+    id: 'mahia',
+    name: 'Mahia',
+    country: 'New Zealand',
+    latitudeDeg: -39.3,
+    longitudeDeg: 177.9,
+    allowsEastward: true,
+    allowsPolar: true,
+    why: 'A small peninsula with open ocean all around, so small rockets can fly almost any direction.',
+    whatFor: 'Small satellites, including sun-synchronous imaging ones.',
+  },
+]
