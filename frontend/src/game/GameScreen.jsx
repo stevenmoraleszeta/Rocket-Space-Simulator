@@ -101,19 +101,19 @@ export function GameScreen({ mission, onExit }) {
         </div>
       </div>
       {hud}
-      <div className="pad-story">
-        <button
-          type="button"
-          className={storyOpen ? 'bulb is-on' : 'bulb'}
-          aria-pressed={storyOpen}
-          aria-label={storyOpen ? 'Close the story' : 'Open the story'}
-          onClick={() => setStoryOpen((open) => !open)}
-        >
-          <BulbIcon />
-        </button>
-        {storyOpen && <Briefing mission={mission} />}
-      </div>
       <div className="bay">
+        <div className="pad-story">
+          <button
+            type="button"
+            className={storyOpen ? 'bulb is-on' : 'bulb'}
+            aria-pressed={storyOpen}
+            aria-label={storyOpen ? 'Close the story' : 'Open the story'}
+            onClick={() => setStoryOpen((open) => !open)}
+          >
+            <BulbIcon />
+          </button>
+          {storyOpen && <Briefing mission={mission} />}
+        </div>
         <Meters meters={meters} />
         <div className="dock">
           <ul className="parts">
