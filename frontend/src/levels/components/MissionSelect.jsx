@@ -11,6 +11,7 @@ import { useProgress } from '../ProgressContext.jsx';
 import { Planet } from './Planet.jsx';
 import { StarRating } from './StarRating.jsx';
 import { SpaceBackground } from './SpaceBackground.jsx';
+import { SPRITES } from '../assets/sprites.js';
 
 export function MissionSelect({ onStartMission }) {
   const { missions, getState, getStars, totalStars, maxStars, loading } = useProgress();
@@ -46,7 +47,13 @@ export function MissionSelect({ onStartMission }) {
                 }
               >
                 <Planet planet={m.planet} size={130} locked={state === 'locked'} />
-                {state === 'locked' && <span className="ms-lock" aria-hidden="true">🔒</span>}
+                {state === 'locked' && (
+                  <span className="ms-lock" aria-hidden="true">
+                    {SPRITES.lock?.src
+                      ? <img className={`ms-lock__img${SPRITES.lock.pixelArt ? ' is-pixel' : ''}`} src={SPRITES.lock.src} alt="" draggable="false" />
+                      : '🔒'}
+                  </span>
+                )}
                 {state === 'completed' && <span className="ms-check" aria-hidden="true">✓</span>}
               </button>
               <div className="ms-stop__num">Mission {m.number}</div>

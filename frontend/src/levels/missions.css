@@ -48,6 +48,8 @@ img.ms-planet { object-fit: contain; user-select: none; }
 .ms-stop--current .ms-planet { filter: drop-shadow(0 0 22px rgba(79,195,255,.7)); }
 .ms-planet.is-locked { filter: grayscale(1) brightness(.45); }
 .ms-lock { position: absolute; inset: 0; display: grid; place-items: center; font-size: 42px; }
+.ms-lock__img { width: 72px; height: 72px; filter: drop-shadow(0 3px 0 rgba(0,0,0,.5)); user-select: none; }
+.ms-lock__img.is-pixel { image-rendering: pixelated; }
 .ms-check { position: absolute; right: 0; bottom: 4px; width: 42px; height: 42px; border-radius: 50%; background: var(--ms-green); color: #06301f; font-weight: 800; font-size: 24px; display: grid; place-items: center; border: 3px solid var(--ms-bg); }
 .ms-stop__num { font-family: var(--ms-font-pixel); margin-top: 16px; font-size: 11px; color: var(--ms-accent); text-transform: uppercase; letter-spacing: .08em; }
 .ms-stop__title { font-family: var(--ms-font-pixel); font-size: 14px; line-height: 1.5; margin: 8px 0 8px; }

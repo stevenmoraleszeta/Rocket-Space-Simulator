@@ -25,6 +25,7 @@ import moon from './moon.svg';
 import mars from './mars.svg';
 
 import space from '../../assets/images/fondos/espacio.svg';
+import lock from '../../assets/images/items/candado.svg';
 
 export const SPRITES = {
   planets: {
@@ -33,4 +34,6 @@ export const SPRITES = {
     mars: { src: mars, frames: 1, pixelArt: true },
   },
   background: { src: space, mode: 'cover', pixelArt: true },
+  // Lock shown over locked planets. null = falls back to the 🔒 emoji.
+  lock: { src: lock, pixelArt: true },
 };
