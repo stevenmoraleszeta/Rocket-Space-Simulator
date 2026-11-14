@@ -10,7 +10,7 @@ import { EMPTY_LOADOUT, PARTS } from './parts.js';
 import { PadCrew } from './PadCrew.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
-import { AMBIENCE, MUSIC, useSoundtrack } from '../audio';
+import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../audio';
 import './game.css';
 
 export function GameScreen({ mission, onExit }) {
@@ -23,6 +23,7 @@ export function GameScreen({ mission, onExit }) {
   );
 
   function toggle(id) {
+    playSfx(equipped[id] ? SFX.unequip : SFX.equip);
     setEquipped((current) => ({ ...current, [id]: !current[id] }));
   }
 
