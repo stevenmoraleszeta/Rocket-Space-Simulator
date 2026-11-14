@@ -80,10 +80,10 @@ export function rocketStatus(equipped, mission) {
   if (budgetLeft < 0) problems.push(`Over budget by ${-budgetLeft} cr`);
   if (massLeft < 0) problems.push(`Too heavy by ${-massLeft} kg`);
   if (energyLeft < 0) problems.push(`Need ${-energyLeft} more power`);
-  if (limits.food > 0 && totals.food < limits.food) problems.push('The astronaut needs food');
+  if (limits.food > 0 && totals.food < limits.food) problems.push('The astronaut will go hungry');
   if (limits.heat > 0 && totals.heat < limits.heat) problems.push('Too hot. The rocket could break');
   if (limits.thrust > 0 && totals.thrust < limits.thrust) problems.push('Not enough push to get there');
-  if (limits.air > 0 && totals.air < limits.air) problems.push('The crew needs more air');
+  if (limits.air > 0 && totals.air < limits.air) problems.push('The crew cannot breathe');
 
   return { meters, problems };
 }
