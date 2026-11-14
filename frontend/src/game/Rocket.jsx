@@ -1,4 +1,4 @@
-import { PARTS, ROCKET } from './parts.js';
+import { PARTS, ROCKET, partCount } from './parts.js';
 
 function sheetStyle(part, lit) {
   const x = lit || part.offX == null ? part.frameX : part.offX;
@@ -16,15 +16,21 @@ export function Rocket({ equipped, flying = false, open = false }) {
   if (flying) classes.push('is-flying');
   if (open) classes.push('rocket--open');
 
-  const interior = PARTS.filter((part) => part.inside && equipped[part.id]);
+  const interior = PARTS.filter((part) => part.inside && partCount(equipped, part.id) > 0);
 
   return (
     <div className={classes.join(' ')}>
       {open && (
         <div className="rocket__cabin">
-          {interior.map((part) => (
-            <img key={part.id} className="rocket__cargo" src={part.src} alt="" />
-          ))}
+          {interior.map((part) => {
+            const count = partCount(equipped, part.id);
+            return (
+              <span key={part.id} className="rocket__cargo-slot">
+                <img className="rocket__cargo" src={part.src} alt="" />
+                {count > 1 && <span className="rocket__qty">{count}</span>}
+              </span>
+            );
+          })}
         </div>
       )}
       <span
@@ -34,7 +40,7 @@ export function Rocket({ equipped, flying = false, open = false }) {
           backgroundSize: `${ROCKET.frame}px ${ROCKET.frame}px`,
         }}
       />
-      {PARTS.filter((part) => part.sheet && equipped[part.id]).map((part) => (
+      {PARTS.filter((part) => part.sheet && partCount(equipped, part.id) > 0).map((part) => (
         <span key={part.id} className="rocket__layer" style={sheetStyle(part, flying)} />
       ))}
     </div>

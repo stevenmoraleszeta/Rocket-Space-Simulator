@@ -17,7 +17,7 @@ export const PARTS = [
   {
     id: 'shield',
     name: 'Heat shield',
-    blurb: 'Covers the nose',
+    blurb: 'Keeps the rocket safe from heat',
     cost: 28,
     mass: 14,
     energy: 8,
@@ -34,7 +34,7 @@ export const PARTS = [
   {
     id: 'boosters',
     name: 'Boosters',
-    blurb: 'Extra rockets on the sides',
+    blurb: 'Extra push to go farther',
     cost: 42,
     mass: 24,
     energy: 6,
@@ -51,7 +51,9 @@ export const PARTS = [
   {
     id: 'food',
     name: 'Food',
-    blurb: 'Meals for the crew',
+    blurb: 'Meals. You can pack more than one.',
+    stack: true,
+    max: 4,
     cost: 16,
     mass: 9,
     food: 40,
@@ -61,7 +63,9 @@ export const PARTS = [
   {
     id: 'plant',
     name: 'Plant',
-    blurb: 'A living plant on board',
+    blurb: 'Makes air. You can pack more than one.',
+    stack: true,
+    max: 3,
     cost: 22,
     mass: 7,
     energy: 12,
@@ -71,4 +75,13 @@ export const PARTS = [
   },
 ];
 
-export const EMPTY_LOADOUT = Object.fromEntries(PARTS.map((part) => [part.id, false]));
+/** How many of this part are packed. Missing entries count as zero. */
+export function partCount(equipped, id) {
+  const value = equipped?.[id];
+  if (typeof value === 'number') return Math.max(0, value);
+  return value ? 1 : 0;
+}
+
+export const partMax = (part) => part.max ?? 1;
+
+export const EMPTY_LOADOUT = Object.fromEntries(PARTS.map((part) => [part.id, 0]));

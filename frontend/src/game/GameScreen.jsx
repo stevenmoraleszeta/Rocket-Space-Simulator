@@ -6,18 +6,23 @@ import { useState } from 'react';
 import { SpaceBackground } from '../levels';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
-import { EMPTY_LOADOUT, PARTS } from './parts.js';
+import { EMPTY_LOADOUT, PARTS, partCount, partMax } from './parts.js';
 import { PadCrew } from './PadCrew.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
 import './game.css';
 
 export function GameScreen({ mission, onExit }) {
-  const [phase, setPhase] = useState('assemble');
+  const [phase, setPhase] = useState('story');
   const [equipped, setEquipped] = useState(EMPTY_LOADOUT);
 
-  function toggle(id) {
-    setEquipped((current) => ({ ...current, [id]: !current[id] }));
+  function changeCount(id, delta) {
+    const part = PARTS.find((item) => item.id === id);
+    const max = partMax(part);
+    setEquipped((current) => {
+      const count = Math.max(0, Math.min(max, partCount(current, id) + delta));
+      return { ...current, [id]: count };
+    });
   }
 
   const { meters, problems } = rocketStatus(equipped, mission);
@@ -35,6 +40,17 @@ export function GameScreen({ mission, onExit }) {
       <div className="game__place">{mission.place}</div>
     </header>
   );
+
+  if (phase === 'story') {
+    return (
+      <SpaceBackground>
+        <div className="game">
+          {hud}
+          <Briefing mission={mission} onReady={() => setPhase('assemble')} />
+        </div>
+      </SpaceBackground>
+    );
+  }
 
   if (phase === 'flight') {
     return (
@@ -70,18 +86,20 @@ export function GameScreen({ mission, onExit }) {
       </div>
       {hud}
       <div className="bay">
+        <div className="bay__tools">
+          <button type="button" className="game__back" onClick={() => setPhase('story')}>
+            Story
+          </button>
+        </div>
+        <Clues hints={mission.hints} />
         <Meters meters={meters} />
         <ul className="parts">
           {PARTS.map((part) => {
-            const on = equipped[part.id];
+            const count = partCount(equipped, part.id);
+            const max = partMax(part);
             return (
               <li key={part.id}>
-                <button
-                  type="button"
-                  className={on ? 'part is-on' : 'part'}
-                  aria-pressed={on}
-                  onClick={() => toggle(part.id)}
-                >
+                <div className={count > 0 ? 'part is-on' : 'part'}>
                   <PartIcon part={part} />
                   <span className="part__text">
                     <span className="part__name">{part.name}</span>
@@ -92,8 +110,28 @@ export function GameScreen({ mission, onExit }) {
                       ))}
                     </span>
                   </span>
-                  <span className="part__action">{on ? 'Remove' : 'Add'}</span>
-                </button>
+                  <span className="part__stepper">
+                    <button
+                      type="button"
+                      className="part__step"
+                      disabled={count <= 0}
+                      aria-label={`Remove one ${part.name}`}
+                      onClick={() => changeCount(part.id, -1)}
+                    >
+                      −
+                    </button>
+                    <span className="part__count" aria-live="polite">{count}</span>
+                    <button
+                      type="button"
+                      className="part__step"
+                      disabled={count >= max}
+                      aria-label={`Add one ${part.name}`}
+                      onClick={() => changeCount(part.id, 1)}
+                    >
+                      +
+                    </button>
+                  </span>
+                </div>
               </li>
             );
           })}
@@ -112,12 +150,53 @@ export function GameScreen({ mission, onExit }) {
   );
 }
 
+/** Short story and clues, shown before the player packs the rocket. */
+function Briefing({ mission, onReady }) {
+  return (
+    <section className="brief" aria-labelledby="brief-title">
+      <h2 id="brief-title" className="brief__title">Story</h2>
+      {mission.intro && <p className="brief__intro">{mission.intro}</p>}
+      <div className="brief__story">
+        {(mission.story ?? []).map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </div>
+      <div className="brief__hints">
+        <h3>Clues</h3>
+        <ol>
+          {(mission.hints ?? []).map((hint) => (
+            <li key={hint}>{hint}</li>
+          ))}
+        </ol>
+      </div>
+      <button type="button" className="ms-btn" onClick={onReady}>
+        Pack the rocket
+      </button>
+    </section>
+  );
+}
+
+/** Clues stay one tap away while the rocket is being packed. */
+function Clues({ hints }) {
+  if (!hints?.length) return null;
+  return (
+    <details className="clues">
+      <summary>Clues</summary>
+      <ol>
+        {hints.map((hint) => (
+          <li key={hint}>{hint}</li>
+        ))}
+      </ol>
+    </details>
+  );
+}
+
 /** Budget, mass, energy, and the supplies the mission asks for. */
 function Meters({ meters }) {
   return (
     <section className="meters" aria-label="Rocket supplies">
       <h2 className="meters__title">Supplies</h2>
-      <p className="meters__hint">The hull already adds mass, thrust, and cabin air.</p>
+      <p className="meters__hint">Green bars are ready. Yellow bars still need help.</p>
       <div className="meters__grid">
         {meters.map((meter) => (
           <div key={meter.id} className={`meter is-${meter.tone}`}>

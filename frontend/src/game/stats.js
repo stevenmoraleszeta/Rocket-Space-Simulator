@@ -1,4 +1,4 @@
-import { PARTS } from './parts.js';
+import { PARTS, partCount } from './parts.js';
 
 /** What the empty rocket already brings to the pad. */
 export const HULL = {
@@ -20,15 +20,16 @@ const DEFAULT_LIMITS = {
 
 /** Short chips shown on a part button. Only the stats that part actually changes. */
 export function partTags(part) {
+  const each = part.stack ? ' each' : '';
   const tags = [
-    { kind: 'cost', text: `${part.cost} cr` },
-    { kind: 'mass', text: `${part.mass} kg` },
+    { kind: 'cost', text: `${part.cost} cr${each}` },
+    { kind: 'mass', text: `${part.mass} kg${each}` },
   ];
-  if (part.energy) tags.push({ kind: 'draw', text: `-${part.energy} pwr` });
+  if (part.energy) tags.push({ kind: 'draw', text: `-${part.energy} pwr${each}` });
   if (part.heat) tags.push({ kind: 'good', text: `+${part.heat} heat` });
   if (part.thrust) tags.push({ kind: 'good', text: `+${part.thrust} thrust` });
-  if (part.food) tags.push({ kind: 'good', text: `+${part.food} food` });
-  if (part.air) tags.push({ kind: 'good', text: `+${part.air} air` });
+  if (part.food) tags.push({ kind: 'good', text: `+${part.food} food${each}` });
+  if (part.air) tags.push({ kind: 'good', text: `+${part.air} air${each}` });
   return tags;
 }
 
@@ -50,14 +51,15 @@ export function rocketStatus(equipped, mission) {
   };
 
   for (const part of PARTS) {
-    if (!equipped?.[part.id]) continue;
-    totals.cost += part.cost || 0;
-    totals.mass += part.mass || 0;
-    totals.energy += part.energy || 0;
-    totals.heat += part.heat || 0;
-    totals.thrust += part.thrust || 0;
-    totals.food += part.food || 0;
-    totals.air += part.air || 0;
+    const count = partCount(equipped, part.id);
+    if (count <= 0) continue;
+    totals.cost += (part.cost || 0) * count;
+    totals.mass += (part.mass || 0) * count;
+    totals.energy += (part.energy || 0) * count;
+    totals.heat += (part.heat || 0) * count;
+    totals.thrust += (part.thrust || 0) * count;
+    totals.food += (part.food || 0) * count;
+    totals.air += (part.air || 0) * count;
   }
 
   const budgetLeft = limits.budget - totals.cost;
@@ -78,6 +80,10 @@ export function rocketStatus(equipped, mission) {
   if (budgetLeft < 0) problems.push(`Over budget by ${-budgetLeft} cr`);
   if (massLeft < 0) problems.push(`Too heavy by ${-massLeft} kg`);
   if (energyLeft < 0) problems.push(`Need ${-energyLeft} more power`);
+  if (limits.food > 0 && totals.food < limits.food) problems.push('The astronaut needs food');
+  if (limits.heat > 0 && totals.heat < limits.heat) problems.push('Too hot. The rocket could break');
+  if (limits.thrust > 0 && totals.thrust < limits.thrust) problems.push('Not enough push to get there');
+  if (limits.air > 0 && totals.air < limits.air) problems.push('The crew needs more air');
 
   return { meters, problems };
 }
