@@ -1,0 +1,18 @@
+---
+description: Code in English, talk to the user in Spanish
+alwaysApply: true
+---
+
+# Language
+
+Write all program source in English: identifiers, comments, UI copy, error messages, and logs.
+
+```jsx
+// Bad
+<p>Base del proyecto lista.</p>
+
+// Good
+<p>Project base is ready.</p>
+```
+
+Reply to the user in Spanish. Keep the README in Spanish; it is for the user, not program source.
