@@ -1,6 +1,6 @@
 import sheet from '../assets/images/crew/engineers_sheet.png';
 
-/** Crew working around the unlit rocket during preparation. */
+/** Crew working around the unlit rocket. Each sheet row is a different person. */
 const CREW = [
   { job: 'weld', left: '-4%', bottom: 'calc(-1px * var(--scale))', delay: '0s' },
   { job: 'hammer', left: '78%', bottom: 'calc(-1px * var(--scale))', delay: '0.2s', flip: true },

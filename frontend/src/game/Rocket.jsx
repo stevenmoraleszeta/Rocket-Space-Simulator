@@ -79,14 +79,14 @@ export function Rocket({ equipped, flying = false, launching = false, ascending 
   );
 }
 
-/** Small preview of one part, used on its toggle. */
-export function PartIcon({ part }) {
+/** Small preview of one part, used on its icon button. */
+export function PartIcon({ part, lit = false }) {
   if (part.src) {
     return <img className="part__photo" src={part.src} alt="" />;
   }
   return (
     <span className="part__icon">
-      <span className="rocket__layer" style={sheetStyle(part, false)} />
+      <span className="rocket__layer" style={sheetStyle(part, lit)} />
     </span>
   );
 }

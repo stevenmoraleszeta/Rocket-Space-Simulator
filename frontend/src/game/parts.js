@@ -4,7 +4,7 @@ import rocketSheet from '../assets/images/rockets/animations/rocket_sheet.png';
 import shieldSheet from '../assets/images/rockets/animations/heat_shield_sheet.png';
 import boosterSheet from '../assets/images/rockets/animations/side_boosters_sheet.png';
 import food from '../assets/images/items/food.svg';
-import plant from '../assets/images/items/plant.svg';
+import astronaut from '../assets/images/items/astronaut.svg';
 
 /** Still rocket the player builds on. 32×32, transparent background. `off` has a cold nozzle. */
 export const ROCKET = {
@@ -70,16 +70,16 @@ export const PARTS = [
     inside: true,
   },
   {
-    id: 'plant',
-    name: 'Plant',
-    blurb: 'Makes air. You can pack more than one.',
+    id: 'astronaut',
+    name: 'Astronaut',
+    blurb: 'Flies the ship. The suit holds air. You can pack more than one.',
     stack: true,
     max: 3,
     cost: 22,
     mass: 7,
     energy: 12,
     air: 36,
-    src: plant,
+    src: astronaut,
     inside: true,
   },
 ];
