@@ -12,7 +12,7 @@ import { PadClouds } from './PadClouds.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
-import { AMBIENCE, MUSIC, useSoundtrack } from '../audio';
+import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../audio';
 import './game.css';
 
 export function GameScreen({ mission, onExit }) {
@@ -37,6 +37,11 @@ export function GameScreen({ mission, onExit }) {
   function changeCount(id, delta) {
     const part = PARTS.find((item) => item.id === id);
     const max = partMax(part);
+    // Sound only when the count really changes (not when already at 0 or at the max)
+    const before = partCount(equipped, id);
+    const after = Math.max(0, Math.min(max, before + delta));
+    if (after > before) playSfx(SFX.equip);
+    else if (after < before) playSfx(SFX.unequip);
     setEquipped((current) => {
       const count = Math.max(0, Math.min(max, partCount(current, id) + delta));
       return { ...current, [id]: count };
