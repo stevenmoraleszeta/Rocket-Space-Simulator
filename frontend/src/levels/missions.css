@@ -1,0 +1,83 @@
+/* Mission selection styles. Everything uses the ms- prefix to avoid clashing with the rest of the app.
+   Built for players aged 8–15: large text, big tap targets (130 px planets, 52 px buttons). */
+:root {
+  --ms-bg: #0b1030; --ms-panel: #161d4a; --ms-line: #2c3670;
+  --ms-text: #ffffff; --ms-muted: #b9c2ec; --ms-accent: #4fc3ff; --ms-accent-dark: #1f8fd0;
+  --ms-yellow: #ffd23f; --ms-green: #3ddc97; --ms-locked: #3a426e;
+  --ms-font: "Fredoka", "Nunito", "Trebuchet MS", system-ui, sans-serif;
+}
+
+.ms-select { font-family: var(--ms-font); color: var(--ms-text); font-size: 18px; max-width: 980px; margin: 0 auto; padding: 24px 16px 40px; }
+.ms-loading { font-family: var(--ms-font); color: var(--ms-muted); text-align: center; padding: 60px; font-size: 20px; }
+
+.ms-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 36px; }
+.ms-head h1 { font-size: clamp(28px, 5vw, 42px); margin: 0; letter-spacing: .01em; }
+.ms-total { background: var(--ms-panel); border: 2px solid var(--ms-line); border-radius: 999px; padding: 8px 18px; font-size: 22px; font-weight: 700; }
+.ms-total span { color: var(--ms-yellow); }
+
+/* Background (see components/SpaceBackground.jsx) */
+.ms-bg { position: relative; min-height: 100vh; isolation: isolate; }
+.ms-bg__layer { position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse at 50% -20%, #2a3a8c 0%, var(--ms-bg) 60%); }
+.ms-bg__layer.is-drifting { animation: ms-drift 120s linear infinite; }
+.ms-bg__content { position: relative; z-index: 1; }
+@keyframes ms-drift { from { background-position: 0 0; } to { background-position: -1200px 600px; } }
+
+/* Sprites */
+.ms-planet.is-pixel, .ms-bg__layer.is-pixel { image-rendering: pixelated; }
+.ms-sprite { animation-name: ms-sprite; animation-iteration-count: infinite; background-repeat: no-repeat; }
+@keyframes ms-sprite { from { background-position: 0% 0; } to { background-position: 100% 0; } }
+img.ms-planet, .ms-sprite { display: block; margin-inline: auto; }
+img.ms-planet { object-fit: contain; user-select: none; }
+
+/* Path: 3 stops in a row, joined by a dashed "flight line" */
+.ms-path { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; position: relative; }
+.ms-path::before { content: ""; position: absolute; top: 85px; left: 16%; right: 16%; border-top: 4px dashed var(--ms-line); z-index: 0; }
+.ms-stop { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 20px; }
+.ms-stop__btn { position: relative; background: none; border: 0; padding: 0; border-radius: 50%; cursor: pointer; transition: transform .15s; }
+.ms-stop__btn:hover:not(:disabled) { transform: scale(1.07) rotate(-3deg); }
+.ms-stop__btn:focus-visible { outline: 4px solid var(--ms-yellow); outline-offset: 6px; }
+.ms-stop__btn:disabled { cursor: not-allowed; }
+.ms-stop--current .ms-stop__btn { animation: ms-float 2.4s ease-in-out infinite; }
+.ms-stop--current .ms-planet { filter: drop-shadow(0 0 22px rgba(79,195,255,.7)); }
+.ms-planet.is-locked { filter: grayscale(1) brightness(.45); }
+.ms-lock { position: absolute; inset: 0; display: grid; place-items: center; font-size: 42px; }
+.ms-check { position: absolute; right: 0; bottom: 4px; width: 42px; height: 42px; border-radius: 50%; background: var(--ms-green); color: #06301f; font-weight: 800; font-size: 24px; display: grid; place-items: center; border: 3px solid var(--ms-bg); }
+.ms-stop__num { margin-top: 14px; font-size: 15px; font-weight: 700; color: var(--ms-accent); text-transform: uppercase; letter-spacing: .08em; }
+.ms-stop__title { font-size: 22px; font-weight: 700; margin: 2px 0 6px; }
+.ms-stop--locked .ms-stop__title, .ms-stop--locked .ms-stop__num { color: var(--ms-muted); }
+.ms-stop__hint { font-size: 15px; color: var(--ms-muted); margin-top: 6px; max-width: 200px; }
+
+.ms-bubble { position: absolute; top: -18px; background: var(--ms-yellow); color: #2a2000; font-weight: 800; font-size: 18px; padding: 6px 16px; border-radius: 14px; animation: ms-bob 1.4s ease-in-out infinite; z-index: 2; }
+.ms-bubble::after { content: ""; position: absolute; left: 50%; bottom: -8px; margin-left: -8px; border: 8px solid transparent; border-bottom: 0; border-top-color: var(--ms-yellow); }
+
+.ms-stars { letter-spacing: .1em; color: #444d82; line-height: 1; }
+.ms-stars .on { color: var(--ms-yellow); }
+
+/* Mission card */
+.ms-modal { position: fixed; inset: 0; background: rgba(5,8,25,.82); display: grid; place-items: center; padding: 16px; z-index: 50; }
+.ms-card { font-family: var(--ms-font); color: var(--ms-text); width: min(480px, 100%); background: var(--ms-panel); border: 3px solid var(--ms-line); border-radius: 26px; padding: 26px 24px 22px; text-align: center; animation: ms-pop .25s ease; max-height: 100%; overflow: auto; }
+.ms-card__num { margin-top: 8px; color: var(--ms-accent); font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: .06em; }
+.ms-card h2 { font-size: 32px; margin: 4px 0 10px; }
+.ms-card__goal { font-size: 20px; line-height: 1.4; margin: 0 0 14px; }
+.ms-card__fact { background: rgba(255,210,63,.12); border: 2px solid rgba(255,210,63,.5); border-radius: 16px; padding: 12px 14px; font-size: 17px; text-align: left; }
+.ms-card__fact b { color: var(--ms-yellow); }
+.ms-card__best { margin-top: 12px; font-size: 17px; color: var(--ms-muted); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ms-card__actions { display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+
+/* Buttons */
+.ms-btn { font-family: var(--ms-font); font-size: 22px; font-weight: 700; min-height: 52px; padding: 10px 28px; border-radius: 18px; border: 0; background: var(--ms-accent); color: #04213a; cursor: pointer; box-shadow: 0 6px 0 var(--ms-accent-dark); }
+.ms-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--ms-accent-dark); }
+.ms-btn--ghost { background: transparent; color: var(--ms-text); border: 3px solid var(--ms-line); box-shadow: none; }
+.ms-btn:focus-visible { outline: 4px solid var(--ms-yellow); outline-offset: 3px; }
+
+@keyframes ms-float { 50% { transform: translateY(-8px); } }
+@keyframes ms-bob { 50% { transform: translateY(-5px); } }
+@keyframes ms-pop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
+
+/* Phones and narrow screens: missions stacked vertically */
+@media (max-width: 720px) {
+  .ms-path { grid-template-columns: 1fr; gap: 34px; }
+  .ms-path::before { display: none; }
+  .ms-stop:not(:last-child)::after { content: ""; display: block; height: 26px; margin-top: 14px; border-left: 4px dashed var(--ms-line); }
+}
+@media (prefers-reduced-motion: reduce) { .ms-select *, .ms-modal *, .ms-bg__layer { animation: none !important; transition: none !important; } }
