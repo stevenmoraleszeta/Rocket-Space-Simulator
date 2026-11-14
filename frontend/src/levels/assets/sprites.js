@@ -24,8 +24,7 @@ import earth from './earth.svg';
 import moon from './moon.svg';
 import mars from './mars.svg';
 
-// Example — uncomment and adjust the file name when the background arrives:
-// import stars from './stars.png';
+import space from '../../assets/images/fondos/espacio.svg';
 
 export const SPRITES = {
   planets: {
@@ -33,5 +32,5 @@ export const SPRITES = {
     moon: { src: moon, frames: 1, pixelArt: true },
     mars: { src: mars, frames: 1, pixelArt: true },
   },
-  background: null, // e.g. { src: stars, mode: 'tile', drift: true }
+  background: { src: space, mode: 'cover', pixelArt: true },
 };
