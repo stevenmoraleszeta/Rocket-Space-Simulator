@@ -1,16 +1,14 @@
 /**
  * Plays the stages of one mission in order (see stages.js).
  *
- *   Level 0  EarthSurfaceLevel   arrival at the launch base and briefing
  *   Level 2  GameScreen          hangar: fit the rocket parts
  *   Level 2  OrbitalLaunchLevel  choose site and orbit, aim, launch (mission 1)
  *            then, if it reaches orbit: liftoff + ascent cinematic and the orbit summary
  */
 import { useState } from 'react'
 import { GameScreen } from './GameScreen.jsx'
-import { EarthSurfaceLevel } from './levels/earth/EarthSurfaceLevel.jsx'
 import { OrbitalLaunchLevel } from './levels/orbit/OrbitalLaunchLevel.jsx'
-import { MISSION_STAGES, STAGE_IDS, STAGE_INFO, getFirstStage, getNextStage } from './stages.js'
+import { MISSION_STAGES, STAGE_IDS, STAGE_INFO, getFirstStage } from './stages.js'
 
 export function MissionFlow({ mission, onExit }) {
   const [stageId, setStageId] = useState(() => getFirstStage(mission.id))
@@ -26,22 +24,6 @@ export function MissionFlow({ mission, onExit }) {
         onExit={onExit}
         initialEquipped={equipped}
         orbitSummary={orbitSummary}
-      />
-    )
-  }
-
-  const goToNextStage = () => {
-    const nextStageId = getNextStage(mission.id, stageId)
-    if (nextStageId) setStageId(nextStageId)
-  }
-
-  if (stageId === STAGE_IDS.EARTH_SURFACE) {
-    return (
-      <EarthSurfaceLevel
-        mission={mission}
-        stageInfo={STAGE_INFO[stageId]}
-        onContinue={goToNextStage}
-        onExit={onExit}
       />
     )
   }
