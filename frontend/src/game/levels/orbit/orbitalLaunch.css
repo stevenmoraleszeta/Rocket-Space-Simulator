@@ -127,6 +127,8 @@ button.orbit-site:focus-visible .orbit-site__name { outline: 3px solid var(--ms-
 .orbit-option:disabled { cursor: not-allowed; opacity: 0.55; }
 .orbit-option:focus-visible { outline: 4px solid var(--ms-yellow); outline-offset: 3px; }
 .orbit-option__name { font-family: var(--ms-font-pixel); font-size: 11px; line-height: 1.5; }
+.orbit-option__swatch { display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; background: var(--orbit-color, var(--ms-accent)); }
+.orbit-option:disabled .orbit-option__swatch { background: var(--ms-locked); }
 .orbit-option__meta { font-size: 15px; color: var(--ms-muted); }
 .orbit-option__why { font-size: 15px; line-height: 1.3; }
 

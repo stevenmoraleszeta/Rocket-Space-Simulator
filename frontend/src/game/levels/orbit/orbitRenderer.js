@@ -19,7 +19,7 @@ import { OUTCOMES, degreesToRadians, satellitePositionAt } from './launchSimulat
 /** Altitude where the display curve starts to squeeze heights (km). */
 export const ALTITUDE_DISPLAY_SCALE_KM = 1200
 /** Highest drawn altitude, in Earth radii above the surface. */
-export const ALTITUDE_DISPLAY_MAX_EARTH_RADII = 0.9
+export const ALTITUDE_DISPLAY_MAX_EARTH_RADII = 0.6
 /** Full aim distance (maximum power), as a fraction of the smaller side of the view. */
 export const AIM_MAX_VIEW_FRACTION = 0.45
 
@@ -40,7 +40,6 @@ const COLORS = {
   satelliteOrbit: 'rgba(255, 210, 63, 0.22)',
   satellite: '#ffd23f',
   danger: 'rgba(255, 93, 115, 0.55)',
-  ring: '#4fc3ff',
   ringDisabled: 'rgba(185, 194, 236, 0.3)',
   ringSelected: '#ffd23f',
   pathOrbit: '#3ddc97',
@@ -169,18 +168,23 @@ function drawSatellites(ctx, view, satellites, timeSeconds) {
   }
 }
 
-/** Arrival orbits as big dotted rings with their name. */
-function drawOrbitRings(ctx, view, orbits, selectedOrbitId, showAll) {
+/**
+ * Arrival orbits as big dotted rings, each in its own color (the same color as its card in the panel).
+ * Only the chosen ring gets a label, so labels never pile up. While aiming the ring is faint,
+ * so the dotted trajectory stands out.
+ */
+function drawOrbitRings(ctx, view, orbits, selectedOrbitId, step) {
+  const choosing = step === 'target'
   for (const orbit of orbits) {
     const selected = orbit.id === selectedOrbitId
-    if (!showAll && !selected) continue
-    const color = selected ? COLORS.ringSelected : orbit.available ? COLORS.ring : COLORS.ringDisabled
+    if (!choosing && !selected) continue
+    const color = orbit.available ? orbit.color : COLORS.ringDisabled
     const radius = orbitRingRadius(view, orbit.altitudeKm)
-    drawDottedRing(ctx, view, radius, color, selected ? 5 : 4, 10)
-    if (showAll) {
-      // Name at the top-left of each ring, staggered so the labels do not overlap.
-      const angle = degreesToRadians(128 + orbit.labelOffsetDeg)
-      drawLabel(ctx, `${orbit.altitudeKm} km`, view.centerX + radius * Math.cos(angle), view.centerY - radius * Math.sin(angle), 'right', color, 15)
+    ctx.globalAlpha = choosing ? 1 : 0.35
+    drawDottedRing(ctx, view, radius, color, selected && choosing ? 5 : 4, 10)
+    ctx.globalAlpha = 1
+    if (selected && choosing) {
+      drawLabel(ctx, `${orbit.altitudeKm} km`, view.centerX, view.centerY - radius - 16, 'center', color, 16)
     }
   }
 }
@@ -313,7 +317,7 @@ export function drawOrbitScene(ctx, view, scene) {
   const simTime = scene.flight?.simTime ?? 0
   drawSatellites(ctx, view, scene.satellites, simTime)
   drawEarth(ctx, view, scene.images)
-  drawOrbitRings(ctx, view, scene.orbits, scene.selectedOrbitId, scene.step === 'target')
+  drawOrbitRings(ctx, view, scene.orbits, scene.selectedOrbitId, scene.step)
   if (scene.step !== 'site') drawArrivalMarker(ctx, view, scene.arrival)
 
   if (scene.step === 'aim') {

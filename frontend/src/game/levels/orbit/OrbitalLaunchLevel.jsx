@@ -127,9 +127,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
 
   const orbitsForSite = useMemo(
     () =>
-      ORBIT_TARGETS.map((candidate, index) => {
+      ORBIT_TARGETS.map((candidate) => {
         const check = site ? checkTargetFromSite(site, candidate) : { ok: false, reason: '' }
-        return { ...candidate, available: check.ok, reason: check.reason, labelOffsetDeg: index * 16 }
+        return { ...candidate, available: check.ok, reason: check.reason }
       }),
     [site],
   )
@@ -423,11 +423,12 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
                     <button
                       type="button"
                       className={candidate.id === orbitId ? 'orbit-option is-selected' : 'orbit-option'}
+                      style={{ '--orbit-color': candidate.color }}
                       aria-pressed={candidate.id === orbitId}
                       disabled={!candidate.available}
                       onClick={() => selectOrbit(candidate.id)}
                     >
-                      <span className="orbit-option__name">{candidate.altitudeKm} km · {candidate.name}</span>
+                      <span className="orbit-option__name"><span className="orbit-option__swatch" aria-hidden="true" />{candidate.altitudeKm} km · {candidate.name}</span>
                       <span className="orbit-option__why">{candidate.available ? candidate.why : candidate.reason}</span>
                     </button>
                   </li>

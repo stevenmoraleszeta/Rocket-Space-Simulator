@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MissionSelect, ProgressProvider } from './levels'
-import { GameScreen } from './game/GameScreen.jsx'
+import { MissionFlow } from './game/MissionFlow.jsx'
 import { SettingsMenu, SettingsProvider } from './settings'
 import { AMBIENCE, AudioVolumeSync, MUSIC, useSoundtrack } from './audio'
 import './levels/missions.css'
@@ -19,7 +19,7 @@ export default function App() {
       <AudioVolumeSync />
       <ProgressProvider>
         {mission ? (
-          <GameScreen mission={mission} onExit={() => setMission(null)} />
+          <MissionFlow key={mission.id} mission={mission} onExit={() => setMission(null)} />
         ) : (
           <>
             <MenuSoundtrack />

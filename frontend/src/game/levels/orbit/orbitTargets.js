@@ -4,6 +4,7 @@
  * altitudeKm      real altitude of that kind of orbit
  * inclinationDeg  real tilt of the orbit (98° = sun-synchronous, 51.6° = space station)
  * missionFit      how well the orbit serves THIS mission (1 = ideal), used for the score
+ * color           color of its ring on the planet and of its card in the panel
  *
  * The arrival point is chosen by the player by clicking on the orbit ring. When the orbit is picked
  * from the panel instead, the arrival point starts SUGGESTED_ARRIVAL_OFFSET_DEG east of the site.
@@ -23,6 +24,7 @@ export const ORBIT_TARGETS = [
     altitudeKm: 700,
     inclinationDeg: 98,
     missionFit: 1,
+    color: '#3ddc97',
     why: 'Passes over every place at the same time of day, so every photo has the same light. Landsat and Sentinel use it.',
   },
   {
@@ -31,6 +33,7 @@ export const ORBIT_TARGETS = [
     altitudeKm: 420,
     inclinationDeg: 51.6,
     missionFit: 0.6,
+    color: '#4fc3ff',
     why: 'Easy to reach, but crowded (ISS, Tiangong) and the thin air slows satellites down, so they fall sooner.',
   },
   {
@@ -39,6 +42,7 @@ export const ORBIT_TARGETS = [
     altitudeKm: 850,
     inclinationDeg: 20,
     missionFit: 0.75,
+    color: '#ff8fd8',
     why: 'Watches the tropics many times a day, great for rain and storms, but it never sees the poles.',
   },
 ]

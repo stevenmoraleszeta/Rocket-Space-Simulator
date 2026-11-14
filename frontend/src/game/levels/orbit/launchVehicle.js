@@ -13,7 +13,7 @@
  */
 import { STANDARD_GRAVITY } from '../../physics/constants.js'
 import { rocketEquationDeltaV } from '../../physics/orbitalMechanics.js'
-import { PARTS } from '../../parts.js'
+import { PARTS, partCount } from '../../parts.js'
 import { HULL } from '../../stats.js'
 
 export const REAL_KG_PER_HANGAR_KG = 1000
@@ -26,17 +26,18 @@ export const VEHICLE_SPECIFIC_IMPULSE_SECONDS = 450
 /** Drag coefficient × cross-section area (m²). */
 export const VEHICLE_DRAG_AREA_M2 = 10
 
-/** Builds the physical vehicle for a hangar loadout ({ partId: boolean }). */
+/** Builds the physical vehicle for a hangar loadout ({ partId: count }). */
 export function buildLaunchVehicle(equipped) {
   let dryHangarKg = HULL.mass
   let thrustPoints = HULL.thrust
   let propellantHangarKg = PROPELLANT_HANGAR_KG
 
   for (const part of PARTS) {
-    if (!equipped?.[part.id]) continue
-    dryHangarKg += part.mass || 0
-    thrustPoints += part.thrust || 0
-    propellantHangarKg += PART_PROPELLANT_HANGAR_KG[part.id] || 0
+    const count = partCount(equipped, part.id)
+    if (count <= 0) continue
+    dryHangarKg += (part.mass || 0) * count
+    thrustPoints += (part.thrust || 0) * count
+    propellantHangarKg += (PART_PROPELLANT_HANGAR_KG[part.id] || 0) * count
   }
 
   const dryMassKg = dryHangarKg * REAL_KG_PER_HANGAR_KG
