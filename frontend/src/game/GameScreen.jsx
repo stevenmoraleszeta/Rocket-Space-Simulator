@@ -16,16 +16,19 @@ import './game.css';
 export function GameScreen({ mission, onExit }) {
   const [phase, setPhase] = useState('assemble');
   const [storyOpen, setStoryOpen] = useState(true);
+  const [openPart, setOpenPart] = useState(null);
   const [equipped, setEquipped] = useState(EMPTY_LOADOUT);
 
   useEffect(() => {
-    if (!storyOpen || phase !== 'assemble') return undefined;
+    if (phase !== 'assemble' || (!storyOpen && !openPart)) return undefined;
     const onKey = (event) => {
-      if (event.key === 'Escape') setStoryOpen(false);
+      if (event.key !== 'Escape') return;
+      if (openPart) setOpenPart(null);
+      else setStoryOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [storyOpen, phase]);
+  }, [storyOpen, openPart, phase]);
   useSoundtrack(
     phase === 'flight'
       ? { music: MUSIC.flight, ambient: AMBIENCE.space }
@@ -104,58 +107,50 @@ export function GameScreen({ mission, onExit }) {
       </div>
       <div className="bay">
         <Meters meters={meters} />
-        <ul className="parts">
-          {PARTS.map((part) => {
-            const count = partCount(equipped, part.id);
-            const max = partMax(part);
-            return (
-              <li key={part.id}>
-                <div className={count > 0 ? 'part is-on' : 'part'}>
-                  <PartIcon part={part} />
-                  <span className="part__text">
-                    <span className="part__name">{part.name}</span>
-                    <span className="part__blurb">{part.blurb}</span>
-                    <span className="part__tags">
-                      {partTags(part).map((tag) => (
-                        <span key={tag.text} className={`part__tag part__tag--${tag.kind}`}>{tag.text}</span>
-                      ))}
-                    </span>
-                  </span>
-                  <span className="part__stepper">
-                    <button
-                      type="button"
-                      className="part__step"
-                      disabled={count <= 0}
-                      aria-label={`Remove one ${part.name}`}
-                      onClick={() => changeCount(part.id, -1)}
-                    >
-                      −
-                    </button>
-                    <span className="part__count" aria-live="polite">{count}</span>
-                    <button
-                      type="button"
-                      className="part__step"
-                      disabled={count >= max}
-                      aria-label={`Add one ${part.name}`}
-                      onClick={() => changeCount(part.id, 1)}
-                    >
-                      +
-                    </button>
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        <button
-          type="button"
-          className="ms-btn bay__launch"
-          disabled={!ready}
-          aria-label={ready ? 'Launch' : `Launch. ${problems.join('. ')}`}
-          onClick={() => setPhase('flight')}
-        >
-          {ready ? 'Launch' : problems[0]}
-        </button>
+        <div className="dock">
+          <ul className="parts">
+            {PARTS.map((part) => {
+              const count = partCount(equipped, part.id);
+              const open = openPart === part.id;
+              return (
+                <li key={part.id}>
+                  <button
+                    type="button"
+                    className={[
+                      'part-btn',
+                      count > 0 ? 'is-on' : '',
+                      open ? 'is-open' : '',
+                    ].filter(Boolean).join(' ')}
+                    aria-expanded={open}
+                    aria-controls={open ? 'part-dialog' : undefined}
+                    aria-label={`${part.name}. ${count} packed.`}
+                    onClick={() => setOpenPart(open ? null : part.id)}
+                  >
+                    <PartIcon part={part} lit />
+                    {count > 0 && <span className="part-btn__qty">{count}</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {openPart && (
+            <PartDialog
+              part={PARTS.find((part) => part.id === openPart)}
+              count={partCount(equipped, openPart)}
+              onChange={changeCount}
+              onClose={() => setOpenPart(null)}
+            />
+          )}
+          <button
+            type="button"
+            className="bay__launch"
+            disabled={!ready}
+            aria-label={ready ? 'Launch' : `Launch. ${problems.join('. ')}`}
+            onClick={() => setPhase('flight')}
+          >
+            Launch
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -192,6 +187,55 @@ function BulbIcon() {
         d="M8 1a4.5 4.5 0 0 0-2.5 8.2V11h5V9.2A4.5 4.5 0 0 0 8 1zm-1 11h2v1H7v-1zm.5 2h1v1h-1v-1zM1 6h2v1H1V6zm12 0h2v1h-2V6zM2.2 2.2l1.4 1.4-.7.7L1.5 2.9l.7-.7zm10.2 0 .7.7-1.4 1.4-.7-.7 1.4-1.4z"
       />
     </svg>
+  );
+}
+
+/** Detail for one part. Opens on the right, next to the icon row. */
+function PartDialog({ part, count, onChange, onClose }) {
+  if (!part) return null;
+  const max = partMax(part);
+
+  return (
+    <section
+      className="part-dialog"
+      id="part-dialog"
+      role="dialog"
+      aria-labelledby="part-dialog-title"
+    >
+      <div className="part-dialog__head">
+        <h2 id="part-dialog-title" className="part-dialog__title">{part.name}</h2>
+        <button type="button" className="part-dialog__close" onClick={onClose}>
+          Close
+        </button>
+      </div>
+      <p className="part-dialog__blurb">{part.blurb}</p>
+      <p className="part__tags">
+        {partTags(part).map((tag) => (
+          <span key={tag.text} className={`part__tag part__tag--${tag.kind}`}>{tag.text}</span>
+        ))}
+      </p>
+      <div className="part-dialog__stepper">
+        <button
+          type="button"
+          className="step-btn"
+          disabled={count <= 0}
+          aria-label={`Remove one ${part.name}`}
+          onClick={() => onChange(part.id, -1)}
+        >
+          −
+        </button>
+        <span className="part-dialog__count" aria-live="polite">{count} / {max}</span>
+        <button
+          type="button"
+          className="step-btn"
+          disabled={count >= max}
+          aria-label={`Add one ${part.name}`}
+          onClick={() => onChange(part.id, 1)}
+        >
+          +
+        </button>
+      </div>
+    </section>
   );
 }
 
