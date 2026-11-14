@@ -47,6 +47,38 @@
   image-rendering: pixelated;
 }
 
+/* Clouds drift across the pad sky. Each lane is as wide as the frame, so
+   translateX(100%) carries its cloud from just off the left edge to past the right. */
+.clouds {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.clouds__lane {
+  position: absolute;
+  inset: 0;
+  animation: cloud-drift linear infinite;
+  will-change: transform;
+}
+
+.clouds__cloud {
+  position: absolute;
+  left: 0;
+  width: var(--cloud-w);
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.clouds__cloud.is-flipped {
+  transform: scaleX(-1);
+}
+
+@keyframes cloud-drift {
+  from { transform: translateX(calc(-1 * var(--cloud-w))); }
+  to { transform: translateX(100%); }
+}
+
 .stage__mount {
   position: absolute;
   left: 34%;
@@ -453,6 +485,22 @@
 
 .meter {
   --meter: #6eae90;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Pixel icon on the left so younger players can tell the meters apart. */
+.meter__icon {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+}
+
+.meter__body {
+  flex: 1;
+  min-width: 0;
   display: grid;
   grid-template-columns: 68px 1fr auto;
   align-items: center;
@@ -656,9 +704,10 @@
   background-color: #1b2638;
   background-image:
     linear-gradient(#101722, #101722),
-    linear-gradient(90deg, #5d7190 0 9%, #243246 9% 91%, #101722 91% 100%);
-  background-size: 100% 7px, 100% 100%;
-  background-position: center bottom, 0 0;
+    linear-gradient(#2c3b52, #2c3b52),
+    linear-gradient(90deg, #314156 0 8%, #1e2a3c 8% 92%, #121a28 92% 100%);
+  background-size: 100% 7px, 100% 4px, 100% 100%;
+  background-position: center bottom, center 46%, 0 0;
   background-repeat: no-repeat;
   box-shadow: inset 0 7px 0 #121a28;
 }
@@ -1048,6 +1097,11 @@
   .engineer,
   .crew__mover.is-patrol {
     animation: none;
+  }
+
+  /* Keep the clouds where they start instead of drifting. */
+  .clouds__lane {
+    animation-play-state: paused;
   }
 
   .meter__fill {

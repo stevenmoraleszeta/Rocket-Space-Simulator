@@ -13,8 +13,9 @@ const FADE_MS = 900;
 // Slider position → loudness. Squaring makes the slider feel even (50% sounds about half as loud).
 const loudness = (v) => v * v;
 
-function createChannel() {
+function createChannel(maxLevel = 1) {
   return {
+    maxLevel,        // where 100% on the slider lands, as a slider position (0.5 = old 50%)
     src: null,       // track that should be playing
     el: null,        // its <audio> element
     fade: 0,         // 0..1 fade multiplier of the current element
@@ -23,13 +24,15 @@ function createChannel() {
   };
 }
 
-const channels = { music: createChannel(), ambient: createChannel() };
+// The space ambience loop is loud next to the music, so its 100% matches what 50% used to be.
+// Sound effects (playSfx) share the ambient slider but are not capped.
+const channels = { music: createChannel(1), ambient: createChannel(0.5) };
 let rafId = 0;
 let lastTick = 0;
 let waitingForGesture = false;
 
 function applyVolume(channel, el, fade) {
-  el.volume = Math.min(1, Math.max(0, loudness(channel.volume) * fade));
+  el.volume = Math.min(1, Math.max(0, loudness(channel.volume * channel.maxLevel) * fade));
 }
 
 function tick(now) {
@@ -128,11 +131,20 @@ export function setChannelVolume(channelName, volume) {
   for (const old of channel.fadingOut) applyVolume(channel, old.el, old.fade);
 }
 
-/** Plays a one-shot sound effect at the ambient/effects volume. */
-export function playSfx(src) {
+/**
+ * Plays a one-shot sound effect at the ambient/effects volume.
+ * Accepts a file, or a sequence of steps to build a combined sound:
+ *   playSfx([{ src: a }, { src: b, at: 0.11, volume: 0.8 }])   // `at` in seconds
+ */
+export function playSfx(sound) {
   const volume = loudness(channels.ambient.volume);
-  if (!src || volume <= 0) return;
-  const el = new Audio(src);
-  el.volume = volume;
-  el.play().catch(() => { /* blocked or interrupted: effects are optional */ });
+  if (!sound || volume <= 0) return;
+  const steps = Array.isArray(sound) ? sound : [{ src: sound }];
+  for (const step of steps) {
+    const el = new Audio(step.src);
+    el.volume = Math.min(1, volume * (step.volume ?? 1));
+    const start = () => el.play().catch(() => { /* blocked or interrupted: effects are optional */ });
+    if (step.at > 0) setTimeout(start, step.at * 1000);
+    else start();
+  }
 }
