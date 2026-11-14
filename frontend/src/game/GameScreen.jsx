@@ -19,7 +19,6 @@ import './game.css';
 /**
  * Timed phases after pressing Launch, and what comes next:
  * launching = liftoff from the pad (game.css), ascent = through the atmosphere (ascent.css).
- * With onLaunch the rocket goes to the mission's next stage instead of 'flight'.
  */
 const TIMED_PHASES = {
   launching: { ms: 3600, next: 'ascent' },
@@ -28,8 +27,8 @@ const TIMED_PHASES = {
 
 /**
  * Optional props used by MissionFlow:
- *   onLaunch(equipped)  when given, the built rocket goes to the next stage
- *                       (e.g. the orbit trajectory) after the liftoff and ascent
+ *   onLaunch(equipped)  when given, Launch hands the built rocket to the next stage
+ *                       (the orbit trajectory plays the liftoff itself, see LaunchSequence.jsx)
  *   initialEquipped     loadout to start with (keeps the parts when coming back to the hangar)
  */
 export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
@@ -49,20 +48,20 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [storyOpen, openPart, phase]);
 
-  // Pad liftoff → ascent → flight (or the next stage), each step after its animation ends
+  // Pad liftoff → ascent → flight, each step after its animation ends
   useEffect(() => {
     const step = TIMED_PHASES[phase];
     if (!step) return undefined;
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const goOn = () => {
-      if (step.next === 'flight' && onLaunch) onLaunch(equipped);
-      else setPhase(step.next);
-    };
-    const timer = setTimeout(goOn, reduceMotion ? 500 : step.ms);
+    const timer = setTimeout(() => setPhase(step.next), reduceMotion ? 500 : step.ms);
     return () => clearTimeout(timer);
-  }, [phase, onLaunch, equipped]);
+  }, [phase]);
 
   function startLaunch() {
+    if (onLaunch) {
+      onLaunch(equipped);
+      return;
+    }
     playSfx(SFX.liftoff);
     setStoryOpen(false);
     setOpenPart(null);

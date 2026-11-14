@@ -4,8 +4,8 @@
  *   Level 2  GameScreen          hangar: fit the rocket parts
  *   Level 2  OrbitalLaunchLevel  choose site and orbit, aim, launch (mission 1)
  *
- * Launch in the hangar always plays the liftoff and the climb through the atmosphere.
- * Then the rocket goes to the next implemented stage of the mission (stages.js).
+ * Launch in the hangar hands the rocket to the next implemented stage of the mission (stages.js).
+ * That stage plays the liftoff animation (LaunchSequence.jsx) when the rocket really leaves.
  * A new stage, like the trip in space of mission 2, is added there and rendered below.
  */
 import { useState } from 'react'

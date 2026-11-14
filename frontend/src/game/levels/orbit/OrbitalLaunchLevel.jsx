@@ -6,17 +6,19 @@
  *   target  tap an orbit ring at the exact point where the satellite should arrive
  *   aim     hold the click and move: the dotted line (the real simulated path) follows.
  *           Direction from the base = where the rocket tilts, distance = power.
+ *   liftoff the launch pad liftoff and the climb through the atmosphere (LaunchSequence)
  *   flight  the same simulation plays out in a few seconds; crashes explode
  *   result  the score is reported to the mission progress (src/levels)
  *
  * Physics lives in physics/ and launchSimulation.js, drawing in orbitRenderer.js.
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { StarRating, getMission, useProgress } from '../../../levels'
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../../../audio'
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
+import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { LAUNCH_SITES } from './launchSites.js'
 import { OUTCOMES, arrivalPosition, degreesToRadians, simulateLaunch } from './launchSimulation.js'
 import { buildLaunchVehicle } from './launchVehicle.js'
@@ -315,13 +317,19 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     setAimPoint(null)
     setStep('aim')
   }
+  // Launch: first the pad liftoff and the climb (LaunchSequence), then the orbit flight on the canvas.
+  const [liftingOff, setLiftingOff] = useState(false)
   const launch = () => {
     playSfx(SFX.liftoff)
-    flightRef.current = { startedAt: performance.now(), endedAt: null }
     setTelemetry(null)
     setResult(null)
-    setStep('flight')
+    setLiftingOff(true)
   }
+  const startOrbitFlight = useCallback(() => {
+    setLiftingOff(false)
+    flightRef.current = { startedAt: performance.now(), endedAt: null }
+    setStep('flight')
+  }, [])
   const retry = () => {
     flightRef.current = null
     setResult(null)
@@ -336,18 +344,27 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const predictionSummary = prediction ? describePrediction(prediction) : null
   const visibleSites = step === 'site' ? LAUNCH_SITES : LAUNCH_SITES.filter((candidate) => candidate.id === siteId)
 
+  const hud = (
+    <header className="game__hud orbit-level__hud">
+      <button type="button" className="game__back" onClick={onExit}>
+        Missions
+      </button>
+      <div className="game__mission">
+        <div className="game__num">Level {stageInfo.levelNumber} · {stageInfo.title}</div>
+        <h1>{mission.title}</h1>
+      </div>
+      <div className="game__place">{mission.place}</div>
+    </header>
+  )
+
   return (
     <div className="game orbit-level" style={{ backgroundImage: `url(${ASSETS.spaceBackground.src})` }}>
-      <header className="game__hud orbit-level__hud">
-        <button type="button" className="game__back" onClick={onExit}>
-          Missions
-        </button>
-        <div className="game__mission">
-          <div className="game__num">Level {stageInfo.levelNumber} · {stageInfo.title}</div>
-          <h1>{mission.title}</h1>
+      {hud}
+      {liftingOff && (
+        <div className="orbit-level__liftoff">
+          <LaunchSequence equipped={equipped} hud={hud} onDone={startOrbitFlight} />
         </div>
-        <div className="game__place">{mission.place}</div>
-      </header>
+      )}
 
       <div className="orbit-level__body">
         <div className="orbit-stage">
