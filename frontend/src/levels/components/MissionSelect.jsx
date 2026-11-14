@@ -12,10 +12,12 @@ import { Planet } from './Planet.jsx';
 import { StarRating } from './StarRating.jsx';
 import { SpaceBackground } from './SpaceBackground.jsx';
 import { SPRITES } from '../assets/sprites.js';
+import { useSettings } from '../../settings/SettingsContext.jsx';
 
 export function MissionSelect({ onStartMission }) {
   const { missions, getState, getStars, totalStars, maxStars, loading } = useProgress();
   const [open, setOpen] = useState(null);
+  const playerName = useSettings().playerName.trim();
 
   if (loading) return <SpaceBackground><div className="ms-loading">Loading…</div></SpaceBackground>;
 
@@ -24,6 +26,7 @@ export function MissionSelect({ onStartMission }) {
     <div className="ms-select">
       <header className="ms-head">
         <h1>Choose your mission!</h1>
+        {playerName && <p className="ms-greet">Ready for launch, <b>{playerName}</b>?</p>}
         <div className="ms-total" aria-label={`${totalStars} of ${maxStars} stars collected`}>
           <span aria-hidden="true">★</span> {totalStars} / {maxStars}
         </div>

@@ -17,6 +17,8 @@
 
 .ms-head { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; margin-bottom: 48px; }
 .ms-head h1 { font-family: var(--ms-font-pixel); font-weight: 400; font-size: clamp(18px, 3.4vw, 32px); line-height: 1.4; margin: 0; text-shadow: 3px 3px 0 #1a2260; }
+.ms-greet { margin: -6px 0 0; font-size: 20px; color: var(--ms-muted); }
+.ms-greet b { color: var(--ms-yellow); font-weight: 700; }
 .ms-total { font-family: var(--ms-font-pixel); background: var(--ms-panel); border: 2px solid var(--ms-line); border-radius: 999px; padding: 10px 18px; font-size: 14px; }
 .ms-total span { color: var(--ms-yellow); }
 

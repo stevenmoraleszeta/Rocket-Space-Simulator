@@ -7,11 +7,17 @@ import { SpaceBackground } from '../levels';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
 import { EMPTY_LOADOUT, PARTS } from './parts.js';
 import { PartIcon, Rocket } from './Rocket.jsx';
+import { AMBIENCE, MUSIC, useSoundtrack } from '../audio';
 import './game.css';
 
 export function GameScreen({ mission, onExit }) {
   const [phase, setPhase] = useState('assemble');
   const [equipped, setEquipped] = useState(EMPTY_LOADOUT);
+  useSoundtrack(
+    phase === 'flight'
+      ? { music: MUSIC.flight, ambient: AMBIENCE.space }
+      : { music: MUSIC.assemble },
+  );
 
   function toggle(id) {
     setEquipped((current) => ({ ...current, [id]: !current[id] }));
