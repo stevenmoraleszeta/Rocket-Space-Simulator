@@ -36,6 +36,8 @@
 
 .ms-head { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; margin-bottom: 48px; }
 .ms-head h1 { font-family: var(--ms-font-pixel); font-weight: 400; font-size: clamp(18px, 3.4vw, 32px); line-height: 1.4; margin: 0; text-shadow: 3px 3px 0 #1a2260; }
+.ms-greet { margin: -6px 0 0; font-size: 20px; color: var(--ms-muted); }
+.ms-greet b { color: var(--ms-yellow); font-weight: 700; }
 .ms-total { position: relative; isolation: isolate; font-family: var(--ms-font-pixel); background: transparent; border: 0; border-radius: 0; padding: 12px 16px; font-size: 12px; }
 .ms-total::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ms-panel); clip-path: var(--px-clip); box-shadow: inset var(--px) var(--px) 0 var(--px-edge), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim); filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink)); }
 .ms-total span { color: var(--ms-yellow); }
@@ -67,6 +69,8 @@ img.ms-planet { object-fit: contain; user-select: none; }
 .ms-stop--current .ms-planet { filter: drop-shadow(0 0 22px rgba(79,195,255,.7)); }
 .ms-planet.is-locked { filter: grayscale(1) brightness(.45); }
 .ms-lock { position: absolute; inset: 0; display: grid; place-items: center; font-size: 42px; }
+.ms-lock__img { width: 50px; height: 50px; filter: brightness(.75) drop-shadow(0 3px 0 rgba(0,0,0,.5)); user-select: none; }
+.ms-lock__img.is-pixel { image-rendering: pixelated; }
 .ms-check { position: absolute; right: 0; bottom: 4px; width: 32px; height: 32px; border-radius: 0; background: var(--ms-green); color: #06301f; font-family: var(--ms-font-pixel); font-weight: 400; font-size: 12px; display: grid; place-items: center; border: 0; clip-path: var(--px-clip); filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink)); }
 .ms-stop__num { font-family: var(--ms-font-pixel); margin-top: 16px; font-size: 11px; color: var(--ms-accent); text-transform: uppercase; letter-spacing: .08em; }
 .ms-stop__title { font-family: var(--ms-font-pixel); font-size: 14px; line-height: 1.5; margin: 8px 0 8px; }

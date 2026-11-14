@@ -10,11 +10,17 @@ import { EMPTY_LOADOUT, PARTS, partCount, partMax } from './parts.js';
 import { PadCrew } from './PadCrew.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
+import { AMBIENCE, MUSIC, useSoundtrack } from '../audio';
 import './game.css';
 
 export function GameScreen({ mission, onExit }) {
   const [phase, setPhase] = useState('story');
   const [equipped, setEquipped] = useState(EMPTY_LOADOUT);
+  useSoundtrack(
+    phase === 'flight'
+      ? { music: MUSIC.flight, ambient: AMBIENCE.space }
+      : { music: MUSIC.assemble },
+  );
 
   function changeCount(id, delta) {
     const part = PARTS.find((item) => item.id === id);
