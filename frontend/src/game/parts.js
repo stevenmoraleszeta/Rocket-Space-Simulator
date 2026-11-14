@@ -1,12 +1,19 @@
 import rocket from '../assets/images/rockets/rocket_32x32.png';
 import rocketOff from '../assets/images/rockets/rocket_off_32x32.png';
+import rocketSheet from '../assets/images/rockets/animations/rocket_sheet.png';
 import shieldSheet from '../assets/images/rockets/animations/heat_shield_sheet.png';
 import boosterSheet from '../assets/images/rockets/animations/side_boosters_sheet.png';
 import food from '../assets/images/items/food.svg';
 import astronaut from '../assets/images/items/astronaut.svg';
 
 /** Still rocket the player builds on. 32×32, transparent background. `off` has a cold nozzle. */
-export const ROCKET = { src: rocket, off: rocketOff, frame: 32 };
+export const ROCKET = {
+  src: rocket,
+  off: rocketOff,
+  frame: 32,
+  // In flight: first row of rocket_sheet.png, 4 frames of flickering flame
+  flight: { sheet: rocketSheet, sheetWidth: 256, sheetHeight: 96, frameY: 0, frames: 4 },
+};
 
 /**
  * Parts the player can add or remove before liftoff.
@@ -30,6 +37,7 @@ export const PARTS = [
     offX: 128,
     offY: 0,
     frame: 32,
+    flightFrames: 5, // lit frames in row frameY, played while flying
   },
   {
     id: 'boosters',
@@ -47,6 +55,7 @@ export const PARTS = [
     offX: 32,
     offY: 0,
     frame: 32,
+    flightFrames: 5, // lit frames in row frameY, played while flying
   },
   {
     id: 'food',

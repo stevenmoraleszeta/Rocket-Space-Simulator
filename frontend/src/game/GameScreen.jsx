@@ -10,10 +10,20 @@ import { EMPTY_LOADOUT, PARTS, partCount, partMax } from './parts.js';
 import { METER_ICONS } from './meterIcons.js';
 import { PadClouds } from './PadClouds.jsx';
 import { PadCrew } from './PadCrew.jsx';
+import { ASCENT_MS, AscentScene } from './AscentScene.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../audio';
 import './game.css';
+
+/**
+ * Timed phases after pressing Launch, and what comes next:
+ * launching = liftoff from the pad (game.css), ascent = through the atmosphere (ascent.css).
+ */
+const TIMED_PHASES = {
+  launching: { ms: 3600, next: 'ascent' },
+  ascent: { ms: ASCENT_MS, next: 'flight' },
+};
 
 export function GameScreen({ mission, onExit }) {
   const [phase, setPhase] = useState('assemble');
@@ -31,10 +41,31 @@ export function GameScreen({ mission, onExit }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [storyOpen, openPart, phase]);
+
+  // Pad liftoff → ascent → flight, each step after its animation ends
+  useEffect(() => {
+    const step = TIMED_PHASES[phase];
+    if (!step) return undefined;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const timer = setTimeout(() => setPhase(step.next), reduceMotion ? 500 : step.ms);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  function startLaunch() {
+    playSfx(SFX.liftoff);
+    setStoryOpen(false);
+    setOpenPart(null);
+    setPhase('launching');
+  }
+
+  const launching = phase === 'launching';
+
   useSoundtrack(
     phase === 'flight'
       ? { music: MUSIC.flight, ambient: AMBIENCE.space }
-      : { music: MUSIC.assemble },
+      : phase === 'ascent'
+        ? { music: MUSIC.flight }
+        : { music: MUSIC.assemble },
   );
 
   function changeCount(id, delta) {
@@ -67,6 +98,10 @@ export function GameScreen({ mission, onExit }) {
     </header>
   );
 
+  if (phase === 'ascent') {
+    return <AscentScene equipped={equipped} hud={hud} />;
+  }
+
   if (phase === 'flight') {
     return (
       <SpaceBackground>
@@ -94,14 +129,14 @@ export function GameScreen({ mission, onExit }) {
           <div className="stage__mount">
             <div className="prep">
               <img className="prep__base" src={launchBase} alt="" />
-              <Rocket equipped={equipped} open />
+              <Rocket equipped={equipped} open={!launching} launching={launching} />
               <PadCrew />
             </div>
           </div>
         </div>
       </div>
       {hud}
-      <div className="bay">
+      <div className="bay" inert={launching}>
         <div className="pad-story">
           <button
             type="button"
@@ -154,7 +189,7 @@ export function GameScreen({ mission, onExit }) {
             className="bay__launch"
             disabled={!ready}
             aria-label={ready ? 'Launch' : `Launch. ${problems.join('. ')}`}
-            onClick={() => setPhase('flight')}
+            onClick={startLaunch}
           >
             Launch
           </button>

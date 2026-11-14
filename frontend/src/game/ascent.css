@@ -1,0 +1,156 @@
+/* Ascent scene (see AscentScene.jsx). Every animation shares the same 6s timeline,
+   which must match ASCENT_MS in GameScreen.jsx. */
+.ascent {
+  --ascent-time: 6s;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #05061a;
+  font-family: var(--ms-font);
+  color: var(--ms-text);
+}
+
+/* Tall gradient from daytime blue (bottom) to space black (top). It slides down,
+   so the camera seems to climb from the blue sky into black space. */
+.ascent__sky {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 400%;
+  background: linear-gradient(
+    to top,
+    #9bd8ff 0%,
+    #5fb0f0 14%,
+    #2f6fc8 30%,
+    #173a86 48%,
+    #0b1a4a 64%,
+    #070b26 80%,
+    #05061a 100%
+  );
+  transform: translateY(-75%);
+  animation: ascent-sky var(--ascent-time) ease-in both;
+}
+
+@keyframes ascent-sky {
+  from { transform: translateY(-75%); }
+  to { transform: translateY(0); }
+}
+
+/* Stars show up once the sky is dark enough */
+.ascent__stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  opacity: 0;
+  animation: ascent-stars var(--ascent-time) ease-in both;
+}
+
+@keyframes ascent-stars {
+  0%, 45% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Earth below, drawn frame by frame in PlanetHorizon.jsx on a small canvas
+   stretched to the screen. Anchored to the bottom so the horizon stays there. */
+.ascent__planet {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 100%;
+  image-rendering: pixelated;
+}
+
+/* Pixel clouds rushing down past the rocket during the first seconds */
+.ascent__cloud {
+  position: absolute;
+  top: -30vh;
+  left: var(--x);
+  width: var(--w);
+  height: calc(var(--w) * 0.2);
+  background: #f5f9ff;
+  box-shadow: 0 calc(var(--w) * 0.06) 0 #c9dcf2;
+  transform: translateY(0);
+  animation: ascent-cloud var(--time) linear var(--delay) both;
+}
+
+.ascent__cloud::before {
+  content: "";
+  position: absolute;
+  left: 18%;
+  bottom: 100%;
+  width: 46%;
+  height: 80%;
+  background: #f5f9ff;
+}
+
+@keyframes ascent-cloud {
+  from { transform: translateY(0); }
+  to { transform: translateY(150vh); }
+}
+
+/* Rocket: comes up from below (where it left the pad), holds in the middle
+   while the world moves, then shoots out the top toward space. */
+.ascent__rocket {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  animation: ascent-rocket var(--ascent-time) both;
+}
+
+@keyframes ascent-rocket {
+  0% {
+    transform: translate(-50%, 60vh);
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+  }
+  14% {
+    transform: translate(-50%, -50%);
+    animation-timing-function: linear;
+  }
+  86% {
+    transform: translate(-50%, -56%);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.5);
+  }
+  100% { transform: translate(-50%, -140vh); }
+}
+
+/* Engine rumble */
+.rocket.is-ascending {
+  animation: ascent-shake 0.12s steps(2) infinite;
+}
+
+@keyframes ascent-shake {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(calc(var(--scale) * 0.4px)); }
+}
+
+.ascent__content {
+  position: relative;
+  z-index: 1;
+}
+
+.ascent__status {
+  margin-top: 8px;
+  animation: ascent-status var(--ascent-time) ease both;
+}
+
+@keyframes ascent-status {
+  0% { opacity: 0; }
+  10%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ascent *:not(.ascent__planet),
+  .ascent *::before {
+    animation: none !important;
+  }
+
+  .ascent__cloud {
+    display: none;
+  }
+}

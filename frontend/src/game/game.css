@@ -734,13 +734,61 @@
   padding: 1px 3px;
 }
 
+/* Launch: the rocket rises from below the screen to its spot, then hovers. */
 .rocket.is-flying {
-  animation: liftoff 2.6s ease-out forwards;
+  animation:
+    liftoff 2.6s cubic-bezier(0.22, 0.8, 0.3, 1) both,
+    hover 2.8s ease-in-out 2.6s infinite;
 }
 
 @keyframes liftoff {
-  from { transform: translateY(48px); }
-  to { transform: translateY(-8px); }
+  from { transform: translateY(110vh); }
+  to { transform: translateY(0); }
+}
+
+@keyframes hover {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Liftoff from the pad: the engine lights and shakes, then the rocket climbs
+   slowly, speeds up and leaves through the top of the screen.
+   Total 3.6s = LAUNCH_MS in GameScreen.jsx. */
+.rocket.is-launching {
+  --scale: inherit;
+  animation:
+    pad-shake 0.14s steps(2) 5,
+    pad-liftoff 2.9s cubic-bezier(0.55, 0, 0.85, 0.5) 0.7s forwards;
+}
+
+@keyframes pad-shake {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(calc(var(--scale) * 0.5px)); }
+}
+
+@keyframes pad-liftoff {
+  from { transform: translateY(0); }
+  to { transform: translateY(-160vh); }
+}
+
+/* While the rocket leaves, the parts panel slides away and stops taking input. */
+.bay {
+  transition: opacity 0.4s, transform 0.4s ease-in;
+}
+
+.bay[inert] {
+  opacity: 0;
+  transform: translateX(40px);
+}
+
+/* Sprite-sheet loop: steps through --frames cells of one 32px row. */
+.rocket__layer--anim {
+  animation: rocket-frames calc(var(--frames) * 90ms) steps(var(--frames)) infinite;
+}
+
+@keyframes rocket-frames {
+  from { background-position-x: 0; }
+  to { background-position-x: calc(var(--frames) * -32px); }
 }
 
 .dock {
@@ -1024,6 +1072,63 @@
   padding: 12px 16px 32px;
 }
 
+/* The rocket keeps its full size and rises in front of the supplies panel. */
+.flight .rocket {
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+/* Wide screens: rocket in the middle, supplies on the right, so nothing overlaps. */
+@media (min-width: 900px) {
+  .flight {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto 1fr auto;
+    align-items: center;
+    justify-items: center;
+    column-gap: 48px;
+  }
+
+  .flight__status {
+    grid-column: 1 / -1;
+  }
+
+  .flight .rocket {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .flight .meters {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .flight > .game__back {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-self: center;
+  }
+}
+
+/* Phones: everything stacks and the screen scrolls; the rocket is a bit smaller
+   and is clipped to the flight area while it rises, so the page does not grow. */
+@media (max-width: 720px) {
+  .game:has(.flight) {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .flight {
+    overflow: clip;
+  }
+
+  .flight .rocket {
+    --scale: 4;
+  }
+}
+
 .flight__status {
   margin: 0;
   font-family: var(--ms-font-pixel);
@@ -1082,6 +1187,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rocket.is-flying,
+  .rocket.is-launching,
+  .rocket__layer--anim,
   .engineer,
   .crew__mover.is-patrol {
     animation: none;

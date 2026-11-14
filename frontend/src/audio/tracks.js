@@ -5,6 +5,7 @@ import intense from '../assets/audio/music/intense.wav';
 import spaceAmbience from '../assets/audio/space/space_ambience_loop.wav';
 import clinkLow from '../assets/audio/equipment/clink_low.wav';
 import armorEquip from '../assets/audio/equipment/armor_equip.wav';
+import liftoff from '../assets/audio/rockets/liftoff.wav';
 
 export const MUSIC = {
   menu: calm,       // mission select
@@ -20,4 +21,5 @@ export const AMBIENCE = {
 export const SFX = {
   equip: armorEquip,   // a rocket part is added
   unequip: clinkLow,   // a rocket part is removed
+  liftoff,             // the Launch button is pressed
 };
