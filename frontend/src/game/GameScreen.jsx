@@ -2,22 +2,84 @@
  * After a mission is launched the player fits the rocket on Earth,
  * then presses Launch and the flight begins.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SpaceBackground } from '../levels';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
-import { EMPTY_LOADOUT, PARTS } from './parts.js';
+import { EMPTY_LOADOUT, PARTS, partCount, partMax } from './parts.js';
+import { METER_ICONS } from './meterIcons.js';
+import { PadClouds } from './PadClouds.jsx';
 import { PadCrew } from './PadCrew.jsx';
+import { ASCENT_MS, AscentScene } from './AscentScene.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
+import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../audio';
 import './game.css';
+
+/**
+ * Timed phases after pressing Launch, and what comes next:
+ * launching = liftoff from the pad (game.css), ascent = through the atmosphere (ascent.css).
+ */
+const TIMED_PHASES = {
+  launching: { ms: 3600, next: 'ascent' },
+  ascent: { ms: ASCENT_MS, next: 'flight' },
+};
 
 export function GameScreen({ mission, onExit }) {
   const [phase, setPhase] = useState('assemble');
+  const [storyOpen, setStoryOpen] = useState(true);
+  const [openPart, setOpenPart] = useState(null);
   const [equipped, setEquipped] = useState(EMPTY_LOADOUT);
 
-  function toggle(id) {
-    setEquipped((current) => ({ ...current, [id]: !current[id] }));
+  useEffect(() => {
+    if (phase !== 'assemble' || (!storyOpen && !openPart)) return undefined;
+    const onKey = (event) => {
+      if (event.key !== 'Escape') return;
+      if (openPart) setOpenPart(null);
+      else setStoryOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [storyOpen, openPart, phase]);
+
+  // Pad liftoff → ascent → flight, each step after its animation ends
+  useEffect(() => {
+    const step = TIMED_PHASES[phase];
+    if (!step) return undefined;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const timer = setTimeout(() => setPhase(step.next), reduceMotion ? 500 : step.ms);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  function startLaunch() {
+    playSfx(SFX.liftoff);
+    setStoryOpen(false);
+    setOpenPart(null);
+    setPhase('launching');
+  }
+
+  const launching = phase === 'launching';
+
+  useSoundtrack(
+    phase === 'flight'
+      ? { music: MUSIC.flight, ambient: AMBIENCE.space }
+      : phase === 'ascent'
+        ? { music: MUSIC.flight }
+        : { music: MUSIC.assemble },
+  );
+
+  function changeCount(id, delta) {
+    const part = PARTS.find((item) => item.id === id);
+    const max = partMax(part);
+    // Sound only when the count really changes (not when already at 0 or at the max)
+    const before = partCount(equipped, id);
+    const after = Math.max(0, Math.min(max, before + delta));
+    if (after > before) playSfx(SFX.equip);
+    else if (after < before) playSfx(SFX.unequip);
+    setEquipped((current) => {
+      const count = Math.max(0, Math.min(max, partCount(current, id) + delta));
+      return { ...current, [id]: count };
+    });
   }
 
   const { meters, problems } = rocketStatus(equipped, mission);
@@ -35,6 +97,10 @@ export function GameScreen({ mission, onExit }) {
       <div className="game__place">{mission.place}</div>
     </header>
   );
+
+  if (phase === 'ascent') {
+    return <AscentScene equipped={equipped} hud={hud} />;
+  }
 
   if (phase === 'flight') {
     return (
@@ -59,56 +125,160 @@ export function GameScreen({ mission, onExit }) {
       <div className="stage">
         <div className="stage__frame">
           <img className="stage__bg" src={launchPad} alt="" />
+          <PadClouds />
           <div className="stage__mount">
             <div className="prep">
               <img className="prep__base" src={launchBase} alt="" />
-              <Rocket equipped={equipped} open />
+              <Rocket equipped={equipped} open={!launching} launching={launching} />
               <PadCrew />
             </div>
           </div>
         </div>
       </div>
       {hud}
-      <div className="bay">
-        <Meters meters={meters} />
-        <ul className="parts">
-          {PARTS.map((part) => {
-            const on = equipped[part.id];
-            return (
-              <li key={part.id}>
-                <button
-                  type="button"
-                  className={on ? 'part is-on' : 'part'}
-                  aria-pressed={on}
-                  onClick={() => toggle(part.id)}
-                >
-                  <PartIcon part={part} />
-                  <span className="part__text">
-                    <span className="part__name">{part.name}</span>
-                    <span className="part__blurb">{part.blurb}</span>
-                    <span className="part__tags">
-                      {partTags(part).map((tag) => (
-                        <span key={tag.text} className={`part__tag part__tag--${tag.kind}`}>{tag.text}</span>
-                      ))}
-                    </span>
-                  </span>
-                  <span className="part__action">{on ? 'Remove' : 'Add'}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+      <div className="pad-story">
         <button
           type="button"
-          className="ms-btn bay__launch"
-          disabled={!ready}
-          aria-label={ready ? 'Launch' : `Launch. ${problems.join('. ')}`}
-          onClick={() => setPhase('flight')}
+          className={storyOpen ? 'bulb is-on' : 'bulb'}
+          aria-pressed={storyOpen}
+          aria-label={storyOpen ? 'Close the story' : 'Open the story'}
+          onClick={() => setStoryOpen((open) => !open)}
         >
-          {ready ? 'Launch' : problems[0]}
+          <BulbIcon />
         </button>
+        {storyOpen && <Briefing mission={mission} />}
+      </div>
+      <div className="bay" inert={launching}>
+        <Meters meters={meters} />
+        <div className="dock">
+          <ul className="parts">
+            {PARTS.map((part) => {
+              const count = partCount(equipped, part.id);
+              const open = openPart === part.id;
+              return (
+                <li key={part.id}>
+                  <button
+                    type="button"
+                    className={[
+                      'part-btn',
+                      count > 0 ? 'is-on' : '',
+                      open ? 'is-open' : '',
+                    ].filter(Boolean).join(' ')}
+                    aria-expanded={open}
+                    aria-controls={open ? 'part-dialog' : undefined}
+                    aria-label={`${part.name}. ${count} packed.`}
+                    onClick={() => setOpenPart(open ? null : part.id)}
+                  >
+                    <PartIcon part={part} lit />
+                    {count > 0 && <span className="part-btn__qty">{count}</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {openPart && (
+            <PartDialog
+              part={PARTS.find((part) => part.id === openPart)}
+              count={partCount(equipped, openPart)}
+              onChange={changeCount}
+              onClose={() => setOpenPart(null)}
+            />
+          )}
+          <button
+            type="button"
+            className="bay__launch"
+            disabled={!ready}
+            aria-label={ready ? 'Launch' : `Launch. ${problems.join('. ')}`}
+            onClick={startLaunch}
+          >
+            Launch
+          </button>
+        </div>
       </div>
     </div>
+  );
+}
+
+/** Story and clues, opened over the rocket with the light bulb. */
+function Briefing({ mission }) {
+  return (
+    <section className="brief" role="dialog" aria-labelledby="brief-title">
+      <h2 id="brief-title" className="brief__title">Story</h2>
+      {mission.intro && <p className="brief__intro">{mission.intro}</p>}
+      <div className="brief__story">
+        {(mission.story ?? []).map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </div>
+      <div className="brief__hints">
+        <h3>Clues</h3>
+        <ol>
+          {(mission.hints ?? []).map((hint) => (
+            <li key={hint}>{hint}</li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+function BulbIcon() {
+  return (
+    <svg className="bulb__icon" viewBox="0 0 16 16" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M8 1a4.5 4.5 0 0 0-2.5 8.2V11h5V9.2A4.5 4.5 0 0 0 8 1zm-1 11h2v1H7v-1zm.5 2h1v1h-1v-1zM1 6h2v1H1V6zm12 0h2v1h-2V6zM2.2 2.2l1.4 1.4-.7.7L1.5 2.9l.7-.7zm10.2 0 .7.7-1.4 1.4-.7-.7 1.4-1.4z"
+      />
+    </svg>
+  );
+}
+
+/** Detail for one part. Opens on the right, next to the icon row. */
+function PartDialog({ part, count, onChange, onClose }) {
+  if (!part) return null;
+  const max = partMax(part);
+
+  return (
+    <section
+      className="part-dialog"
+      id="part-dialog"
+      role="dialog"
+      aria-labelledby="part-dialog-title"
+    >
+      <div className="part-dialog__head">
+        <h2 id="part-dialog-title" className="part-dialog__title">{part.name}</h2>
+        <button type="button" className="part-dialog__close" onClick={onClose}>
+          Close
+        </button>
+      </div>
+      <p className="part-dialog__blurb">{part.blurb}</p>
+      <p className="part__tags">
+        {partTags(part).map((tag) => (
+          <span key={tag.text} className={`part__tag part__tag--${tag.kind}`}>{tag.text}</span>
+        ))}
+      </p>
+      <div className="part-dialog__stepper">
+        <button
+          type="button"
+          className="step-btn"
+          disabled={count <= 0}
+          aria-label={`Remove one ${part.name}`}
+          onClick={() => onChange(part.id, -1)}
+        >
+          −
+        </button>
+        <span className="part-dialog__count" aria-live="polite">{count} / {max}</span>
+        <button
+          type="button"
+          className="step-btn"
+          disabled={count >= max}
+          aria-label={`Add one ${part.name}`}
+          onClick={() => onChange(part.id, 1)}
+        >
+          +
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -117,24 +287,29 @@ function Meters({ meters }) {
   return (
     <section className="meters" aria-label="Rocket supplies">
       <h2 className="meters__title">Supplies</h2>
-      <p className="meters__hint">The hull already adds mass, thrust, and cabin air.</p>
+      <p className="meters__hint">Green bars are ready. Yellow bars still need help.</p>
       <div className="meters__grid">
         {meters.map((meter) => (
           <div key={meter.id} className={`meter is-${meter.tone}`}>
-            <div className="meter__top">
-              <span className="meter__label">{meter.label}</span>
-              <span className="meter__value">{meter.text}</span>
-            </div>
-            <div
-              className="meter__track"
-              role="meter"
-              aria-label={meter.label}
-              aria-valuemin={0}
-              aria-valuemax={meter.max}
-              aria-valuenow={meter.current}
-              aria-valuetext={`${meter.label}: ${meter.text}`}
-            >
-              <span className="meter__fill" style={{ clipPath: `inset(0 ${100 - meter.fill}% 0 0)` }} />
+            {METER_ICONS[meter.id] && (
+              <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />
+            )}
+            <div className="meter__body">
+              <div className="meter__top">
+                <span className="meter__label">{meter.label}</span>
+                <span className="meter__value">{meter.text}</span>
+              </div>
+              <div
+                className="meter__track"
+                role="meter"
+                aria-label={meter.label}
+                aria-valuemin={0}
+                aria-valuemax={meter.max}
+                aria-valuenow={meter.current}
+                aria-valuetext={`${meter.label}: ${meter.text}`}
+              >
+                <span className="meter__fill" style={{ clipPath: `inset(0 ${100 - meter.fill}% 0 0)` }} />
+              </div>
             </div>
           </div>
         ))}

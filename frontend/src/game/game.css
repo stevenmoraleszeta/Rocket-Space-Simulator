@@ -47,6 +47,38 @@
   image-rendering: pixelated;
 }
 
+/* Clouds drift across the pad sky. Each lane is as wide as the frame, so
+   translateX(100%) carries its cloud from just off the left edge to past the right. */
+.clouds {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.clouds__lane {
+  position: absolute;
+  inset: 0;
+  animation: cloud-drift linear infinite;
+  will-change: transform;
+}
+
+.clouds__cloud {
+  position: absolute;
+  left: 0;
+  width: var(--cloud-w);
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.clouds__cloud.is-flipped {
+  transform: scaleX(-1);
+}
+
+@keyframes cloud-drift {
+  from { transform: translateX(calc(-1 * var(--cloud-w))); }
+  to { transform: translateX(100%); }
+}
+
 .stage__mount {
   position: absolute;
   left: 34%;
@@ -70,22 +102,66 @@
 }
 
 .game__back {
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
   justify-self: start;
   font-family: var(--ms-font-pixel);
   font-size: 12px;
-  min-height: 52px;
-  padding: 10px 16px;
-  border-radius: 18px;
-  border: 3px solid var(--ms-line);
-  background: rgba(11, 16, 48, 0.82);
+  line-height: 1.6;
+  min-height: 48px;
+  padding: 12px 16px 16px;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
   color: var(--ms-text);
   cursor: pointer;
+  box-shadow: none;
+}
+
+.game__back::before,
+.game__back::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  clip-path: var(--px-clip);
+}
+
+.game__back::before {
+  z-index: -2;
+  inset: var(--px) 0 calc(var(--px) * -1);
+  background: var(--px-ink);
+}
+
+.game__back::after {
+  z-index: -1;
+  inset: 0 0 var(--px);
+  background: rgba(11, 16, 48, 0.94);
+  box-shadow:
+    inset var(--px) var(--px) 0 var(--px-edge),
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+}
+
+.game__back:active {
+  transform: translateY(var(--px));
+}
+
+.game__back:active::before {
+  inset: 0;
+}
+
+.game__back:active::after {
+  bottom: 0;
 }
 
 .game__back:focus-visible,
-.part:focus-visible {
-  outline: 4px solid var(--ms-yellow);
-  outline-offset: 3px;
+.part-btn:focus-visible,
+.step-btn:focus-visible,
+.part-dialog__close:focus-visible,
+.bay__launch:focus-visible,
+.bulb:focus-visible {
+  outline: var(--px) solid var(--ms-yellow);
+  outline-offset: var(--px);
 }
 
 .game__mission {
@@ -106,7 +182,7 @@
   font-weight: 400;
   font-size: clamp(14px, 2vw, 22px);
   line-height: 1.4;
-  text-shadow: 3px 3px 0 #05061a;
+  text-shadow: var(--px) var(--px) 0 var(--px-ink);
 }
 
 .game__place {
@@ -117,120 +193,364 @@
 }
 
 .bay {
+  --px-edge: #5c6894;
+  --px-edge-dim: #10162f;
+  --meter: #6eae90;
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 12px;
+  gap: 8px;
   flex: 1;
   min-height: 0;
   box-sizing: border-box;
   margin: 0;
-  padding: 8px 28px 18px;
+  padding: 4px 16px 12px;
   justify-content: safe center;
   overflow: auto;
   pointer-events: auto;
 }
 
-.bay__launch {
-  pointer-events: auto;
-  width: min(420px, 100%);
+.pad-story {
+  --bay-room: 380px;
+  position: fixed;
+  z-index: 3;
+  top: 50%;
+  left: max(16px, min(calc(34vw - 220px), calc(100vw - var(--bay-room) - 440px)));
+  width: min(440px, calc(100vw - var(--bay-room)));
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
-.bay__launch:disabled {
-  background: var(--ms-locked);
-  color: var(--ms-muted);
-  box-shadow: none;
-  cursor: not-allowed;
-  font-size: 11px;
-  line-height: 1.45;
-  white-space: normal;
+.pad-story > * {
+  pointer-events: auto;
 }
 
-.meters {
-  pointer-events: auto;
-  width: min(420px, 100%);
+.bulb {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ms-yellow);
+  cursor: pointer;
+}
+
+.bulb::before,
+.bulb::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  clip-path: var(--px-clip);
+}
+
+.bulb::before {
+  z-index: -2;
+  inset: var(--px) 0 calc(var(--px) * -1);
+  background: var(--px-ink);
+}
+
+.bulb::after {
+  z-index: -1;
+  inset: 0 0 var(--px);
+  background: rgba(11, 16, 48, 0.94);
+  box-shadow:
+    inset var(--px) var(--px) 0 var(--px-edge),
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+}
+
+.bulb.is-on {
+  color: #2a2000;
+}
+
+.bulb.is-on::before {
+  background: #c49212;
+}
+
+.bulb.is-on::after {
+  background: var(--ms-yellow);
+  box-shadow:
+    inset var(--px) var(--px) 0 #fff1a8,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #a88412;
+}
+
+.bulb:active {
+  transform: translateY(var(--px));
+}
+
+.bulb:active::before {
+  inset: 0;
+}
+
+.bulb:active::after {
+  bottom: 0;
+}
+
+.bulb__icon {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.brief {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-height: calc(100vh - 112px);
+  margin: 0;
+  padding: 16px 16px 20px;
   box-sizing: border-box;
-  padding: 10px 14px 12px;
-  border-radius: 18px;
-  border: 3px solid var(--ms-line);
-  background: rgba(11, 16, 48, 0.82);
+  overflow: auto;
 }
 
-.meters__title {
+.brief::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(11, 16, 48, 0.94);
+  clip-path: var(--px-clip);
+  box-shadow:
+    inset var(--px) var(--px) 0 var(--px-edge),
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+  filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink));
+}
+
+.brief__title,
+.brief__hints h3 {
   margin: 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ms-accent);
+  color: var(--ms-yellow);
+}
+
+.brief__intro {
+  margin: 12px 0 0;
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+.brief__story p,
+.brief__hints li {
+  margin: 10px 0 0;
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.brief__hints {
+  margin-top: 16px;
+}
+
+.brief__hints ol {
+  margin: 0;
+  padding-left: 1.3em;
+}
+
+.bay__launch {
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+  pointer-events: auto;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px 12px;
+  border: 0;
+  background: transparent;
+  color: #e7f3ee;
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.bay__launch::before,
+.bay__launch::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  clip-path: var(--px-clip);
+}
+
+.bay__launch::before {
+  z-index: -2;
+  inset: var(--px) 0 calc(var(--px) * -1);
+  background: #10241f;
+}
+
+.bay__launch::after {
+  z-index: -1;
+  inset: 0 0 var(--px);
+  background: #24574c;
+  box-shadow:
+    inset var(--px) var(--px) 0 #8fbfa8,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #10241f;
+}
+
+.bay__launch:active:not(:disabled) {
+  transform: translateY(var(--px));
+}
+
+.bay__launch:active:not(:disabled)::before {
+  inset: 0;
+}
+
+.bay__launch:active:not(:disabled)::after {
+  bottom: 0;
+}
+
+.bay__launch:disabled {
+  color: var(--ms-muted);
+  cursor: not-allowed;
+  white-space: normal;
+}
+
+.bay__launch:disabled::before {
+  background: var(--px-ink);
+}
+
+.bay__launch:disabled::after {
+  background: #2a3154;
+  box-shadow:
+    inset var(--px) var(--px) 0 #454d72,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+}
+
+.meters {
+  position: relative;
+  isolation: isolate;
+  pointer-events: auto;
+  width: min(320px, 100%);
+  box-sizing: border-box;
+  padding: 10px 12px 12px;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+}
+
+.meters::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(11, 16, 48, 0.94);
+  clip-path: var(--px-clip);
+  box-shadow:
+    inset var(--px) var(--px) 0 var(--px-edge),
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+}
+
+.meters__title {
+  margin: 0;
+  font-family: var(--ms-font-pixel);
+  font-weight: 400;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9eb0d4;
 }
 
 .meters__hint {
-  margin: 8px 0 0;
-  color: var(--ms-muted);
-  font-size: 15px;
+  margin: 6px 0 0;
+  color: #9aa3c4;
+  font-size: 14px;
   line-height: 1.3;
 }
 
 .meters__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin-top: 8px;
 }
 
 .meter__top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  display: contents;
 }
 
 .meter {
-  --meter: var(--ms-green);
+  --meter: #6eae90;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Pixel icon on the left so younger players can tell the meters apart. */
+.meter__icon {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+}
+
+.meter__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 68px 1fr auto;
+  align-items: center;
+  column-gap: 8px;
 }
 
 .meter.is-warn,
 .meter.is-short {
-  --meter: var(--ms-yellow);
+  --meter: #c6b36a;
 }
 
 .meter.is-over {
-  --meter: #ff5d7a;
+  --meter: #d28b98;
 }
 
 .meter__label {
+  grid-column: 1;
+  grid-row: 1;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
-  letter-spacing: 0.06em;
+  font-size: 8px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ms-muted);
+  color: #9aa3c4;
 }
 
 .meter__value {
-  font-family: var(--ms-font);
-  font-size: 16px;
-  line-height: 1.2;
+  grid-column: 3;
+  grid-row: 1;
+  font-family: var(--ms-font-pixel);
+  font-size: 8px;
+  line-height: 1.4;
   text-align: right;
+  white-space: nowrap;
   color: var(--meter);
-  text-shadow: 2px 2px 0 #05061a;
 }
 
 .meter.is-short .meter__value {
-  color: var(--ms-yellow);
+  color: #c6b36a;
 }
 
 .meter__track {
+  grid-column: 2;
+  grid-row: 1;
   position: relative;
-  height: 20px;
-  margin-top: 6px;
-  border-radius: 8px;
-  border: 3px solid var(--ms-line);
-  background: #0b1030;
-  box-shadow: 3px 3px 0 #05061a;
+  box-sizing: border-box;
+  height: 16px;
+  margin: 0;
+  border-radius: 0;
+  border: 4px solid #3a4468;
+  background: var(--px-ink);
   overflow: hidden;
 }
 
@@ -240,12 +560,14 @@
 
 .meter__track::before,
 .meter__fill {
+  content: "";
   position: absolute;
-  inset: 3px;
-  background: repeating-linear-gradient(
+  inset: 0;
+  background-color: transparent;
+  background-image: repeating-linear-gradient(
     90deg,
-    var(--cell, #1a214f) 0 8px,
-    transparent 8px 10px
+    var(--cell, #3a4468) 0 4px,
+    transparent 4px 8px
   );
 }
 
@@ -266,7 +588,7 @@
 /* Preparation shows a larger rocket with the payload bay cut open. */
 .rocket--open,
 .prep {
-  --scale: 15;
+  --scale: 18;
 }
 
 .prep {
@@ -376,29 +698,111 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-evenly;
-  gap: 6px;
-  padding: 8px 6px;
+  gap: 8px;
+  padding: 10px 8px 12px;
   overflow: hidden;
-  background:
-    linear-gradient(#b7c6da, #b7c6da) center / 100% 4px no-repeat,
-    linear-gradient(90deg, #f7fbff 0 8%, #8ea3bd 8% 16%, #dce8f4 16% 88%, #9aafc6 88% 100%);
+  background-color: #1b2638;
+  background-image:
+    linear-gradient(#101722, #101722),
+    linear-gradient(#2c3b52, #2c3b52),
+    linear-gradient(90deg, #314156 0 8%, #1e2a3c 8% 92%, #121a28 92% 100%);
+  background-size: 100% 7px, 100% 4px, 100% 100%;
+  background-position: center bottom, center 46%, 0 0;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 7px 0 #121a28;
+}
+
+.rocket__cargo-slot {
+  position: relative;
+  width: 100%;
+  height: 46%;
+  min-height: 0;
 }
 
 .rocket__cargo {
   width: 100%;
-  height: 46%;
+  height: 100%;
   min-height: 0;
   object-fit: contain;
   image-rendering: pixelated;
 }
 
+.rocket__qty {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  line-height: 1.4;
+  color: #04213a;
+  background: var(--ms-yellow);
+  padding: 1px 3px;
+}
+
+/* Launch: the rocket rises from below the screen to its spot, then hovers. */
 .rocket.is-flying {
-  animation: liftoff 2.6s ease-out forwards;
+  animation:
+    liftoff 2.6s cubic-bezier(0.22, 0.8, 0.3, 1) both,
+    hover 2.8s ease-in-out 2.6s infinite;
 }
 
 @keyframes liftoff {
-  from { transform: translateY(48px); }
-  to { transform: translateY(-8px); }
+  from { transform: translateY(110vh); }
+  to { transform: translateY(0); }
+}
+
+@keyframes hover {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Liftoff from the pad: the engine lights and shakes, then the rocket climbs
+   slowly, speeds up and leaves through the top of the screen.
+   Total 3.6s = LAUNCH_MS in GameScreen.jsx. */
+.rocket.is-launching {
+  --scale: inherit;
+  animation:
+    pad-shake 0.14s steps(2) 5,
+    pad-liftoff 2.9s cubic-bezier(0.55, 0, 0.85, 0.5) 0.7s forwards;
+}
+
+@keyframes pad-shake {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(calc(var(--scale) * 0.5px)); }
+}
+
+@keyframes pad-liftoff {
+  from { transform: translateY(0); }
+  to { transform: translateY(-160vh); }
+}
+
+/* While the rocket leaves, the parts panel slides away and stops taking input. */
+.bay {
+  transition: opacity 0.4s, transform 0.4s ease-in;
+}
+
+.bay[inert] {
+  opacity: 0;
+  transform: translateX(40px);
+}
+
+/* Sprite-sheet loop: steps through --frames cells of one 32px row. */
+.rocket__layer--anim {
+  animation: rocket-frames calc(var(--frames) * 90ms) steps(var(--frames)) infinite;
+}
+
+@keyframes rocket-frames {
+  from { background-position-x: 0; }
+  to { background-position-x: calc(var(--frames) * -32px); }
+}
+
+.dock {
+  width: min(320px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  pointer-events: auto;
 }
 
 .parts {
@@ -406,52 +810,223 @@
   margin: 0;
   padding: 0;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: min(420px, 100%);
-  pointer-events: auto;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
 }
 
-.part {
-  width: 100%;
+.part-btn,
+.step-btn,
+.part-dialog__close {
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ms-text);
+  font-family: var(--ms-font-pixel);
+  cursor: pointer;
+}
+
+.part-btn::before,
+.part-btn::after,
+.step-btn::before,
+.step-btn::after,
+.part-dialog__close::before,
+.part-dialog__close::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  clip-path: var(--px-clip);
+}
+
+.part-btn::before,
+.step-btn::before,
+.part-dialog__close::before {
+  z-index: -2;
+  inset: var(--px) 0 calc(var(--px) * -1);
+  background: var(--px-ink);
+}
+
+.part-btn::after,
+.step-btn::after,
+.part-dialog__close::after {
+  z-index: -1;
+  inset: 0 0 var(--px);
+  background: rgba(16, 22, 48, 0.94);
+  box-shadow:
+    inset var(--px) var(--px) 0 #5c6894,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+}
+
+.part-btn {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 72px;
+  padding: 0 0 var(--px);
+}
+
+.part-btn.is-on::after,
+.part-btn.is-open::after {
+  box-shadow: inset 0 0 0 var(--px) #c6b36a;
+}
+
+.part-btn.is-on::before,
+.part-btn.is-open::before {
+  background: #3a3420;
+}
+
+.part-btn:active,
+.step-btn:active:not(:disabled),
+.part-dialog__close:active {
+  transform: translateY(var(--px));
+}
+
+.part-btn:active::before,
+.step-btn:active:not(:disabled)::before,
+.part-dialog__close:active::before {
+  inset: 0;
+}
+
+.part-btn:active::after,
+.step-btn:active:not(:disabled)::after,
+.part-dialog__close:active::after {
+  bottom: 0;
+}
+
+.part-btn__qty {
+  position: absolute;
+  z-index: 2;
+  right: 2px;
+  bottom: 8px;
+  min-width: 14px;
+  padding: 0 3px;
+  background: #c6b36a;
+  color: #241c08;
+  font-family: var(--ms-font-pixel);
+  font-size: 9px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.part-dialog {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  padding: 10px 12px 12px;
+}
+
+.part-dialog::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(12, 16, 36, 0.96);
+  clip-path: var(--px-clip);
+  box-shadow:
+    inset var(--px) var(--px) 0 #5c6894,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+}
+
+.part-dialog__head {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 76px;
-  padding: 8px 12px;
-  border-radius: 18px;
-  border: 3px solid var(--ms-line);
-  background: rgba(11, 16, 48, 0.82);
-  color: var(--ms-text);
-  font-family: var(--ms-font);
-  cursor: pointer;
-  text-align: left;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.part.is-on {
-  border-color: var(--ms-yellow);
+.part-dialog__title {
+  margin: 0;
+  font-family: var(--ms-font-pixel);
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.part-dialog__close {
+  flex: none;
+  min-height: 28px;
+  padding: 4px 8px 8px;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.part-dialog__blurb {
+  margin: 8px 0 0;
+  color: #b7bedd;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.part-dialog .part__tags {
+  margin-top: 6px;
+}
+
+.part-dialog__stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.step-btn {
+  width: 36px;
+  height: 40px;
+  padding: 0 0 var(--px);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.step-btn:disabled,
+.step-btn:disabled::after {
+  color: #8b93b4;
+  cursor: not-allowed;
+}
+
+.step-btn:disabled::after {
+  background: #2a3154;
+  box-shadow: inset 0 0 0 var(--px) #454d72;
+}
+
+.part-dialog__count {
+  min-width: 3.2em;
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  text-align: center;
 }
 
 .part__icon {
-  --scale: 2;
+  --scale: 1.6;
   position: relative;
-  width: 64px;
-  height: 64px;
+  z-index: 1;
+  width: 52px;
+  height: 52px;
   flex: none;
+  overflow: hidden;
+  background: transparent;
 }
 
 .part__photo {
-  width: 56px;
-  height: 56px;
+  position: relative;
+  z-index: 1;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  box-sizing: border-box;
   object-fit: contain;
   image-rendering: pixelated;
   flex: none;
+  background: transparent;
 }
 
 .part__text {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
   flex: 1;
 }
@@ -476,9 +1051,9 @@
 
 .part__tag {
   font-family: var(--ms-font);
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.2;
-  color: var(--ms-muted);
+  color: #b7bedd;
 }
 
 .part__tag + .part__tag::before {
@@ -487,20 +1062,9 @@
   color: var(--ms-line);
 }
 
-.part__tag--cost { color: var(--ms-yellow); }
-.part__tag--draw { color: #ff8fa6; }
-.part__tag--good { color: var(--ms-green); }
-
-.part__action {
-  font-family: var(--ms-font-pixel);
-  font-size: 10px;
-  color: var(--ms-accent);
-  flex: none;
-}
-
-.part.is-on .part__action {
-  color: var(--ms-yellow);
-}
+.part__tag--cost { color: #c6b36a; }
+.part__tag--draw { color: #d7a3b0; }
+.part__tag--good { color: #6eae90; }
 
 .flight {
   flex: 1;
@@ -513,13 +1077,70 @@
   padding: 12px 16px 32px;
 }
 
+/* The rocket keeps its full size and rises in front of the supplies panel. */
+.flight .rocket {
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+/* Wide screens: rocket in the middle, supplies on the right, so nothing overlaps. */
+@media (min-width: 900px) {
+  .flight {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto 1fr auto;
+    align-items: center;
+    justify-items: center;
+    column-gap: 48px;
+  }
+
+  .flight__status {
+    grid-column: 1 / -1;
+  }
+
+  .flight .rocket {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .flight .meters {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .flight > .game__back {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-self: center;
+  }
+}
+
+/* Phones: everything stacks and the screen scrolls; the rocket is a bit smaller
+   and is clipped to the flight area while it rises, so the page does not grow. */
+@media (max-width: 720px) {
+  .game:has(.flight) {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .flight {
+    overflow: clip;
+  }
+
+  .flight .rocket {
+    --scale: 4;
+  }
+}
+
 .flight__status {
   margin: 0;
   font-family: var(--ms-font-pixel);
   font-size: clamp(12px, 2vw, 16px);
   line-height: 1.6;
   text-align: center;
-  text-shadow: 3px 3px 0 #05061a;
+  text-shadow: var(--px) var(--px) 0 var(--px-ink);
 }
 
 @media (max-width: 720px) {
@@ -542,10 +1163,21 @@
     justify-content: flex-start;
   }
 
-  .parts,
-  .bay__launch,
+  .dock,
   .meters {
-    width: min(420px, 100%);
+    width: min(320px, 100%);
+  }
+
+  .pad-story {
+    left: 50%;
+    top: 92px;
+    width: min(440px, calc(100% - 24px));
+    max-height: min(48vh, 420px);
+    transform: translateX(-50%);
+  }
+
+  .brief {
+    max-height: min(40vh, 360px);
   }
 
   .rocket {
@@ -554,22 +1186,29 @@
 
   .rocket--open,
   .prep {
-    --scale: 9;
+    --scale: 12;
   }
 }
 
-@media (max-height: 820px) and (min-width: 721px) {
+@media (max-height: 900px) and (min-width: 721px) {
   .rocket--open,
   .prep {
-    --scale: 12;
+    --scale: 16;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .rocket.is-flying,
+  .rocket.is-launching,
+  .rocket__layer--anim,
   .engineer,
   .crew__mover.is-patrol {
     animation: none;
+  }
+
+  /* Keep the clouds where they start instead of drifting. */
+  .clouds__lane {
+    animation-play-state: paused;
   }
 
   .meter__fill {
