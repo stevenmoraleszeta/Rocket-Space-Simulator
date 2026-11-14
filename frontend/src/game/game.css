@@ -124,7 +124,7 @@
 
 .game__back:focus-visible,
 .part__step:focus-visible,
-.brief .ms-btn:focus-visible {
+.bulb:focus-visible {
   outline: var(--px) solid var(--ms-yellow);
   outline-offset: var(--px);
 }
@@ -174,23 +174,108 @@
   pointer-events: auto;
 }
 
-.bay__tools {
+.pad-story {
+  --bay-room: 520px;
+  position: fixed;
+  z-index: 3;
+  top: 50%;
+  left: max(16px, min(calc(34vw - 220px), calc(100vw - var(--bay-room) - 440px)));
+  width: min(440px, calc(100vw - var(--bay-room)));
+  max-height: calc(100vh - 32px);
   display: flex;
-  width: min(420px, 100%);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.pad-story > * {
   pointer-events: auto;
 }
 
-.bay__tools .game__back {
-  width: 100%;
+.bulb {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ms-yellow);
+  cursor: pointer;
+}
+
+.bulb::before,
+.bulb::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  clip-path: var(--px-clip);
+}
+
+.bulb::before {
+  z-index: -2;
+  inset: var(--px) 0 calc(var(--px) * -1);
+  background: var(--px-ink);
+}
+
+.bulb::after {
+  z-index: -1;
+  inset: 0 0 var(--px);
+  background: rgba(11, 16, 48, 0.94);
+  box-shadow:
+    inset var(--px) var(--px) 0 var(--px-edge),
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+}
+
+.bulb.is-on {
+  color: #2a2000;
+}
+
+.bulb.is-on::before {
+  background: #c49212;
+}
+
+.bulb.is-on::after {
+  background: var(--ms-yellow);
+  box-shadow:
+    inset var(--px) var(--px) 0 #fff1a8,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #a88412;
+}
+
+.bulb:active {
+  transform: translateY(var(--px));
+}
+
+.bulb:active::before {
+  inset: 0;
+}
+
+.bulb:active::after {
+  bottom: 0;
+}
+
+.bulb__icon {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 
 .brief {
   position: relative;
   isolation: isolate;
-  width: min(560px, calc(100% - 32px));
-  margin: 8px auto 28px;
-  padding: 20px 20px 24px;
+  width: 100%;
+  max-height: calc(100vh - 112px);
+  margin: 0;
+  padding: 16px 16px 20px;
   box-sizing: border-box;
+  overflow: auto;
 }
 
 .brief::before {
@@ -207,8 +292,7 @@
 }
 
 .brief__title,
-.brief__hints h3,
-.clues summary {
+.brief__hints h3 {
   margin: 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
@@ -225,8 +309,7 @@
 }
 
 .brief__story p,
-.brief__hints li,
-.clues li {
+.brief__hints li {
   margin: 10px 0 0;
   font-size: 20px;
   line-height: 1.35;
@@ -236,39 +319,9 @@
   margin-top: 16px;
 }
 
-.brief__hints ol,
-.clues ol {
+.brief__hints ol {
   margin: 0;
   padding-left: 1.3em;
-}
-
-.brief .ms-btn {
-  margin-top: 18px;
-}
-
-.clues {
-  position: relative;
-  isolation: isolate;
-  width: min(420px, 100%);
-  box-sizing: border-box;
-  padding: 12px 16px 16px;
-  pointer-events: auto;
-}
-
-.clues::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: rgba(11, 16, 48, 0.94);
-  clip-path: var(--px-clip);
-  box-shadow:
-    inset var(--px) var(--px) 0 var(--px-edge),
-    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
-}
-
-.clues summary {
-  cursor: pointer;
 }
 
 .bay__launch {
@@ -790,10 +843,20 @@
 
   .parts,
   .bay__launch,
-  .bay__tools,
-  .clues,
   .meters {
     width: min(420px, 100%);
+  }
+
+  .pad-story {
+    left: 50%;
+    top: 92px;
+    width: min(440px, calc(100% - 24px));
+    max-height: min(48vh, 420px);
+    transform: translateX(-50%);
+  }
+
+  .brief {
+    max-height: min(40vh, 360px);
   }
 
   .meters__grid {

@@ -2,7 +2,7 @@
  * After a mission is launched the player fits the rocket on Earth,
  * then presses Launch and the flight begins.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SpaceBackground } from '../levels';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
@@ -14,8 +14,18 @@ import { AMBIENCE, MUSIC, useSoundtrack } from '../audio';
 import './game.css';
 
 export function GameScreen({ mission, onExit }) {
-  const [phase, setPhase] = useState('story');
+  const [phase, setPhase] = useState('assemble');
+  const [storyOpen, setStoryOpen] = useState(true);
   const [equipped, setEquipped] = useState(EMPTY_LOADOUT);
+
+  useEffect(() => {
+    if (!storyOpen || phase !== 'assemble') return undefined;
+    const onKey = (event) => {
+      if (event.key === 'Escape') setStoryOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [storyOpen, phase]);
   useSoundtrack(
     phase === 'flight'
       ? { music: MUSIC.flight, ambient: AMBIENCE.space }
@@ -46,17 +56,6 @@ export function GameScreen({ mission, onExit }) {
       <div className="game__place">{mission.place}</div>
     </header>
   );
-
-  if (phase === 'story') {
-    return (
-      <SpaceBackground>
-        <div className="game">
-          {hud}
-          <Briefing mission={mission} onReady={() => setPhase('assemble')} />
-        </div>
-      </SpaceBackground>
-    );
-  }
 
   if (phase === 'flight') {
     return (
@@ -91,13 +90,19 @@ export function GameScreen({ mission, onExit }) {
         </div>
       </div>
       {hud}
+      <div className="pad-story">
+        <button
+          type="button"
+          className={storyOpen ? 'bulb is-on' : 'bulb'}
+          aria-pressed={storyOpen}
+          aria-label={storyOpen ? 'Close the story' : 'Open the story'}
+          onClick={() => setStoryOpen((open) => !open)}
+        >
+          <BulbIcon />
+        </button>
+        {storyOpen && <Briefing mission={mission} />}
+      </div>
       <div className="bay">
-        <div className="bay__tools">
-          <button type="button" className="game__back" onClick={() => setPhase('story')}>
-            Story
-          </button>
-        </div>
-        <Clues hints={mission.hints} />
         <Meters meters={meters} />
         <ul className="parts">
           {PARTS.map((part) => {
@@ -156,10 +161,10 @@ export function GameScreen({ mission, onExit }) {
   );
 }
 
-/** Short story and clues, shown before the player packs the rocket. */
-function Briefing({ mission, onReady }) {
+/** Story and clues, opened over the rocket with the light bulb. */
+function Briefing({ mission }) {
   return (
-    <section className="brief" aria-labelledby="brief-title">
+    <section className="brief" role="dialog" aria-labelledby="brief-title">
       <h2 id="brief-title" className="brief__title">Story</h2>
       {mission.intro && <p className="brief__intro">{mission.intro}</p>}
       <div className="brief__story">
@@ -175,25 +180,18 @@ function Briefing({ mission, onReady }) {
           ))}
         </ol>
       </div>
-      <button type="button" className="ms-btn" onClick={onReady}>
-        Pack the rocket
-      </button>
     </section>
   );
 }
 
-/** Clues stay one tap away while the rocket is being packed. */
-function Clues({ hints }) {
-  if (!hints?.length) return null;
+function BulbIcon() {
   return (
-    <details className="clues">
-      <summary>Clues</summary>
-      <ol>
-        {hints.map((hint) => (
-          <li key={hint}>{hint}</li>
-        ))}
-      </ol>
-    </details>
+    <svg className="bulb__icon" viewBox="0 0 16 16" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M8 1a4.5 4.5 0 0 0-2.5 8.2V11h5V9.2A4.5 4.5 0 0 0 8 1zm-1 11h2v1H7v-1zm.5 2h1v1h-1v-1zM1 6h2v1H1V6zm12 0h2v1h-2V6zM2.2 2.2l1.4 1.4-.7.7L1.5 2.9l.7-.7zm10.2 0 .7.7-1.4 1.4-.7-.7 1.4-1.4z"
+      />
+    </svg>
   );
 }
 
