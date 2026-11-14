@@ -1,5 +1,5 @@
 /* Mission selection styles. Everything uses the ms- prefix to avoid clashing with the rest of the app.
-   Built for players aged 8–15: large text, big tap targets (130 px planets, 52 px buttons).
+   Built for players aged 8–15: large text, big tap targets (130 px planets, 48 px buttons).
    Pixel fonts are loaded from main.jsx. */
 
 :root {
@@ -9,6 +9,25 @@
   /* Pixel fonts: --ms-font-pixel for titles, labels and buttons; --ms-font for longer, readable text */
   --ms-font-pixel: "Press Start 2P", "Pixelify Sans", monospace;
   --ms-font: "Pixelify Sans", "Trebuchet MS", system-ui, sans-serif;
+  /* One texel of a 32×32 sprite, drawn at 4 CSS px so frames stay on that grid. */
+  --px: 4px;
+  --px-ink: #05061a;
+  --px-edge: #8aa0e8;
+  --px-edge-dim: #12183f;
+  --px-clip: polygon(
+    0 var(--px),
+    var(--px) var(--px),
+    var(--px) 0,
+    calc(100% - var(--px)) 0,
+    calc(100% - var(--px)) var(--px),
+    100% var(--px),
+    100% calc(100% - var(--px)),
+    calc(100% - var(--px)) calc(100% - var(--px)),
+    calc(100% - var(--px)) 100%,
+    var(--px) 100%,
+    var(--px) calc(100% - var(--px)),
+    0 calc(100% - var(--px))
+  );
 }
 
 /* Content is centered horizontally and vertically in the viewport */
@@ -19,7 +38,8 @@
 .ms-head h1 { font-family: var(--ms-font-pixel); font-weight: 400; font-size: clamp(18px, 3.4vw, 32px); line-height: 1.4; margin: 0; text-shadow: 3px 3px 0 #1a2260; }
 .ms-greet { margin: -6px 0 0; font-size: 20px; color: var(--ms-muted); }
 .ms-greet b { color: var(--ms-yellow); font-weight: 700; }
-.ms-total { font-family: var(--ms-font-pixel); background: var(--ms-panel); border: 2px solid var(--ms-line); border-radius: 999px; padding: 10px 18px; font-size: 14px; }
+.ms-total { position: relative; isolation: isolate; font-family: var(--ms-font-pixel); background: transparent; border: 0; border-radius: 0; padding: 12px 16px; font-size: 12px; }
+.ms-total::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ms-panel); clip-path: var(--px-clip); box-shadow: inset var(--px) var(--px) 0 var(--px-edge), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim); filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink)); }
 .ms-total span { color: var(--ms-yellow); }
 
 /* Background (see components/SpaceBackground.jsx) */
@@ -51,38 +71,53 @@ img.ms-planet { object-fit: contain; user-select: none; }
 .ms-lock { position: absolute; inset: 0; display: grid; place-items: center; font-size: 42px; }
 .ms-lock__img { width: 50px; height: 50px; filter: brightness(.75) drop-shadow(0 3px 0 rgba(0,0,0,.5)); user-select: none; }
 .ms-lock__img.is-pixel { image-rendering: pixelated; }
-.ms-check { position: absolute; right: 0; bottom: 4px; width: 42px; height: 42px; border-radius: 50%; background: var(--ms-green); color: #06301f; font-weight: 800; font-size: 24px; display: grid; place-items: center; border: 3px solid var(--ms-bg); }
+.ms-check { position: absolute; right: 0; bottom: 4px; width: 32px; height: 32px; border-radius: 0; background: var(--ms-green); color: #06301f; font-family: var(--ms-font-pixel); font-weight: 400; font-size: 12px; display: grid; place-items: center; border: 0; clip-path: var(--px-clip); filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink)); }
 .ms-stop__num { font-family: var(--ms-font-pixel); margin-top: 16px; font-size: 11px; color: var(--ms-accent); text-transform: uppercase; letter-spacing: .08em; }
 .ms-stop__title { font-family: var(--ms-font-pixel); font-size: 14px; line-height: 1.5; margin: 8px 0 8px; }
 .ms-stop--locked .ms-stop__title, .ms-stop--locked .ms-stop__num { color: var(--ms-muted); }
 .ms-stop__hint { font-size: 17px; color: var(--ms-muted); margin-top: 6px; max-width: 240px; }
 
-.ms-bubble { font-family: var(--ms-font-pixel); position: absolute; top: -18px; background: var(--ms-yellow); color: #2a2000; font-size: 12px; padding: 8px 14px; border-radius: 14px; animation: ms-bob 1.4s ease-in-out infinite; z-index: 2; }
-.ms-bubble::after { content: ""; position: absolute; left: 50%; bottom: -8px; margin-left: -8px; border: 8px solid transparent; border-bottom: 0; border-top-color: var(--ms-yellow); }
+.ms-bubble { font-family: var(--ms-font-pixel); position: absolute; top: -8px; background: transparent; color: #2a2000; font-size: 12px; padding: 8px 12px 12px; border-radius: 0; animation: ms-bob 1.4s steps(2, end) infinite; z-index: 2; }
+.ms-bubble::before { content: ""; position: absolute; inset: 0 0 var(--px); z-index: -1; background: var(--ms-yellow); clip-path: var(--px-clip); box-shadow: inset var(--px) var(--px) 0 #fff1a8, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #c49212; }
+.ms-bubble::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 8px; height: 8px; margin-left: -4px; background: #c49212; }
 
 .ms-stars { letter-spacing: .1em; color: #444d82; line-height: 1; }
 .ms-stars .on { color: var(--ms-yellow); }
 
 /* Mission card */
 .ms-modal { position: fixed; inset: 0; background: rgba(5,8,25,.82); display: grid; place-items: center; padding: 16px; z-index: 50; }
-.ms-card { font-family: var(--ms-font); color: var(--ms-text); width: min(480px, 100%); background: var(--ms-panel); border: 3px solid var(--ms-line); border-radius: 26px; padding: 26px 24px 22px; text-align: center; animation: ms-pop .25s ease; max-height: 100%; overflow: auto; }
+.ms-card { position: relative; isolation: isolate; font-family: var(--ms-font); color: var(--ms-text); width: min(480px, 100%); background: transparent; border: 0; border-radius: 0; padding: 24px; text-align: center; animation: ms-pop .2s steps(3, end); max-height: 100%; overflow: auto; }
+.ms-card::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ms-panel); clip-path: var(--px-clip); box-shadow: inset var(--px) var(--px) 0 var(--px-edge), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim); }
 .ms-card__num { font-family: var(--ms-font-pixel); margin-top: 8px; color: var(--ms-accent); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
 .ms-card h2 { font-family: var(--ms-font-pixel); font-weight: 400; font-size: 20px; line-height: 1.4; margin: 10px 0 14px; }
+.ms-card__intro { margin: 0 0 8px; font-size: 18px; line-height: 1.3; color: var(--ms-accent); }
 .ms-card__goal { font-size: 20px; line-height: 1.4; margin: 0 0 14px; }
-.ms-card__fact { background: rgba(255,210,63,.12); border: 2px solid rgba(255,210,63,.5); border-radius: 16px; padding: 12px 14px; font-size: 17px; text-align: left; }
+.ms-card__fact { position: relative; isolation: isolate; background: transparent; border: 0; border-radius: 0; padding: 12px 16px; font-size: 17px; text-align: left; }
+.ms-card__fact::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #2a2408; clip-path: var(--px-clip); box-shadow: inset var(--px) var(--px) 0 #ffe38a, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #6a5410; }
 .ms-card__fact b { color: var(--ms-yellow); }
 .ms-card__best { margin-top: 12px; font-size: 17px; color: var(--ms-muted); display: flex; align-items: center; justify-content: center; gap: 8px; }
 .ms-card__actions { display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
 
-/* Buttons */
-.ms-btn { font-family: var(--ms-font-pixel); font-size: 14px; min-height: 52px; padding: 10px 28px; border-radius: 18px; border: 0; background: var(--ms-accent); color: #04213a; cursor: pointer; box-shadow: 0 6px 0 var(--ms-accent-dark); }
-.ms-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--ms-accent-dark); }
-.ms-btn--ghost { background: transparent; color: var(--ms-text); border: 3px solid var(--ms-line); box-shadow: none; }
-.ms-btn:focus-visible { outline: 4px solid var(--ms-yellow); outline-offset: 3px; }
+/* Buttons. The face sits on a 4 px slab so the press lands on the pixel grid. */
+.ms-btn { position: relative; isolation: isolate; z-index: 0; font-family: var(--ms-font-pixel); font-size: 12px; line-height: 1.6; min-height: 48px; padding: 12px 20px 16px; border-radius: 0; border: 0; background: transparent; color: #04213a; cursor: pointer; box-shadow: none; }
+.ms-btn::before,
+.ms-btn::after { content: ""; position: absolute; pointer-events: none; clip-path: var(--px-clip); }
+.ms-btn::before { z-index: -2; inset: var(--px) 0 calc(var(--px) * -1); background: var(--ms-accent-dark); }
+.ms-btn::after { z-index: -1; inset: 0 0 var(--px); background: var(--ms-accent); box-shadow: inset var(--px) var(--px) 0 #d7f4ff, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #1a7eb8; }
+.ms-btn:active:not(:disabled) { transform: translateY(var(--px)); }
+.ms-btn:active:not(:disabled)::before { inset: 0; }
+.ms-btn:active:not(:disabled)::after { bottom: 0; }
+.ms-btn--ghost { color: var(--ms-text); }
+.ms-btn--ghost::before { background: var(--px-ink); }
+.ms-btn--ghost::after { background: rgba(11, 16, 48, 0.94); box-shadow: inset var(--px) var(--px) 0 var(--px-edge), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim); }
+.ms-btn:focus-visible { outline: var(--px) solid var(--ms-yellow); outline-offset: var(--px); }
+.ms-btn:disabled { color: var(--ms-muted); cursor: not-allowed; }
+.ms-btn:disabled::before { background: var(--px-ink); }
+.ms-btn:disabled::after { background: var(--ms-locked); box-shadow: inset var(--px) var(--px) 0 var(--ms-line), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim); }
 
 @keyframes ms-float { 50% { transform: translateY(-8px); } }
 @keyframes ms-bob { 50% { transform: translateY(-5px); } }
-@keyframes ms-pop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
+@keyframes ms-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* Phones and narrow screens: missions stacked vertically */
 @media (max-width: 720px) {

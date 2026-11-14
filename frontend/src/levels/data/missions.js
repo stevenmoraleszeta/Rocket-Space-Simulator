@@ -11,6 +11,9 @@
  * @property {string} title
  * @property {string} place     where the mission goes
  * @property {string} goal      one-sentence goal, shown on the mission card
+ * @property {string} intro     one short line that sets the trip, shown before the story
+ * @property {string[]} story   a few short sentences the player reads before packing
+ * @property {string[]} hints   short clues about the trip. They never name what to pack.
  * @property {string} funFact   short fact, shown on the mission card
  * @property {number} passPct   minimum score (%) to complete the mission
  * @property {Object} loadout   hangar limits and what the trip needs
@@ -31,10 +34,23 @@ export const MISSIONS = [
     planet: 'earth',
     title: 'Eye on Earth',
     place: 'Earth orbit',
-    goal: 'Build a rocket and send a satellite into space to take pictures of our planet.',
+    goal: 'Pack a rocket and fly once around Earth.',
+    intro: 'A short trip around Earth.',
+    story: [
+      'You fly into orbit to look down at Earth.',
+      'The trip is short, but the astronaut will get hungry. With nothing to eat, the trip is over.',
+      'The way up is very hot. Too much heat can break the rocket.',
+      'The rocket\'s own push is not enough to reach orbit.',
+      'The cabin already has air for a short trip.',
+    ],
+    hints: [
+      'What could end the trip: hunger, heat, or a weak push?',
+      'This trip is short. Something on the rocket may already be enough.',
+      'A green bar is ready. A yellow bar is still short.',
+    ],
     funFact: 'The International Space Station goes around the Earth about every 90 minutes!',
     passPct: 60,
-    loadout: { budget: 140, mass: 110, energy: 50, heat: 20, thrust: 40, food: 20, air: 24 },
+    loadout: { budget: 140, mass: 110, energy: 50, heat: 20, thrust: 40, food: 20, air: 12 },
   },
   {
     id: 'moon',
@@ -42,10 +58,22 @@ export const MISSIONS = [
     planet: 'moon',
     title: 'Moon Explorer',
     place: 'The Moon',
-    goal: 'Fly all the way to the Moon and look for hidden ice inside its dark craters.',
+    goal: 'Fly to the Moon and look for ice in the dark.',
+    intro: 'A long trip to the Moon.',
+    story: [
+      'You fly to the Moon to look for ice in the dark.',
+      'The trip takes many days. People need to eat every day.',
+      'The Moon has no air. The crew still has to breathe.',
+      'The way there is hot, and the Moon is much farther than orbit.',
+    ],
+    hints: [
+      'Eating once is not the same as eating for many days.',
+      'There is no air outside the ship. The crew still has to breathe.',
+      'Farther than orbit, heat and push still matter.',
+    ],
     funFact: 'Some craters near the Moon\'s south pole never get any sunlight at all.',
     passPct: 60,
-    loadout: { budget: 115, mass: 98, energy: 32, heat: 35, thrust: 60, food: 35, air: 40 },
+    loadout: { budget: 160, mass: 120, energy: 40, heat: 30, thrust: 55, food: 50, air: 40 },
   },
   {
     id: 'mars',
@@ -53,9 +81,22 @@ export const MISSIONS = [
     planet: 'mars',
     title: 'Red Planet Rover',
     place: 'Mars',
-    goal: 'Land a rover on Mars and drill into red rocks to learn about the planet\'s past.',
+    goal: 'Send a rover to Mars and look at the red rocks.',
+    intro: 'A very long trip to Mars.',
+    story: [
+      'You send a rover to Mars, far past the Moon.',
+      'The crew is away much longer than on the Moon. They eat the whole time.',
+      'Breathing for a short time is not the same as breathing for the whole trip.',
+      'The way is still hot, and Mars is the farthest place yet.',
+      'Money, weight, and power can run out. Packing extra can leave you short.',
+    ],
+    hints: [
+      'This trip lasts longer than the Moon. What has to last the whole way?',
+      'A yellow bar is still short. Try a little more, then look again.',
+      'A red bar means you packed too much.',
+    ],
     funFact: 'Mars looks red because its dust has a lot of rust in it.',
     passPct: 60,
-    loadout: { budget: 90, mass: 84, energy: 20, heat: 35, thrust: 60, food: 35, air: 40 },
+    loadout: { budget: 175, mass: 130, energy: 44, heat: 35, thrust: 60, food: 90, air: 60 },
   },
 ];

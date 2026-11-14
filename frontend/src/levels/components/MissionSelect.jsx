@@ -99,6 +99,7 @@ export function MissionCard({ mission, stars, completed, onClose, onLaunch }) {
         <Planet planet={mission.planet} size={110} />
         <div className="ms-card__num">Mission {mission.number} · {mission.place}</div>
         <h2 id="ms-card-title">{mission.title}</h2>
+        {mission.intro && <p className="ms-card__intro">{mission.intro}</p>}
         <p className="ms-card__goal">{mission.goal}</p>
         <div className="ms-card__fact">
           <b>Did you know?</b> {mission.funFact}

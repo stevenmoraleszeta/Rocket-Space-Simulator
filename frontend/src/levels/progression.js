@@ -133,7 +133,13 @@ export function validateMissions(missions = MISSIONS) {
     ids.add(m.id);
     if (!['earth', 'moon', 'mars'].includes(m.planet)) errors.push(`${m.id}: unknown planet "${m.planet}"`);
     if (!(m.passPct > 0 && m.passPct <= 100)) errors.push(`${m.id}: invalid passPct`);
-    if (!m.title || !m.goal) errors.push(`${m.id}: missing title or goal`);
+    if (!m.title || !m.goal || !m.intro) errors.push(`${m.id}: missing title, goal, or intro`);
+    if (!Array.isArray(m.story) || m.story.length === 0 || m.story.some((line) => typeof line !== 'string' || !line.trim())) {
+      errors.push(`${m.id}: story must be short lines`);
+    }
+    if (!Array.isArray(m.hints) || m.hints.length === 0 || m.hints.some((line) => typeof line !== 'string' || !line.trim())) {
+      errors.push(`${m.id}: hints must be short clues`);
+    }
   });
   return errors;
 }
