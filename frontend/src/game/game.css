@@ -213,18 +213,13 @@
 }
 
 .pad-story {
-  --bay-room: 380px;
-  position: fixed;
+  position: relative;
   z-index: 3;
-  top: 50%;
-  left: max(16px, min(calc(34vw - 220px), calc(100vw - var(--bay-room) - 440px)));
-  width: min(440px, calc(100vw - var(--bay-room)));
-  max-height: calc(100vh - 32px);
+  width: min(320px, 100%);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
-  transform: translateY(-50%);
+  gap: 8px;
   pointer-events: none;
 }
 
@@ -309,7 +304,7 @@
   position: relative;
   isolation: isolate;
   width: 100%;
-  max-height: calc(100vh - 112px);
+  max-height: min(38vh, 320px);
   margin: 0;
   padding: 16px 16px 20px;
   box-sizing: border-box;
@@ -674,10 +669,10 @@
   transform-origin: top left;
 }
 
-/* Cabin hole in the 32×32 hull: columns 12–19, rows 9–22. */
+/* Cabin hole in the 32×32 hull: columns 12–19, rows 6–22. */
 .rocket--open .rocket__hull {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' fill='white'/%3E%3Crect x='12' y='9' width='8' height='14' fill='black'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' fill='white'/%3E%3Crect x='12' y='9' width='8' height='14' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' fill='white'/%3E%3Crect x='12' y='6' width='8' height='17' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' fill='white'/%3E%3Crect x='12' y='6' width='8' height='17' fill='black'/%3E%3C/svg%3E");
   -webkit-mask-mode: luminance;
   mask-mode: luminance;
   -webkit-mask-size: 32px 32px;
@@ -690,9 +685,9 @@
   position: absolute;
   z-index: 0;
   left: calc(100% * 12 / 32);
-  top: calc(100% * 9 / 32);
+  top: calc(100% * 6 / 32);
   width: calc(100% * 8 / 32);
-  height: calc(100% * 14 / 32);
+  height: calc(100% * 17 / 32);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -1164,20 +1159,13 @@
   }
 
   .dock,
-  .meters {
+  .meters,
+  .pad-story {
     width: min(320px, 100%);
   }
 
-  .pad-story {
-    left: 50%;
-    top: 92px;
-    width: min(440px, calc(100% - 24px));
-    max-height: min(48vh, 420px);
-    transform: translateX(-50%);
-  }
-
   .brief {
-    max-height: min(40vh, 360px);
+    max-height: min(34vh, 280px);
   }
 
   .rocket {
