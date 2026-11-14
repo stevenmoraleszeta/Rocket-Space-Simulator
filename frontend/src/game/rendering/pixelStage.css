@@ -1,0 +1,35 @@
+/* Contain mode: host fills the free space; the stage is centered and scaled from its center. */
+.pixel-stage-host {
+  flex: 1;
+  /* Never shrink below scale 1 (STAGE_HEIGHT), or the scene would be cropped. */
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #05070f;
+}
+
+.pixel-stage {
+  position: relative;
+  overflow: hidden;
+  transform-origin: center;
+  image-rendering: pixelated;
+}
+
+/* Cover mode: full-screen background behind the UI; the stage is placed from its top-left corner. */
+.pixel-stage-host--cover {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  min-height: 0;
+}
+.pixel-stage-host--cover .pixel-stage {
+  position: absolute;
+  transform-origin: top left;
+}
+
+.pixel-stage img {
+  image-rendering: pixelated;
+  user-select: none;
+}

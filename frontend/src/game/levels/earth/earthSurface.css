@@ -1,0 +1,171 @@
+/* LEVEL 0 — Earth surface. Scene sizes are in art pixels (stage is 320 x 180).
+   Every .earth-placeholder rule is a PLACEHOLDER drawing, to be replaced by real sprites. */
+
+.earth-sprite,
+.earth-placeholder,
+.earth-sky,
+.earth-sun,
+.earth-cloud,
+.earth-mountains {
+  position: absolute;
+}
+
+/* Sky with hard color bands, pixel-art style */
+.earth-sky {
+  inset: 0;
+  background: linear-gradient(
+    #2f62c9 0 36px,
+    #3f78d8 36px 72px,
+    #5a92e6 72px 104px,
+    #7eb0f0 104px 128px,
+    #a8cdf7 128px
+  );
+}
+
+.earth-sun {
+  left: 40px;
+  top: 22px;
+  width: 14px;
+  height: 14px;
+  background: #ffe066;
+  box-shadow: 0 0 0 2px #ffd23f;
+}
+
+/* Clouds move one art pixel per step so they never land between pixels */
+.earth-cloud {
+  height: 6px;
+  background: #ffffff;
+  box-shadow: 4px -4px 0 -1px #ffffff, 10px -3px 0 -1px #ffffff;
+  animation: earth-cloud-drift 80s steps(380) infinite;
+}
+.earth-cloud--a { width: 26px; top: 30px; left: -40px; }
+.earth-cloud--b { width: 18px; top: 52px; left: -40px; animation-duration: 110s; animation-delay: -55s; }
+
+@keyframes earth-cloud-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(380px); }
+}
+
+.earth-mountains--far {
+  left: 0;
+  right: 0;
+  top: 104px;
+  height: 42px;
+  background: #5d7fa6;
+  clip-path: polygon(0 60%, 12% 20%, 24% 55%, 38% 10%, 52% 50%, 66% 15%, 80% 52%, 92% 25%, 100% 45%, 100% 100%, 0 100%);
+}
+.earth-mountains--near {
+  left: 0;
+  right: 0;
+  top: 120px;
+  height: 26px;
+  background: #3f8f5a;
+  clip-path: polygon(0 50%, 18% 15%, 34% 60%, 50% 25%, 70% 65%, 86% 20%, 100% 55%, 100% 100%, 0 100%);
+}
+
+.earth-ground {
+  background: linear-gradient(#4caf50 0 4px, #3b8a3f 4px 8px, #7a5532 8px);
+}
+
+.earth-building {
+  background: #d9dde6;
+  box-shadow: inset 0 4px 0 #9aa3b5;
+}
+.earth-building::before {
+  /* Windows */
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  background: #4fc3ff;
+  box-shadow: 12px 0 0 #4fc3ff, 24px 0 0 #4fc3ff, 36px 0 0 #4fc3ff;
+}
+.earth-building::after {
+  /* Antenna */
+  content: "";
+  position: absolute;
+  left: 44px;
+  top: -10px;
+  width: 2px;
+  height: 10px;
+  background: #9aa3b5;
+}
+
+.earth-tower {
+  background: repeating-linear-gradient(#c0392b 0 4px, #e5e5e5 4px 8px);
+}
+.earth-tower::after {
+  /* Service arm towards the rocket */
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 18px;
+  width: 16px;
+  height: 2px;
+  background: #e5e5e5;
+}
+
+/* ---------- UI on top of the full-screen scene (regular resolution) ----------
+   The HUD reuses the hangar classes from game.css; the briefing panel matches its part cards. */
+
+.earth-level {
+  position: relative;
+  isolation: isolate;
+}
+
+.earth-briefing {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: min(440px, calc(100% - 40px));
+  margin: 8px 20px 0;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 3px solid var(--ms-line);
+  background: rgba(11, 16, 48, 0.82);
+}
+.earth-briefing__speaker {
+  font-family: var(--ms-font-pixel);
+  color: var(--ms-yellow);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.earth-briefing__text { font-size: 19px; line-height: 1.4; margin: 10px 0 14px; min-height: 4.2em; }
+.earth-briefing__actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.earth-briefing__step { font-family: var(--ms-font-pixel); color: var(--ms-muted); font-size: 10px; white-space: nowrap; }
+.earth-briefing .ms-btn { white-space: nowrap; }
+
+/* Trip needs: same colors as the hangar goal meters (game.css) */
+.earth-briefing__needs {
+  list-style: none;
+  margin: -6px 0 14px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.earth-need {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  border: 2px solid var(--ms-line);
+  background: rgba(5, 6, 26, 0.6);
+}
+.earth-need__label { font-family: var(--ms-font-pixel); font-size: 9px; color: var(--ms-muted); text-transform: uppercase; }
+.earth-need__amount { font-family: var(--ms-font-pixel); font-size: 14px; color: var(--ms-green); }
+
+@media (max-width: 600px) {
+  .earth-briefing { margin: 4px auto 0; }
+  .earth-briefing .ms-btn { font-size: 13px; padding: 10px 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .earth-cloud { animation: none; left: 60px; }
+  .earth-cloud--b { left: 230px; }
+}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MissionSelect, ProgressProvider } from './levels'
-import { GameScreen } from './game/GameScreen.jsx'
+import { MissionFlow } from './game/MissionFlow.jsx'
 import './levels/missions.css'
 
 export default function App() {
@@ -9,7 +9,7 @@ export default function App() {
   return (
     <ProgressProvider>
       {mission ? (
-        <GameScreen mission={mission} onExit={() => setMission(null)} />
+        <MissionFlow key={mission.id} mission={mission} onExit={() => setMission(null)} />
       ) : (
         <MissionSelect onStartMission={setMission} />
       )}
