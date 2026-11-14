@@ -9,6 +9,9 @@
  *   flight  the same simulation plays out in a few seconds; crashes explode
  *   result  the score is reported to the mission progress (src/levels)
  *
+ * onOrbitReached(summary), when given, receives a successful flight instead of the result panel
+ * (MissionFlow then plays the liftoff and ascent cinematic and the orbit summary).
+ *
  * Physics lives in physics/ and launchSimulation.js, drawing in orbitRenderer.js.
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -45,6 +48,8 @@ const MAX_ASCENT_PLAYBACK_SECONDS = 4
 const MAX_COAST_PLAYBACK_SECONDS = 7
 /** Simulated seconds per real second for the satellite circling after a success. */
 const ORBIT_PLAYBACK_WARP = 150
+/** Pause on the finished trajectory before handing a success to onOrbitReached. */
+const HANDOFF_DELAY_MS = 1400
 /** Clicks closer than this (pixels) to an orbit ring select it. */
 const RING_HIT_PIXELS = 18
 
@@ -102,7 +107,7 @@ function describePrediction(prediction) {
   }
 }
 
-export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, onExit }) {
+export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, onExit, onOrbitReached }) {
   const { completeMission } = useProgress()
   const vehicle = useMemo(() => buildLaunchVehicle(equipped), [equipped])
 
@@ -114,6 +119,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const [aimPoint, setAimPoint] = useState(null)
   const [result, setResult] = useState(null)
   const [telemetry, setTelemetry] = useState(null)
+  const [handingOff, setHandingOff] = useState(false)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600, pixelRatio: 1 })
 
   const view = useMemo(() => createView(canvasSize.width, canvasSize.height), [canvasSize])
@@ -168,6 +174,22 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       progressOutcome = completeMission(mission.id, { pct, success })
     } catch {
       /* mission locked or unknown: show the result anyway */
+    }
+    if (success && onOrbitReached) {
+      // Trajectory confirmed: the liftoff cinematic and the orbit summary take it from here
+      playSound('confirm')
+      setHandingOff(true)
+      const summary = {
+        outcome,
+        pct,
+        stars: progressOutcome?.stars ?? 0,
+        unlockedMissionId: progressOutcome?.unlockedMissionId ?? null,
+        orbit,
+        site,
+        vehicle,
+      }
+      setTimeout(() => onOrbitReached(summary), HANDOFF_DELAY_MS)
+      return
     }
     const crashed = outcome.type === OUTCOMES.EARTH_IMPACT || outcome.type === OUTCOMES.SATELLITE_COLLISION
     playSound(success ? 'missionComplete' : crashed ? 'explosion' : 'lose')
@@ -314,7 +336,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     setStep('aim')
   }
   const launch = () => {
-    playSound('liftoff')
+    // With onOrbitReached the real liftoff (and its sound) comes later, in the cinematic
+    playSound(onOrbitReached ? 'confirm' : 'liftoff')
     flightRef.current = { startedAt: performance.now(), endedAt: null }
     setTelemetry(null)
     setResult(null)
@@ -461,7 +484,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
 
           {step === 'flight' && (
             <>
-              <h2 className="orbit-panel__title">Liftoff!</h2>
+              <h2 className="orbit-panel__title">{handingOff ? 'Trajectory confirmed!' : 'Calculating trajectory…'}</h2>
+              {handingOff && <p className="orbit-prediction is-good">The path reaches the orbit. Get ready for liftoff!</p>}
               {telemetry && (
                 <dl className="orbit-stats">
                   <div><dt>Altitude</dt><dd>{formatKm(Math.max(0, telemetry.altitudeMeters))}</dd></div>

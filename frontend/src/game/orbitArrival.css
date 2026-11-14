@@ -1,0 +1,171 @@
+/* Final orbit scene (see OrbitArrival.jsx) */
+.orbit-arrival {
+  --orbit-size: min(62vh, 46vw);
+  --earth-size: calc(var(--orbit-size) * 0.58);
+  --lap-time: 12s;
+  display: flex;
+  flex-direction: column;
+}
+
+.orbit-arrival__body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr minmax(300px, 420px);
+  align-items: center;
+  gap: 32px;
+  padding: 0 32px 16px;
+  /* The turning orbit path is a rotated square: keep its corners from adding scrollbars */
+  overflow: clip;
+}
+
+/* Earth with the orbit ring and the rocket going around it */
+.orbit-arrival__scene {
+  position: relative;
+  justify-self: center;
+  width: var(--orbit-size);
+  aspect-ratio: 1;
+}
+
+.orbit-arrival__ring {
+  position: absolute;
+  inset: 0;
+  border: 3px dashed rgba(127, 212, 255, 0.45);
+  border-radius: 50%;
+}
+
+.orbit-arrival__earth {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--earth-size);
+  height: var(--earth-size);
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 18px rgba(127, 212, 255, 0.45));
+}
+
+/* The path turns; the ship sits at its top edge, nose pointing along the orbit */
+.orbit-arrival__path {
+  position: absolute;
+  inset: 0;
+  animation: orbit-arrival-lap var(--lap-time) linear infinite;
+}
+
+.orbit-arrival__path.is-clockwise {
+  animation-direction: reverse;
+}
+
+.orbit-arrival__ship {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.orbit-arrival__path.is-clockwise .orbit-arrival__ship {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.orbit-arrival__ship .rocket.is-flying {
+  --scale: 2.5;
+  animation: none;
+  filter: drop-shadow(0 0 6px rgba(255, 190, 90, 0.6));
+}
+
+@keyframes orbit-arrival-lap {
+  to { transform: rotate(-360deg); }
+}
+
+/* Summary panel */
+.orbit-arrival__panel {
+  background: var(--ms-panel);
+  border: 3px solid var(--ms-line);
+  padding: 16px 20px 16px;
+  box-shadow: 0 6px 0 #070a22;
+  animation: ms-pop 0.35s ease both;
+}
+
+.orbit-arrival__title {
+  margin: 0 0 8px;
+  font-family: var(--ms-font-pixel);
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--ms-green);
+  text-align: center;
+}
+
+.orbit-arrival__greet {
+  margin: 0 0 8px;
+  font-size: 18px;
+  text-align: center;
+  color: var(--ms-muted);
+}
+
+.orbit-arrival__greet b {
+  color: var(--ms-yellow);
+}
+
+.orbit-arrival__stars {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.orbit-arrival__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  margin: 0;
+}
+
+.orbit-arrival__stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: rgba(11, 16, 48, 0.7);
+  border-left: 3px solid var(--ms-accent);
+}
+
+.orbit-arrival__stats dt {
+  font-family: var(--ms-font-pixel);
+  font-size: 9px;
+  color: var(--ms-accent);
+  text-transform: uppercase;
+}
+
+.orbit-arrival__stats dd {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.orbit-arrival__unlock {
+  margin: 12px 0 0;
+  text-align: center;
+  color: var(--ms-yellow);
+}
+
+.orbit-arrival__actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+@media (max-width: 860px) {
+  .orbit-arrival {
+    --orbit-size: min(78vw, 46vh);
+  }
+
+  .orbit-arrival__body {
+    grid-template-columns: 1fr;
+    padding: 8px 16px 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-arrival__path,
+  .orbit-arrival__panel {
+    animation: none;
+  }
+}

@@ -4,6 +4,7 @@
  *   Level 0  EarthSurfaceLevel   arrival at the launch base and briefing
  *   Level 2  GameScreen          hangar: fit the rocket parts
  *   Level 2  OrbitalLaunchLevel  choose site and orbit, aim, launch (mission 1)
+ *            then, if it reaches orbit: liftoff + ascent cinematic and the orbit summary
  */
 import { useState } from 'react'
 import { GameScreen } from './GameScreen.jsx'
@@ -15,6 +16,19 @@ export function MissionFlow({ mission, onExit }) {
   const [stageId, setStageId] = useState(() => getFirstStage(mission.id))
   // Rocket built in the hangar, handed to the launch stage.
   const [equipped, setEquipped] = useState(null)
+  // Successful orbital launch: plays the cinematic and the orbit summary
+  const [orbitSummary, setOrbitSummary] = useState(null)
+
+  if (orbitSummary && equipped) {
+    return (
+      <GameScreen
+        mission={mission}
+        onExit={onExit}
+        initialEquipped={equipped}
+        orbitSummary={orbitSummary}
+      />
+    )
+  }
 
   const goToNextStage = () => {
     const nextStageId = getNextStage(mission.id, stageId)
@@ -40,6 +54,7 @@ export function MissionFlow({ mission, onExit }) {
         equipped={equipped}
         onBackToHangar={() => setStageId(STAGE_IDS.BUILD_AND_LAUNCH)}
         onExit={onExit}
+        onOrbitReached={setOrbitSummary}
       />
     )
   }
