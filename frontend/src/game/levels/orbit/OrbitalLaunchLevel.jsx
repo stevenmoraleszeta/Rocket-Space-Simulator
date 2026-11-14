@@ -13,7 +13,7 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { StarRating, getMission, useProgress } from '../../../levels'
-import { playSound } from '../../audio/soundEffects.js'
+import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../../../audio'
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
@@ -107,6 +107,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const vehicle = useMemo(() => buildLaunchVehicle(equipped), [equipped])
 
   const [step, setStep] = useState('site')
+  // Same tracks as the hangar flight: intense music, plus the space ambience once the rocket flies.
+  useSoundtrack(step === 'flight' || step === 'result' ? { music: MUSIC.flight, ambient: AMBIENCE.space } : { music: MUSIC.flight })
   const [siteId, setSiteId] = useState(null)
   const [orbitId, setOrbitId] = useState(null)
   const [arrivalAngle, setArrivalAngle] = useState(null)
@@ -170,7 +172,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       /* mission locked or unknown: show the result anyway */
     }
     const crashed = outcome.type === OUTCOMES.EARTH_IMPACT || outcome.type === OUTCOMES.SATELLITE_COLLISION
-    playSound(success ? 'missionComplete' : crashed ? 'explosion' : 'lose')
+    playSfx(success ? SFX.missionComplete : crashed ? SFX.explosion : SFX.lose)
     setResult({ outcome, success, pct, stars: progressOutcome?.stars ?? 0, unlockedMissionId: progressOutcome?.unlockedMissionId ?? null })
     setStep('result')
   }
@@ -256,7 +258,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   }
 
   const selectSite = (id) => {
-    playSound('select')
+    playSfx(SFX.select)
     setSiteId(id)
     setOrbitId(null)
     setArrivalAngle(null)
@@ -264,7 +266,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
 
   /** Picks an orbit; without a clicked point the arrival starts a little east of the base. */
   const selectOrbit = (id, angle = null) => {
-    playSound('select')
+    playSfx(SFX.select)
     setOrbitId(id)
     setArrivalAngle(angle ?? siteAngleOf(site) + degreesToRadians(SUGGESTED_ARRIVAL_OFFSET_DEG))
   }
@@ -304,17 +306,17 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
 
   // ---------------------------------------------------------------- steps
   const goToTargets = () => {
-    playSound('confirm')
+    playSfx(SFX.confirm)
     setStep('target')
   }
   const goToAim = () => {
-    playSound('confirm')
+    playSfx(SFX.confirm)
     setAim(initialAim(site, arrival))
     setAimPoint(null)
     setStep('aim')
   }
   const launch = () => {
-    playSound('liftoff')
+    playSfx(SFX.liftoff)
     flightRef.current = { startedAt: performance.now(), endedAt: null }
     setTelemetry(null)
     setResult(null)
@@ -326,7 +328,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     setStep('aim')
   }
   const goBack = (previousStep) => {
-    playSound('cancel')
+    playSfx(SFX.cancel)
     setStep(previousStep)
   }
 
