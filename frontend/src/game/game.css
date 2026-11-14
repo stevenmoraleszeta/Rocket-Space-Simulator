@@ -14,19 +14,44 @@
 .game--pad {
   position: relative;
   isolation: isolate;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.game__bg {
+.stage {
   position: fixed;
   inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #102f58;
+  pointer-events: none;
+}
+
+/* The frame keeps the pad's 16:9 frame, scaled to cover the screen,
+   so the rocket stays locked to the flame trench. */
+.stage__frame {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100vw, calc(100vh * 16 / 9));
+  height: max(100vh, calc(100vw * 9 / 16));
+  transform: translate(-50%, -50%);
+}
+
+.stage__bg {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center;
-  z-index: 0;
-  pointer-events: none;
   image-rendering: pixelated;
-  background: #1a4d86;
+}
+
+.stage__mount {
+  position: absolute;
+  left: 34%;
+  top: 86%;
+  transform: translate(-50%, -100%);
 }
 
 .game__hud,
@@ -92,28 +117,142 @@
 }
 
 .bay {
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(300px, 420px);
-  align-items: end;
-  gap: 28px;
-  max-width: 980px;
-  min-height: calc(100svh - 108px);
-  box-sizing: border-box;
-  margin: 0 auto;
-  padding: 8px 20px 4px;
-}
-
-.bay__rocket {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-self: center;
+  align-items: flex-end;
   gap: 12px;
-  margin-bottom: 8px;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 8px 28px 18px;
+  justify-content: safe center;
+  overflow: auto;
+  pointer-events: auto;
 }
 
 .bay__launch {
-  min-width: 180px;
+  pointer-events: auto;
+  width: min(420px, 100%);
+}
+
+.bay__launch:disabled {
+  background: var(--ms-locked);
+  color: var(--ms-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.meters {
+  pointer-events: auto;
+  width: min(420px, 100%);
+  box-sizing: border-box;
+  padding: 10px 14px 12px;
+  border-radius: 18px;
+  border: 3px solid var(--ms-line);
+  background: rgba(11, 16, 48, 0.82);
+}
+
+.meters__title {
+  margin: 0;
+  font-family: var(--ms-font-pixel);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ms-accent);
+}
+
+.meters__hint {
+  margin: 8px 0 0;
+  color: var(--ms-muted);
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.meters__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin-top: 8px;
+}
+
+.meter__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.meter {
+  --meter: var(--ms-green);
+}
+
+.meter.is-warn,
+.meter.is-short {
+  --meter: var(--ms-yellow);
+}
+
+.meter.is-over {
+  --meter: #ff5d7a;
+}
+
+.meter__label {
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ms-muted);
+}
+
+.meter__value {
+  font-family: var(--ms-font);
+  font-size: 16px;
+  line-height: 1.2;
+  text-align: right;
+  color: var(--meter);
+  text-shadow: 2px 2px 0 #05061a;
+}
+
+.meter.is-short .meter__value {
+  color: var(--ms-yellow);
+}
+
+.meter__track {
+  position: relative;
+  height: 20px;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: 3px solid var(--ms-line);
+  background: #0b1030;
+  box-shadow: 3px 3px 0 #05061a;
+  overflow: hidden;
+}
+
+.meter.is-over .meter__track {
+  border-color: var(--meter);
+}
+
+.meter__track::before,
+.meter__fill {
+  position: absolute;
+  inset: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--cell, #1a214f) 0 8px,
+    transparent 8px 10px
+  );
+}
+
+.meter__fill {
+  --cell: var(--meter);
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.24s steps(8, end);
 }
 
 .rocket {
@@ -124,23 +263,132 @@
   filter: drop-shadow(0 12px 0 rgba(0, 0, 0, 0.35));
 }
 
+/* Preparation shows a larger rocket with the payload bay cut open. */
+.rocket--open,
+.prep {
+  --scale: 15;
+}
+
+.prep {
+  position: relative;
+  width: calc(32px * var(--scale));
+  height: calc(32px * var(--scale));
+}
+
+/* Deck starts at source row 8, so the clamps overlap the fins and the nozzle rests on the pad. */
+.prep__base {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 100%;
+  width: calc(48px * var(--scale));
+  height: calc(24px * var(--scale));
+  transform: translate(-50%, calc(-8px * var(--scale)));
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.crew {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.crew__mover {
+  position: absolute;
+  width: 16px;
+  height: 24px;
+  transform-origin: bottom center;
+}
+
+.engineer {
+  display: block;
+  width: 16px;
+  height: 24px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  transform: scale(calc(var(--scale) * 0.34));
+  transform-origin: bottom center;
+  animation: crew-work 0.72s steps(4) infinite;
+}
+
+.engineer.is-flip {
+  transform: scale(calc(var(--scale) * -0.34), calc(var(--scale) * 0.34));
+}
+
+.engineer--weld { background-position-y: 0; animation-duration: 0.5s; }
+.engineer--hammer { background-position-y: -24px; animation-duration: 0.84s; }
+.engineer--walk { background-position-y: -48px; animation-duration: 0.44s; }
+.engineer--check { background-position-y: -72px; animation-duration: 0.96s; }
+
+.crew__mover.is-patrol {
+  animation: crew-patrol 6.4s linear infinite;
+}
+
+@keyframes crew-work {
+  from { background-position-x: 0; }
+  to { background-position-x: -64px; }
+}
+
+@keyframes crew-patrol {
+  0% { transform: translateX(0) scaleX(1); }
+  46% { transform: translateX(calc(7px * var(--scale))) scaleX(1); }
+  50% { transform: translateX(calc(7px * var(--scale))) scaleX(-1); }
+  96% { transform: translateX(0) scaleX(-1); }
+  100% { transform: translateX(0) scaleX(1); }
+}
+
 .rocket__layer {
   position: absolute;
   left: 0;
   top: 0;
+  z-index: 1;
   width: 32px;
   height: 32px;
   background-repeat: no-repeat;
   image-rendering: pixelated;
+  transform: scale(var(--scale));
   transform-origin: top left;
 }
 
-.rocket__cargo {
+/* Cabin hole in the 32×32 hull: columns 12–19, rows 9–22. */
+.rocket--open .rocket__hull {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' fill='white'/%3E%3Crect x='12' y='9' width='8' height='14' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' fill='white'/%3E%3Crect x='12' y='9' width='8' height='14' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-mode: luminance;
+  mask-mode: luminance;
+  -webkit-mask-size: 32px 32px;
+  mask-size: 32px 32px;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.rocket__cabin {
   position: absolute;
-  width: 38%;
-  height: auto;
-  left: 76%;
-  top: 40%;
+  z-index: 0;
+  left: calc(100% * 12 / 32);
+  top: calc(100% * 9 / 32);
+  width: calc(100% * 8 / 32);
+  height: calc(100% * 14 / 32);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 6px;
+  padding: 8px 6px;
+  overflow: hidden;
+  background:
+    linear-gradient(#b7c6da, #b7c6da) center / 100% 4px no-repeat,
+    linear-gradient(90deg, #f7fbff 0 8%, #8ea3bd 8% 16%, #dce8f4 16% 88%, #9aafc6 88% 100%);
+}
+
+.rocket__cargo {
+  width: 100%;
+  height: 46%;
+  min-height: 0;
+  object-fit: contain;
   image-rendering: pixelated;
 }
 
@@ -155,12 +403,13 @@
 
 .parts {
   list-style: none;
-  margin: 0 0 24px;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  align-self: center;
+  width: min(420px, 100%);
+  pointer-events: auto;
 }
 
 .part {
@@ -184,6 +433,7 @@
 }
 
 .part__icon {
+  --scale: 2;
   position: relative;
   width: 64px;
   height: 64px;
@@ -191,8 +441,8 @@
 }
 
 .part__photo {
-  width: 64px;
-  height: 32px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   image-rendering: pixelated;
   flex: none;
@@ -216,6 +466,30 @@
   color: var(--ms-muted);
   font-size: 16px;
 }
+
+.part__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  margin-top: 2px;
+}
+
+.part__tag {
+  font-family: var(--ms-font);
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--ms-muted);
+}
+
+.part__tag + .part__tag::before {
+  content: "·";
+  margin: 0 6px;
+  color: var(--ms-line);
+}
+
+.part__tag--cost { color: var(--ms-yellow); }
+.part__tag--draw { color: #ff8fa6; }
+.part__tag--good { color: var(--ms-green); }
 
 .part__action {
   font-family: var(--ms-font-pixel);
@@ -259,22 +533,46 @@
     justify-self: center;
   }
 
-  .bay {
-    grid-template-columns: 1fr;
-    justify-items: center;
+  .stage__frame {
+    transform: translate(-34%, -62%);
   }
 
-  .parts {
+  .bay {
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .parts,
+  .bay__launch,
+  .meters {
     width: min(420px, 100%);
   }
 
   .rocket {
     --scale: 5;
   }
+
+  .rocket--open,
+  .prep {
+    --scale: 9;
+  }
+}
+
+@media (max-height: 820px) and (min-width: 721px) {
+  .rocket--open,
+  .prep {
+    --scale: 12;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rocket.is-flying {
+  .rocket.is-flying,
+  .engineer,
+  .crew__mover.is-patrol {
     animation: none;
+  }
+
+  .meter__fill {
+    transition: none;
   }
 }

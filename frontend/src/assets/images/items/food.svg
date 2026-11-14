@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" shape-rendering="crispEdges">
+  <title>Food (pixel art)</title>
+  <rect x="24" y="4" width="16" height="4" fill="#ffe6b0"/>
+  <rect x="20" y="8" width="24" height="4" fill="#f2c57a"/>
+  <rect x="16" y="12" width="32" height="8" fill="#e8b56a"/>
+  <rect x="16" y="12" width="8" height="4" fill="#f6d08a"/>
+  <rect x="24" y="12" width="4" height="4" fill="#fff4d4"/>
+  <rect x="36" y="16" width="4" height="4" fill="#fff4d4"/>
+  <rect x="12" y="20" width="8" height="4" fill="#4fa83a"/>
+  <rect x="20" y="20" width="28" height="4" fill="#7dce55"/>
+  <rect x="48" y="20" width="4" height="4" fill="#4fa83a"/>
+  <rect x="16" y="24" width="32" height="4" fill="#e0453a"/>
+  <rect x="20" y="24" width="4" height="4" fill="#ff8a78"/>
+  <rect x="36" y="24" width="4" height="4" fill="#ff8a78"/>
+  <rect x="14" y="28" width="36" height="4" fill="#f6d34d"/>
+  <rect x="46" y="32" width="4" height="4" fill="#f6d34d"/>
+  <rect x="16" y="32" width="32" height="4" fill="#a85e32"/>
+  <rect x="16" y="36" width="32" height="4" fill="#7a3e22"/>
+  <rect x="16" y="40" width="32" height="8" fill="#e0a85a"/>
+  <rect x="16" y="44" width="32" height="4" fill="#c4843c"/>
+  <rect x="20" y="48" width="24" height="4" fill="#a86a2c"/>
+</svg>
