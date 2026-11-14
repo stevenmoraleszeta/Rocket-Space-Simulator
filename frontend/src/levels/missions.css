@@ -1,8 +1,6 @@
 /* Mission selection styles. Everything uses the ms- prefix to avoid clashing with the rest of the app.
-   Built for players aged 8–15: large text, big tap targets (130 px planets, 52 px buttons). */
-@import "@fontsource/press-start-2p/400.css";
-@import "@fontsource/pixelify-sans/400.css";
-@import "@fontsource/pixelify-sans/700.css";
+   Built for players aged 8–15: large text, big tap targets (130 px planets, 52 px buttons).
+   Pixel fonts are loaded from main.jsx. */
 
 :root {
   --ms-bg: #0b1030; --ms-panel: #161d4a; --ms-line: #2c3670;
@@ -25,6 +23,7 @@
 /* Background (see components/SpaceBackground.jsx) */
 .ms-bg { position: relative; min-height: 100vh; isolation: isolate; }
 .ms-bg__layer { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at 50% -20%, #2a3a8c 0%, var(--ms-bg) 60%); }
+img.ms-bg__layer { width: 100%; height: 100%; object-fit: cover; object-position: center; pointer-events: none; background: #05061a; }
 .ms-bg__layer.is-drifting { animation: ms-drift 120s linear infinite; }
 .ms-bg__content { position: relative; z-index: 1; }
 @keyframes ms-drift { from { background-position: 0 0; } to { background-position: -1200px 600px; } }

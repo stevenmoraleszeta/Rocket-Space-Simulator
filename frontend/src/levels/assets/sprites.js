@@ -24,8 +24,8 @@ import earth from './earth.svg';
 import moon from './moon.svg';
 import mars from './mars.svg';
 
-import space from '../../assets/images/fondos/espacio.svg';
-import lock from '../../assets/images/items/candado.svg';
+import space from '../../assets/images/backgrounds/space.svg';
+import lock from '../../assets/images/items/lock.svg';
 
 export const SPRITES = {
   planets: {

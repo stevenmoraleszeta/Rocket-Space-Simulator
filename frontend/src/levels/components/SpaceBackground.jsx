@@ -8,24 +8,29 @@ import { SPRITES } from '../assets/sprites.js';
 
 export function SpaceBackground({ children }) {
   const bg = SPRITES.background;
-  const style = bg?.src
+  const isCover = Boolean(bg?.src && bg.mode === 'cover');
+  const style = bg?.src && !isCover
     ? {
         backgroundImage: `url(${bg.src})`,
-        backgroundRepeat: bg.mode === 'cover' ? 'no-repeat' : 'repeat',
-        backgroundSize: bg.mode === 'cover' ? 'cover' : 'auto',
+        backgroundRepeat: 'repeat',
+        backgroundSize: 'auto',
         backgroundPosition: 'center',
       }
     : undefined;
   const cls = [
     'ms-bg__layer',
     bg?.src ? 'has-image' : '',
-    bg?.src && bg.mode !== 'cover' && bg.drift ? 'is-drifting' : '',
+    bg?.src && !isCover && bg.drift ? 'is-drifting' : '',
     bg?.pixelArt ? 'is-pixel' : '',
   ].join(' ');
 
   return (
     <div className="ms-bg">
-      <div className={cls} style={style} aria-hidden="true" />
+      {isCover ? (
+        <img className={cls} src={bg.src} alt="" aria-hidden="true" />
+      ) : (
+        <div className={cls} style={style} aria-hidden="true" />
+      )}
       <div className="ms-bg__content">{children}</div>
     </div>
   );
