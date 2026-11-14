@@ -3,11 +3,15 @@
  *
  *   Level 2  GameScreen          hangar: fit the rocket parts
  *   Level 2  OrbitalLaunchLevel  choose site and orbit, aim, launch (mission 1)
+ *
+ * Launch in the hangar always plays the liftoff and the climb through the atmosphere.
+ * Then the rocket goes to the next implemented stage of the mission (stages.js).
+ * A new stage, like the trip in space of mission 2, is added there and rendered below.
  */
 import { useState } from 'react'
 import { GameScreen } from './GameScreen.jsx'
 import { OrbitalLaunchLevel } from './levels/orbit/OrbitalLaunchLevel.jsx'
-import { MISSION_STAGES, STAGE_IDS, STAGE_INFO, getFirstStage } from './stages.js'
+import { STAGE_IDS, STAGE_INFO, getFirstStage, getNextStage } from './stages.js'
 
 export function MissionFlow({ mission, onExit }) {
   const [stageId, setStageId] = useState(() => getFirstStage(mission.id))
@@ -26,19 +30,22 @@ export function MissionFlow({ mission, onExit }) {
     )
   }
 
-  // Hangar. Missions with a launch stage after it receive the rocket through onLaunch;
+  // Mission 2 (Moon): render its space stage here once STAGE_INFO marks it implemented.
+
+  // Hangar. Missions with a playable stage after it receive the rocket through onLaunch;
   // the others keep the hangar's own flight phase.
-  const hasLaunchStage = MISSION_STAGES[mission.id]?.includes(STAGE_IDS.ORBITAL_LAUNCH)
+  const nextStageId = getNextStage(mission.id, STAGE_IDS.BUILD_AND_LAUNCH)
+  const hasNextStage = Boolean(nextStageId && STAGE_INFO[nextStageId]?.implemented)
   const handleLaunch = (builtLoadout) => {
     setEquipped(builtLoadout)
-    setStageId(STAGE_IDS.ORBITAL_LAUNCH)
+    setStageId(nextStageId)
   }
   return (
     <GameScreen
       mission={mission}
       onExit={onExit}
       initialEquipped={equipped ?? undefined}
-      onLaunch={hasLaunchStage ? handleLaunch : undefined}
+      onLaunch={hasNextStage ? handleLaunch : undefined}
     />
   )
 }
