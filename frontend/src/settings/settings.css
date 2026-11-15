@@ -3,6 +3,9 @@
 
 /* On the game screens the settings button floats in the top-right corner (the menu has it in its toolbar). */
 .st-floating { position: fixed; top: 16px; right: 16px; z-index: 40; }
+/* Inside a mission the floating button is smaller, so it does not crowd the hangar panels. */
+.st-floating .st-toggle { min-height: 34px; padding: 6px 10px 10px; font-size: 9px; gap: 6px; }
+.st-floating .st-toggle .ms-pixel { width: 18px; height: 18px; }
 
 .st-toggle[aria-expanded="true"]::after {
   box-shadow: inset var(--px) var(--px) 0 #d7f4ff, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #1a7eb8;

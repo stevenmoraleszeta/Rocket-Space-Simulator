@@ -46,6 +46,34 @@ function Pixels({ rects }) {
   return rects.map(([x, y, w, h, fill], index) => <rect key={index} x={x} y={y} width={w} height={h} fill={fill} />)
 }
 
+/** Size of the dog picture in art pixels. */
+const ART = { width: 20, height: 14 }
+
+/**
+ * One moving part of the dog drawn in its own full-size <svg> layer, turning around a point of
+ * its own pixels (origin, 0..1 across the part's box). Moving a whole layer is done by the GPU;
+ * moving a <g> inside one picture made the browser redo layout and paint every frame.
+ */
+function Part({ rects, className, origin }) {
+  const left = Math.min(...rects.map(([x]) => x))
+  const top = Math.min(...rects.map(([, y]) => y))
+  const right = Math.max(...rects.map(([x, , w]) => x + w))
+  const bottom = Math.max(...rects.map(([, y, , h]) => y + h))
+  const originX = ((left + (right - left) * origin[0]) * 100) / ART.width
+  const originY = ((top + (bottom - top) * origin[1]) * 100) / ART.height
+  return (
+    <svg
+      className={`pad-laika__part ${className}`}
+      viewBox={`0 0 ${ART.width} ${ART.height}`}
+      shapeRendering="crispEdges"
+      style={{ transformOrigin: `${originX}% ${originY}%` }}
+      aria-hidden="true"
+    >
+      <Pixels rects={rects} />
+    </svg>
+  )
+}
+
 export function PadLaika({ onTalk, talking }) {
   return (
     <button
@@ -63,11 +91,9 @@ export function PadLaika({ onTalk, talking }) {
       }}
     >
       {!talking && <span className="pad-laika__bubble" aria-hidden="true">!</span>}
-      <svg viewBox="0 0 20 14" shapeRendering="crispEdges" aria-hidden="true">
-        <g className="pad-laika__tail"><Pixels rects={TAIL} /></g>
-        <g className="pad-laika__body"><Pixels rects={BODY} /></g>
-        <g className="pad-laika__head"><Pixels rects={HEAD} /></g>
-      </svg>
+      <Part rects={TAIL} className="pad-laika__tail" origin={[1, 1]} />
+      <Part rects={BODY} className="pad-laika__body" origin={[0.5, 1]} />
+      <Part rects={HEAD} className="pad-laika__head" origin={[0.2, 0.9]} />
     </button>
   )
 }

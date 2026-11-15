@@ -59,6 +59,30 @@ img.ms-bg__layer { width: 100%; height: 100%; object-fit: cover; object-position
 .ms-bg__content { position: relative; z-index: 1; }
 @keyframes ms-drift { from { background-position: 0 0; } to { background-position: -1200px 600px; } }
 
+/* Moving parts of the space picture, each on its own still layer (SpaceBackground.jsx). Only
+   opacity and transform change, so the sky is not redrawn. Timings match space.svg. */
+img.ms-bg__overlay { background: none; }
+.ms-bg__twinkle { animation: ms-twinkle 3s steps(3) infinite; }
+.ms-bg__twinkle--2 { animation-duration: 4.5s; animation-delay: 1.5s; }
+.ms-bg__twinkle--3 { animation-duration: 2.4s; animation-delay: 0.8s; }
+@keyframes ms-twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+/* A shooting star crosses 120 x 60 picture pixels; one picture pixel is the cover scale. */
+.ms-bg__shoot {
+  --sky-px: max(calc(100vw / var(--sky-w, 320)), calc(100vh / var(--sky-h, 180)));
+  opacity: 0;
+  animation: ms-shoot 9s steps(48) infinite;
+}
+.ms-bg__shoot--2 { animation-delay: 3s; }
+.ms-bg__shoot--3 { animation-delay: 6s; }
+@keyframes ms-shoot {
+  0% { opacity: 0; transform: translate(0, 0); }
+  1% { opacity: 1; }
+  13% { opacity: 1; }
+  16% { opacity: 0; transform: translate(calc(var(--sky-px) * 120), calc(var(--sky-px) * 60)); }
+  100% { opacity: 0; transform: translate(calc(var(--sky-px) * 120), calc(var(--sky-px) * 60)); }
+}
+
 /* Sprites */
 .ms-planet.is-pixel, .ms-bg__layer.is-pixel { image-rendering: pixelated; }
 .ms-sprite { animation-name: ms-sprite; animation-iteration-count: infinite; background-repeat: no-repeat; }
