@@ -45,17 +45,31 @@ export function ProjectPage() {
     rememberLanguage(language)
   }
 
+  // Section links use a hash. On /#/project that hash is the game route, so
+  // replacing it would leave this page. Scroll in place instead.
+  function followSection(event) {
+    const id = event.currentTarget.getAttribute('href')?.replace(/^#/, '')
+    const target = id ? document.getElementById(id) : null
+    if (!target) return
+    const path = window.location.pathname.replace(/\/+$/, '') || '/'
+    if (path === '/project') return
+    event.preventDefault()
+    target.scrollIntoView({ behavior: 'smooth' })
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
+    target.focus({ preventScroll: true })
+  }
+
   return (
     <BlackHoleBackground>
       <div className="proj" lang={language}>
-        <a className="proj-skip" href="#content">{copy.skip}</a>
+        <a className="proj-skip" href="#content" onClick={followSection}>{copy.skip}</a>
         <header className="proj-bar">
-          <a className="proj-brand" href="#content" aria-label={copy.metaTitle}>
+          <a className="proj-brand" href="#content" aria-label={copy.metaTitle} onClick={followSection}>
             <AppLogo size={48} wordmark bare />
           </a>
           <nav className="proj-nav" aria-label={copy.navLabel}>
             {copy.nav.map((item) => (
-              <a key={item.href} href={item.href}>{item.label}</a>
+              <a key={item.href} href={item.href} onClick={followSection}>{item.label}</a>
             ))}
           </nav>
           <div className="proj-tools">
@@ -76,7 +90,7 @@ export function ProjectPage() {
           </div>
         </header>
 
-        <main id="content" className="proj-main">
+        <main id="content" className="proj-main" tabIndex={-1}>
           <section className="proj-hero">
             <p className="proj-kicker">{copy.kicker}</p>
             <h1>{copy.thesis}</h1>
@@ -86,8 +100,25 @@ export function ProjectPage() {
             </ul>
             <div className="proj-hero__actions">
               <a className="ms-btn" href={PROJECT_LINKS.play} onClick={play}>{copy.playPrototype}</a>
-              <a className="ms-btn ms-btn--ghost" href="#try">{copy.howTo}</a>
+              <a className="ms-btn ms-btn--ghost" href="#try" onClick={followSection}>{copy.howTo}</a>
             </div>
+          </section>
+
+          <section id="rubric" className="proj-section">
+            <h2>{copy.rubricTitle}</h2>
+            <p>{copy.rubricIntro}</p>
+            <ol className="proj-steps">
+              {copy.rubric.map((item) => (
+                <li key={item.title} className="proj-panel">
+                  <span className="proj-index" aria-hidden="true">{item.weight}</span>
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p className="proj-place">{item.ask}</p>
+                    <p>{item.answer}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </section>
 
           <section id="challenge" className="proj-section">
@@ -184,7 +215,6 @@ export function ProjectPage() {
                 <li key={member.name} className="proj-panel">
                   <span className="proj-badge" aria-hidden="true">{initials(member.name)}</span>
                   <p className="proj-member">{member.name}</p>
-                  {member.owner ? <p className="proj-place">{copy.owner}</p> : null}
                 </li>
               ))}
             </ul>

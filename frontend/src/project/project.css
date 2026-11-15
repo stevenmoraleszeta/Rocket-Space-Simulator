@@ -1,8 +1,11 @@
 /* Judge page. Uses the mission-screen tokens (missions.css): pixel fonts,
    clipped panels, and the same blue, yellow, and cyan. */
 
+/* The judge page does not use the game's --ui scale (that would make a paragraph
+   huge on a 4K monitor). It still grows a little so a large monitor is not stuck
+   at 16px, and it never drops below 16px on a small laptop. */
 html:has(.proj) {
-  font-size: 16px;
+  font-size: clamp(16px, 0.35vw + 12px, 22px);
 }
 
 .proj {

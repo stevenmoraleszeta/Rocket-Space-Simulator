@@ -26,6 +26,8 @@ test('the judge page is English unless the link asks for Spanish', () => {
   assert.equal(withLocation('http://localhost/project?lang=en', () => readProjectLanguage()), 'en')
   assert.equal(withLocation('http://localhost/project?lang=es', () => readProjectLanguage()), 'es')
   assert.equal(withLocation('http://localhost/project?lang=fr', () => readProjectLanguage()), 'en')
+  assert.equal(withLocation('http://localhost/#/project?lang=es', () => readProjectLanguage()), 'es')
+  assert.equal(withLocation('http://localhost/#/project', () => readProjectLanguage()), 'en')
 })
 
 test('the judge page matches /project and #/project, including a trailing slash', () => {

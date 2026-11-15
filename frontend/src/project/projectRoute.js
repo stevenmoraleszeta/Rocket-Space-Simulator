@@ -1,7 +1,13 @@
 /** English unless the shared link asks for Spanish. */
+function askedForSpanish(query) {
+  return new URLSearchParams(query).get('lang') === 'es'
+}
+
 export function readProjectLanguage() {
   if (typeof window === 'undefined') return 'en'
-  return new URLSearchParams(window.location.search).get('lang') === 'es' ? 'es' : 'en'
+  if (askedForSpanish(window.location.search)) return 'es'
+  const hashQuery = window.location.hash.split('?')[1] || ''
+  return askedForSpanish(hashQuery) ? 'es' : 'en'
 }
 
 /**

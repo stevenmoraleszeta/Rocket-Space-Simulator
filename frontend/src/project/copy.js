@@ -16,11 +16,11 @@ export const PROJECT_LINKS = Object.freeze({
 })
 
 const MEMBERS = Object.freeze([
-  { name: 'Emanuel Astorga Fernandez', owner: true },
-  { name: 'Kimberly Torres Gonzalez', owner: false },
-  { name: 'Deykell Reyes Campos', owner: false },
-  { name: 'Nayllel Reyes', owner: false },
-  { name: 'Steven Morales Fallas', owner: false },
+  { name: 'Steven Morales Fallas' },
+  { name: 'Emanuel Astorga Fernandez' },
+  { name: 'Kimberly Torres Gonzalez' },
+  { name: 'Deykell Reyes Campos' },
+  { name: 'Nayllel Reyes' },
 ])
 
 export const PROJECT_COPY = Object.freeze({
@@ -35,6 +35,7 @@ export const PROJECT_COPY = Object.freeze({
     openTab: 'Opens in a new tab',
     navLabel: 'On this page',
     nav: [
+      { href: '#rubric', label: 'Rubric' },
       { href: '#challenge', label: 'Challenge' },
       { href: '#missions', label: 'Missions' },
       { href: '#tradeoffs', label: 'Decisions' },
@@ -43,8 +44,8 @@ export const PROJECT_COPY = Object.freeze({
       { href: '#team', label: 'Team' },
     ],
     kicker: 'NASA Space Apps Challenge 2026',
-    thesis: 'Every choice has a cost',
-    lead: 'Kids ages 7 to 12 pack a rocket and fly it. The trip can be one loop around Earth, a crew to the Moon, or a cruise to Mars. Credits, kilograms, and watts run out. Food, water, and air run out too. A part that looks helpful can still sink the mission.',
+    thesis: 'The review is in the game',
+    lead: 'Space TEC built a mission trainer for kids ages 7 to 12. The review asks about impact, creativity, viability, the prototype, and the presentation. Each mark is answered below, and each answer is something a judge can click.',
     chips: [
       'Team Space TEC',
       'San José, Costa Rica',
@@ -53,6 +54,40 @@ export const PROJECT_COPY = Object.freeze({
     ],
     difficulty: 'Intermediate · Beginner/Youth',
     subjects: ['Games', 'Planets and moons', 'Software', 'Space exploration', 'Sun'],
+    rubricTitle: 'The full review',
+    rubricIntro: 'These are the five marks. The weights add to 100. The playable trainer is the evidence for every one.',
+    rubric: [
+      {
+        weight: '30%',
+        title: 'Impact',
+        ask: 'How much impact can this have, and does it help many kids or a few?',
+        answer: 'The challenge is for kids ages 7 to 12. A space game usually hides the cost of staying alive. This one makes food, water, air, power, and a call home run out, so a class can feel a real mission. It opens in a browser, in English or Spanish, with nothing to install. Any kid with the link can play, and a judge can open every mission.',
+      },
+      {
+        weight: '20%',
+        title: 'Creativity',
+        ask: 'Is the approach new, or only a small change to a game that already exists?',
+        answer: 'It is not a quiz, and the rocket does not always fly. The player packs the ship, and the same limit comes back during the flight. A brighter Moon on the slider is the real phase that day. The Mars aim is the angle that meets the planet. A useful part can still cancel the launch. Two extra trips sit on the menu and cannot be played.',
+      },
+      {
+        weight: '20%',
+        title: 'Viability',
+        ask: 'Is it scientifically sound, and does it do what it says?',
+        answer: 'The rates are NASA’s: 1.83 kg of food, 2.5 kg of water, and 0.84 kg of oxygen per person per day. One hangar point is 40 watts. The Moon trip uses the real phase and a path of about 3 days. Mars supplies last 203 days, the Perseverance cruise, and the best aim is 135.55°. The solar storm is a written card, like the one between Apollo 16 and Apollo 17. It is not a live feed. Too little power, no water, no lander, or a missed angle stops the flight.',
+      },
+      {
+        weight: '20%',
+        title: 'Prototype and MVP',
+        ask: 'How far along is the prototype: advanced, intermediate, or early?',
+        answer: 'The trainer can be played from pack to landing. Earth, the Moon, and Mars each have a hangar, a launch, and a stop that says why a bad pack failed. Stars save in this browser. Become admin opens every mission for review. A trailer plays on the first visit. Lord of the Rings and The Black Hole stay on the menu as coming soon. They cannot be played.',
+      },
+      {
+        weight: '10%',
+        title: 'Presentation',
+        ask: 'Does the team tell the challenge, the solution, and why it matters?',
+        answer: 'This page is that story, in English first and in Spanish beside it. The challenge is a junior astronaut mission trainer. The solution is a rocket the player has to pack. It matters because a part that looks helpful still spends power, mass, or days of food. Play opens the same build the page describes.',
+      },
+    ],
     challengeTitle: 'The challenge',
     challenge: [
       'Build a Junior Astronaut Mission Trainer asks for a game where kids feel a lunar or Martian mission: life support, radiation shielding, power, food, and the wait to talk to Earth. A choice that looks safe still has to cost something.',
@@ -85,7 +120,7 @@ export const PROJECT_COPY = Object.freeze({
         text: 'Supplies are planned for 203 days, the Perseverance cruise. A few meals do not last: three meal lockers and two food packs cover three people. The water recycler returns 98% of the water. The air scrubber keeps 95% of the oxygen in the loop, which is what makes the tanks last. Without Medicine, space sickness stops the trip about a day and a half in. Aim between 134° and 138°. The best aim is 135.55°. On the way the crew meets debris, a noisy radio, and an asteroid shower.',
       },
     ],
-    soon: 'Two more trips sit on the menu as coming soon: Lord of the Rings and The White Hole. They cannot be played.',
+    soon: 'Two more trips sit on the menu as coming soon: Lord of the Rings and The Black Hole. They cannot be played.',
     tradeTitle: 'Five decisions',
     tradeIntro: 'These are the constraints the challenge names. In the game, each one spends something else.',
     tradeoffs: [
@@ -136,7 +171,6 @@ export const PROJECT_COPY = Object.freeze({
     teamTitle: 'Team Space TEC',
     teamLead: 'Local event: San José, Costa Rica.',
     teamLink: 'Team page',
-    owner: 'Team owner',
     members: MEMBERS,
     stack: 'Built with React, Vite, and pixel art in the browser, a Python FastAPI service, and Firebase Auth and Firestore for each player’s stars. MIT license.',
     footer: 'Rocket Space Simulator · Space TEC · NASA Space Apps Challenge 2026',
@@ -152,6 +186,7 @@ export const PROJECT_COPY = Object.freeze({
     openTab: 'Se abre en una pestaña nueva',
     navLabel: 'En esta página',
     nav: [
+      { href: '#rubric', label: 'Rúbrica' },
       { href: '#challenge', label: 'Reto' },
       { href: '#missions', label: 'Misiones' },
       { href: '#tradeoffs', label: 'Decisiones' },
@@ -160,8 +195,8 @@ export const PROJECT_COPY = Object.freeze({
       { href: '#team', label: 'Equipo' },
     ],
     kicker: 'NASA Space Apps Challenge 2026',
-    thesis: 'Cada decisión tiene un costo',
-    lead: 'Niños de 7 a 12 años empacan un cohete y lo vuelan. El viaje puede ser una vuelta a la Tierra, una tripulación a la Luna o un viaje a Marte. Los créditos, los kilos y los vatios se acaban. La comida, el agua y el aire también. Una pieza que parece útil puede hundir la misión.',
+    thesis: 'La revisión está en el juego',
+    lead: 'Space TEC hizo un entrenador de misiones para niños de 7 a 12 años. La revisión pregunta por el impacto, la creatividad, la viabilidad, el prototipo y la presentación. Cada punto se responde abajo, y cada respuesta es algo que un jurado puede pulsar.',
     chips: [
       'Equipo Space TEC',
       'San José, Costa Rica',
@@ -170,6 +205,40 @@ export const PROJECT_COPY = Object.freeze({
     ],
     difficulty: 'Intermedio · Principiante/Juventud',
     subjects: ['Juegos', 'Planetas y lunas', 'Software', 'Exploración espacial', 'Sol'],
+    rubricTitle: 'La revisión completa',
+    rubricIntro: 'Estos son los cinco puntos. Los pesos suman 100. El entrenador que se puede jugar es la evidencia de cada uno.',
+    rubric: [
+      {
+        weight: '30%',
+        title: 'Impacto',
+        ask: '¿Cuánto impacto puede tener, y ayuda a muchos niños o a pocos?',
+        answer: 'El reto es para niños de 7 a 12 años. Un juego espacial suele esconder el costo de seguir con vida. Este hace que se acaben la comida, el agua, el aire, la energía y la llamada a casa, para que un grupo sienta una misión de verdad. Se abre en el navegador, en inglés o en español, sin instalar nada. Cualquier niño con el enlace puede jugar, y un jurado puede abrir todas las misiones.',
+      },
+      {
+        weight: '20%',
+        title: 'Creatividad',
+        ask: '¿El enfoque es nuevo, o solo un cambio pequeño de un juego que ya existe?',
+        answer: 'No es un cuestionario, y el cohete no siempre vuela. El jugador empaca la nave, y el mismo límite vuelve durante el vuelo. Una Luna más brillante en el deslizador es la fase real de ese día. La puntería a Marte es el ángulo que encuentra el planeta. Una pieza útil puede cancelar el lanzamiento. Hay dos viajes más en el menú y no se pueden jugar.',
+      },
+      {
+        weight: '20%',
+        title: 'Viabilidad',
+        ask: '¿Es sólido en lo científico, y hace lo que dice?',
+        answer: 'Las cifras son de la NASA: 1,83 kg de comida, 2,5 kg de agua y 0,84 kg de oxígeno por persona al día. Un punto del hangar son 40 vatios. El viaje a la Luna usa la fase real y un camino de unos 3 días. Los suministros de Marte duran 203 días, el viaje de Perseverance, y la mejor puntería es 135,55°. La tormenta solar es una carta escrita, como la que pasó entre el Apolo 16 y el Apolo 17. No es un servicio en vivo. Poca energía, sin agua, sin módulo lunar o un ángulo fallido detienen el vuelo.',
+      },
+      {
+        weight: '20%',
+        title: 'Prototipo y MVP',
+        ask: '¿Qué tan avanzado está el prototipo: avanzado, intermedio o inicial?',
+        answer: 'El entrenador se puede jugar de principio a fin. La Tierra, la Luna y Marte tienen hangar, lanzamiento y una parada que dice por qué falló un mal equipaje. Las estrellas se guardan en este navegador. Modo juez abre todas las misiones para revisarlas. Un tráiler suena en la primera visita. El señor de los anillos y El agujero negro siguen en el menú como próximamente. No se pueden jugar.',
+      },
+      {
+        weight: '10%',
+        title: 'Presentación',
+        ask: '¿El equipo cuenta el reto, la solución y por qué importa?',
+        answer: 'Esta página es esa historia, primero en inglés y al lado en español. El reto es un entrenador de astronautas jóvenes. La solución es un cohete que el jugador tiene que empacar. Importa porque una pieza que parece útil igual gasta energía, masa o días de comida. Jugar abre la misma versión que describe la página.',
+      },
+    ],
     challengeTitle: 'El reto',
     challenge: [
       'Build a Junior Astronaut Mission Trainer pide un juego en el que los niños sientan una misión lunar o marciana: soporte de vida, blindaje contra la radiación, energía, comida y la espera para hablar con la Tierra. Una opción que parece segura también tiene que costar algo.',
@@ -202,7 +271,7 @@ export const PROJECT_COPY = Object.freeze({
         text: 'Los suministros están planeados para 203 días, el viaje de Perseverance. Unas pocas comidas no alcanzan: tres armarios de comidas y dos paquetes de comida cubren a tres personas. El reciclador de agua devuelve el 98% del agua. El limpiador de aire guarda el 95% del oxígeno en el circuito, y eso es lo que hace durar los tanques. Sin Medicina, el mareo espacial detiene el viaje en un día y medio. Apunta entre 134° y 138°. La mejor puntería es 135,55°. En el camino la tripulación se encuentra basura, una radio con ruido y una lluvia de asteroides.',
       },
     ],
-    soon: 'Hay dos viajes más en el menú, marcados como próximamente: El señor de los anillos y El agujero blanco. No se pueden jugar.',
+    soon: 'Hay dos viajes más en el menú, marcados como próximamente: El señor de los anillos y El agujero negro. No se pueden jugar.',
     tradeTitle: 'Cinco decisiones',
     tradeIntro: 'Son los límites que nombra el reto. En el juego, cada uno gasta otra cosa.',
     tradeoffs: [
@@ -253,7 +322,6 @@ export const PROJECT_COPY = Object.freeze({
     teamTitle: 'Equipo Space TEC',
     teamLead: 'Evento local: San José, Costa Rica.',
     teamLink: 'Página del equipo',
-    owner: 'Dueño del equipo',
     members: MEMBERS,
     stack: 'Hecho con React, Vite y pixel art en el navegador, un servicio Python con FastAPI, y Firebase Auth y Firestore para las estrellas de cada jugador. Licencia MIT.',
     footer: 'Rocket Space Simulator · Space TEC · NASA Space Apps Challenge 2026',
