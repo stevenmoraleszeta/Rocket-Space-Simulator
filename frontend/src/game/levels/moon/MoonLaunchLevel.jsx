@@ -28,6 +28,7 @@ import { useUiScale } from '../../../lib/uiScale.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { flightNotes } from '../../flightSummary.js'
+import { planScore } from '../../design/missionPlan.js'
 import { flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { partCount } from '../../parts.js'
 import { LAUNCH_SITES } from '../orbit/launchSites.js'
@@ -265,7 +266,7 @@ const EVENT_SOUNDS = {
   misfire: SYNTH.cough,
 }
 
-export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, onExit, onNextMission }) {
+export function MoonLaunchLevel({ mission, stageInfo, equipped, design, onBackToHangar, onExit, onNextMission }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
   const uiScale = useUiScale()
@@ -764,7 +765,9 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     const light = mapLightFactor(arrivalLook.illumination)
     const scienceFactor = damage.scienceFactor * eventImpact.scienceFactor * light
     const dataLoss = Math.min(100, damage.dataLoss + eventImpact.dataLoss)
-    const pct = Math.max(0, Math.min(100, Math.round(100 * accuracy * scienceFactor * (1 - dataLoss / 100) - damage.scoreLoss)))
+    const flown = Math.max(0, Math.min(100, Math.round(100 * accuracy * scienceFactor * (1 - dataLoss / 100) - damage.scoreLoss)))
+    const passed = flown >= mission.passPct
+    const pct = passed && design ? planScore(design) : flown
     const success = pct >= mission.passPct
     const progress = recordResult(pct, success)
     playSfx(success ? SFX.missionComplete : SFX.lose)
@@ -909,7 +912,8 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
         <MissionCompleteScreen
           mission={mission}
           result={result}
-          lead={`Your crew landed on the Moon, mapped it from orbit, and splashed down safely${result.tripDays ? ` after ${result.tripDays.toFixed(1)} days` : ''}.`}
+          design={design}
+          lead={`Your crew mapped the Moon and came home${result.tripDays ? ` after ${result.tripDays.toFixed(1)} days` : ''}.`}
           onContinue={onNextMission ?? onExit}
           onFlyAgain={retry}
         />

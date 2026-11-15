@@ -25,6 +25,7 @@ import { partCount } from '../../parts.js'
 import { FlightReadout } from '../../FlightReadout.jsx'
 import { flightReadout } from '../../lifeSupport.js'
 import { flightNotes } from '../../flightSummary.js'
+import { planScore, pathById } from '../../design/missionPlan.js'
 import { LAUNCH_FAILURES, flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { LAUNCH_SITES } from './launchSites.js'
 import { MissionCompleteScreen } from './MissionCompleteScreen.jsx'
@@ -129,7 +130,7 @@ function describePrediction(prediction) {
 /** How close (screen pixels) a tap must land to a satellite to open its card. */
 const SATELLITE_TAP_PIXELS = 18
 
-export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, onExit }) {
+export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
   // No boosters: the dotted path still shows the planned flight (as if they were there).
@@ -158,8 +159,11 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     [canvasSize, uiScale],
   )
   const site = LAUNCH_SITES.find((candidate) => candidate.id === siteId) ?? null
-  // First level: no orbit choice. The satellite always aims for the hardest arrival orbit.
-  const orbit = useMemo(() => hardestOrbit(), [])
+  // The road chosen in the design cards. Without one, the first flight uses the hardest orbit.
+  const orbit = useMemo(() => {
+    if (design?.pathId) return ORBIT_TARGETS.find((target) => target.id === design.pathId) ?? hardestOrbit()
+    return hardestOrbit()
+  }, [design])
   const siteCheck = site ? checkTargetFromSite(site, orbit) : null
   const rotationBoost = rotationBoostForInclination(orbit.inclinationDeg)
   const arrival = useMemo(
@@ -266,7 +270,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       supply = supplyFailure
     }
     const success = outcome.type === OUTCOMES.ORBIT_REACHED
-    const pct = success ? scoreOrbitInsertion(orbit, outcome.missKm) : 0
+    const flown = success ? scoreOrbitInsertion(orbit, outcome.missKm) : 0
+    const pct = success && design ? planScore(design) : flown
     const craft = craftShort(outcome.satelliteName)
     let progressOutcome = null
     try {
@@ -575,7 +580,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
         <MissionCompleteScreen
           mission={mission}
           result={result}
-          directionDeg={result.directionDeg}
+          design={design}
+          directionDeg={design ? null : result.directionDeg}
           onContinue={onExit}
           onFlyAgain={retry}
         />
@@ -647,6 +653,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
               const position = siteScreenPosition(view, candidate, step !== 'site')
               const side = position.x >= view.centerX ? 'right' : 'left'
               const selected = candidate.id === siteId
+              const siteOk = checkTargetFromSite(candidate, orbit).ok
               const className = `orbit-site orbit-site--${side}${selected ? ' is-selected' : ''}`
               const style = { left: position.x * uiScale, top: position.y * uiScale }
               if (step !== 'site') {
@@ -667,6 +674,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
                   className={className}
                   style={style}
                   aria-pressed={selected}
+                  disabled={!siteOk}
+                  title={siteOk ? candidate.name : checkTargetFromSite(candidate, orbit).reason}
                   onClick={() => selectSite(candidate.id)}
                 >
                   <span className="orbit-site__dot" />
@@ -685,7 +694,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
             <>
               <h2 className="orbit-panel__title">1. Pick a launch base</h2>
               <p className="orbit-panel__hint">
-                {sayTo(playerName, `Tap a base on the Earth. This trip goes ${orbit.altitudeKm} km up, on the path called ${orbit.name}.`)}
+                {sayTo(playerName, design
+                  ? `Tap a base that can fly your road, the ${pathById(design.jobId, design.pathId)?.name ?? orbit.name}. Dim bases cannot.`
+                  : `Tap a base on the Earth. This trip goes ${orbit.altitudeKm} km up, on the path called ${orbit.name}.`)}
               </p>
               {site ? (
                 <div className="orbit-detail">
@@ -710,12 +721,16 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
             <>
               <h2 className="orbit-panel__title">2. Aim and launch</h2>
               <p className="orbit-panel__hint">
-                {sayTo(playerName, 'Hold and drag. The dots show the path. Farther from the base means more power.')}
+                {sayTo(playerName, design
+                  ? 'Your road is already drawn. Press Launch. Drag the dots only if you want to try a different aim.'
+                  : 'Hold and drag. The dots show the path. Farther from the base means more power.')}
               </p>
-              <dl className="orbit-stats">
-                <div><dt>Direction</dt><dd>{radiansToDegrees(aim.tiltRadians)}°</dd></div>
-                <div><dt>Power</dt><dd>{Math.round(aim.power * 100)}%</dd></div>
-              </dl>
+              {!design && (
+                <dl className="orbit-stats">
+                  <div><dt>Direction</dt><dd>{radiansToDegrees(aim.tiltRadians)}°</dd></div>
+                  <div><dt>Power</dt><dd>{Math.round(aim.power * 100)}%</dd></div>
+                </dl>
+              )}
               {predictionSummary && <p className={`orbit-prediction is-${predictionSummary.tone}`}>{sayTo(playerName, predictionSummary.text)}</p>}
               <div className="orbit-panel__actions">
                 <button type="button" className="game__back" onClick={() => goBack('site')}>Back</button>

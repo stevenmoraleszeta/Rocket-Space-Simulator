@@ -165,6 +165,8 @@ button.orbit-site:focus-visible .orbit-site__name { outline: 0.1875rem solid var
   .orbit-panel { width: 100%; flex: 0 1 45%; }
 }
 
+.orbit-site:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* Pad liftoff and climb (LaunchSequence) cover the whole level until the orbit flight starts. */
 .orbit-level__liftoff { position: fixed; inset: 0; z-index: 50; }
 

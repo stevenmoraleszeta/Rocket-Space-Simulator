@@ -11,6 +11,8 @@
  */
 import { useState } from 'react'
 import { GameScreen } from './GameScreen.jsx'
+import { DesignWizard } from './design/DesignWizard.jsx'
+import { buildFlightLoadout, missionWithDesign } from './design/missionPlan.js'
 import { OrbitalLaunchLevel } from './levels/orbit/OrbitalLaunchLevel.jsx'
 import { MoonLaunchLevel } from './levels/moon/MoonLaunchLevel.jsx'
 import { MarsLaunchLevel } from './levels/marsLaunch/MarsLaunchLevel.jsx'
@@ -18,13 +20,34 @@ import { STAGE_IDS, STAGE_INFO, getFirstStage, getNextStage } from './stages.js'
 
 export function MissionFlow({ mission, onExit, onNextMission }) {
   const [stageId, setStageId] = useState(() => getFirstStage(mission.id))
-  // Rocket built in the hangar, handed to the launch stage.
+  // Card choices (tool, rocket, road, radio) made before the pad.
+  const [design, setDesign] = useState(null)
+  const [designing, setDesigning] = useState(true)
+  // Rocket built from those choices, handed to the launch stage.
   const [equipped, setEquipped] = useState(null)
+  const flightMission = missionWithDesign(mission, design)
+
+  if (designing) {
+    return (
+      <DesignWizard
+        mission={mission}
+        initial={design}
+        onExit={onExit}
+        onDone={(next) => {
+          setDesign(next)
+          setEquipped(buildFlightLoadout(mission.id, next))
+          setStageId(getFirstStage(mission.id))
+          setDesigning(false)
+        }}
+      />
+    )
+  }
 
   if (stageId === STAGE_IDS.ORBITAL_LAUNCH && equipped) {
     return (
       <OrbitalLaunchLevel
-        mission={mission}
+        mission={flightMission}
+        design={design}
         stageInfo={STAGE_INFO[stageId]}
         equipped={equipped}
         onBackToHangar={() => setStageId(STAGE_IDS.BUILD_AND_LAUNCH)}
@@ -36,7 +59,8 @@ export function MissionFlow({ mission, onExit, onNextMission }) {
   if (stageId === STAGE_IDS.MOON_TRANSIT && equipped) {
     return (
       <MoonLaunchLevel
-        mission={mission}
+        mission={flightMission}
+        design={design}
         stageInfo={STAGE_INFO[stageId]}
         equipped={equipped}
         onBackToHangar={() => setStageId(STAGE_IDS.BUILD_AND_LAUNCH)}
@@ -49,7 +73,8 @@ export function MissionFlow({ mission, onExit, onNextMission }) {
   if (stageId === STAGE_IDS.MARS_TRANSIT && equipped) {
     return (
       <MarsLaunchLevel
-        mission={mission}
+        mission={flightMission}
+        design={design}
         stageInfo={STAGE_INFO[stageId]}
         equipped={equipped}
         onBackToHangar={() => setStageId(STAGE_IDS.BUILD_AND_LAUNCH)}
@@ -68,8 +93,10 @@ export function MissionFlow({ mission, onExit, onNextMission }) {
   }
   return (
     <GameScreen
-      mission={mission}
+      mission={flightMission}
+      design={design}
       onExit={onExit}
+      onRevise={() => setDesigning(true)}
       initialEquipped={equipped ?? undefined}
       onLaunch={hasNextStage ? handleLaunch : undefined}
     />

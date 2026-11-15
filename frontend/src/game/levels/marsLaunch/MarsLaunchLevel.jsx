@@ -39,8 +39,10 @@ import {
   simulateMarsTrip,
 } from './marsLaunchRoute.js'
 import { aimFromPointer, createMarsView, drawMarsScene, pathColor, toScreen } from './marsLaunchRenderer.js'
+import { MARS_PATHS, designAim, planScore } from '../../design/missionPlan.js'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
+import '../../design/designWizard.css'
 
 /** The whole cruise plays in this many real seconds. */
 const FLIGHT_PLAYBACK_SECONDS = 7
@@ -113,14 +115,16 @@ function failureHint(result) {
   }
 }
 
-export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, onExit }) {
+export function MarsLaunchLevel({ mission, stageInfo, equipped, design, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
 
   const [step, setStep] = useState('site')
   const [siteId, setSiteId] = useState(null)
   const site = LAUNCH_SITES.find((candidate) => candidate.id === siteId) ?? null
-  const [aim, setAim] = useState(FIRST_AIM)
+  const [aim, setAim] = useState(() => designAim(design) ?? FIRST_AIM)
+  const [roadId, setRoadId] = useState(design?.pathId ?? null)
+  const flownDesign = design ? { ...design, pathId: roadId || design.pathId } : null
   const [result, setResult] = useState(null)
   const [telemetryDay, setTelemetryDay] = useState(0)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600, pixelRatio: 1 })
@@ -164,7 +168,8 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
 
   const finish = useCallback((outcome, failure = null) => {
     const success = outcome.type === MARS_OUTCOMES.REACHED && !failure
-    const pct = success ? scoreMarsArrival(outcome, trip.angleErrorDeg) : 0
+    const flown = success ? scoreMarsArrival(outcome, trip.angleErrorDeg) : 0
+    const pct = success && flownDesign ? planScore(flownDesign) : flown
     let progress = null
     try {
       progress = completeMission(mission.id, {
@@ -190,7 +195,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
       exploded,
     })
     setStep('result')
-  }, [aim, trip, completeMission, mission.id, equipped, site])
+  }, [aim, trip, completeMission, mission.id, equipped, site, flownDesign])
 
   const failLaunch = useCallback(() => {
     setLiftingOff(false)
@@ -334,7 +339,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
       return
     }
     setHazardCard(null)
-    if (step !== 'aim') return
+    if (step !== 'aim' || design) return
     draggingRef.current = true
     event.currentTarget.setPointerCapture(event.pointerId)
     aimAt(point)
@@ -354,7 +359,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
 
   // Arrow keys fine-tune the aim: left/right turn by 0.01° (Shift: 0.1°), up/down change power.
   useEffect(() => {
-    if (step !== 'aim' || liftingOff) return undefined
+    if (step !== 'aim' || liftingOff || design) return undefined
     const onKey = (event) => {
       const big = event.shiftKey ? 10 : 1
       const turn = { ArrowLeft: 1, ArrowRight: -1 }[event.key]
@@ -434,8 +439,11 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
         <MissionCompleteScreen
           mission={mission}
           result={result}
-          directionDeg={result.directionDeg}
-          lead={`Your rocket reached Mars after ${Math.round(result.outcome.day)} days!`}
+          design={flownDesign}
+          directionDeg={design ? null : result.directionDeg}
+          lead={flownDesign
+            ? `Your rocket reached Mars. ${flownDesign.radio ? 'The radio can send the photos home.' : 'Without a radio, some photos stay on the ship.'}`
+            : `Your rocket reached Mars after ${Math.round(result.outcome.day)} days!`}
           onContinue={onExit}
           onFlyAgain={retry}
         />
@@ -526,7 +534,37 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
               </div>
             </>
           )}
-          {step === 'aim' && (
+          {step === 'aim' && design && (
+            <>
+              <h2 className="orbit-panel__title">2. Pick the road to Mars</h2>
+              <div className="dw__grid">
+                {MARS_PATHS.map((path) => (
+                  <button
+                    key={path.id}
+                    type="button"
+                    className={`dw__choice${roadId === path.id ? ' is-on' : ''}`}
+                    aria-pressed={roadId === path.id}
+                    onClick={() => {
+                      playSfx(SFX.select)
+                      setRoadId(path.id)
+                      setAim({ angleDeg: path.angleDeg, power: path.power })
+                    }}
+                  >
+                    <b>{path.name}</b>
+                    <span>{path.line}</span>
+                  </button>
+                ))}
+              </div>
+              <p className={`orbit-prediction is-${prediction.tone}`} style={{ borderColor: pathColor(trip.outcome) }}>
+                {sayTo(playerName, prediction.text)}
+              </p>
+              <div className="orbit-panel__actions">
+                <button type="button" className="game__back" onClick={backToSites}>Back</button>
+                <button type="button" className="ms-btn" onClick={launch} disabled={liftingOff}>Launch</button>
+              </div>
+            </>
+          )}
+          {step === 'aim' && !design && (
             <>
               <h2 className="orbit-panel__title">2. Aim at Mars from {site?.name}</h2>
               <p className="orbit-panel__hint">
@@ -548,7 +586,13 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
               </div>
             </>
           )}
-          {step !== 'aim' && (
+          {(step === 'flight' || step === 'result') && design && (
+            <>
+              <h2 className="orbit-panel__title">{step === 'flight' ? 'On the way to Mars' : 'Trip over'}</h2>
+              <p className="orbit-panel__hint">{MARS_PATHS.find((path) => path.id === roadId)?.line}</p>
+            </>
+          )}
+          {(step === 'flight' || step === 'result') && !design && (
             <>
               <h2 className="orbit-panel__title">{step === 'flight' ? 'On the way to Mars' : 'Trip over'}</h2>
               <dl className="orbit-stats">

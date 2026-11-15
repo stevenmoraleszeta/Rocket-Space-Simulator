@@ -2,7 +2,7 @@
  * The 3 missions of the first prototype, in the order they are played.
  * The order of this array IS the progression: mission i unlocks when mission i-1 is completed.
  *
- * Text is written for players aged 7–12: short sentences, everyday words.
+ * Text is written for players aged 8–12: short sentences, everyday words.
  *
  * @typedef {Object} Mission
  * @property {string} id        stable id, used to save progress and to tell gameplay which mission to load
