@@ -69,6 +69,7 @@ import { tipsTurnedOff } from './moonTipsStorage.js'
 import { FunFactToast } from '../../FunFactToast.jsx'
 import { choiceBlockedReason, pickOrbitEvents, resolveOrbitEvent } from './moonOrbitEvents.js'
 import earthMapUrl from '../../../assets/images/planets/earth.svg'
+import handPointerUrl from '../../../assets/images/icons/hand_pointer.svg'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
 import './moonMission.css'
@@ -107,6 +108,19 @@ function fractionalIndex(samples, seconds, endIndex) {
   const a = samples[index].t
   const b = samples[index + 1].t
   return index + Math.min(1, Math.max(0, (seconds - a) / (b - a || 1)))
+}
+
+/**
+ * Flight clock for the trip out: starts a bit faster than even and ends about 3 times slower,
+ * so the arrival at the Moon is easy to follow. 0 → 0 and 1 → 1, always moving forward.
+ */
+function arrivalEase(progress) {
+  return 1.3 * progress + 0.1 * progress ** 2 - 0.4 * progress ** 3
+}
+
+/** How fast arrivalEase moves at this point (1 = even speed). */
+function arrivalEaseRate(progress) {
+  return 1.3 + 0.2 * progress - 1.2 * progress ** 2
 }
 
 /** "38K" style numbers for the time speed-up. */
@@ -341,7 +355,12 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   useEffect(() => {
     if (!arrived || homePlan?.key === homeKey) return undefined
     const timer = setTimeout(() => {
-      const plan = simulateReturn({ moonTable, arrivalT: prediction.outcome.t, sense: arrivalSense(prediction.samples, moonTable) })
+      const plan = simulateReturn({
+        moonTable,
+        arrivalT: prediction.outcome.t,
+        sense: arrivalSense(prediction.samples, moonTable),
+        arrival: prediction.samples[prediction.samples.length - 1],
+      })
       setHomePlan({ key: homeKey, plan })
     }, HOME_PLAN_DELAY_MS)
     return () => clearTimeout(timer)
@@ -369,6 +388,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     goldSatellite: loadImage(ASSETS.goldSatellite.src),
     commsSatellite: loadImage(ASSETS.commsSatellite.src),
     spaceTelescope: loadImage(ASSETS.spaceTelescope.src),
+    hand: loadImage(handPointerUrl),
   }))
 
   const finishFlightRef = useRef(null)
@@ -458,11 +478,12 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
         if (clock && samples) {
           const endIndex = clock.endIndex
           const endT = samples[endIndex].t
-          // Time runs evenly: the ship and the Moon move on the same clock, so they meet.
+          // The ship and the Moon move on the same clock, so they meet. The clock slows down near
+          // the end of the trip, so the player can see the ship come up to the Moon and swing round it.
           const progress = Math.min(1, Math.max(0, (now - clock.startedAt) / 1000 / clock.playSeconds))
-          let seconds = progress * endT
+          let seconds = arrivalEase(progress) * endT
           let position = fractionalIndex(samples, seconds, endIndex)
-          let speedUp = endT / clock.playSeconds
+          let speedUp = (endT / clock.playSeconds) * arrivalEaseRate(progress)
           let phase = 'out'
           const index = Math.floor(position)
           // Each satellite or junk cloud the ship passes: a flash, a shake and a sound.
@@ -718,7 +739,12 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     // The way home: worked out while aiming, or now if the player launched very fast.
     let plan = returnPrediction
     if (!plan) {
-      plan = simulateReturn({ moonTable, arrivalT: prediction.outcome.t, sense: arrivalSense(prediction.samples, moonTable) })
+      plan = simulateReturn({
+        moonTable,
+        arrivalT: prediction.outcome.t,
+        sense: arrivalSense(prediction.samples, moonTable),
+        arrival: prediction.samples[prediction.samples.length - 1],
+      })
       setHomePlan({ key: homeKey, plan })
     }
     if (!plan) {

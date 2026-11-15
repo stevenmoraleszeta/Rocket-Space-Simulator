@@ -5,6 +5,7 @@
  * engine pushes up with 4 m/s², and fuel is short, like Apollo 11, which landed with about
  * 45 seconds of fuel left. Below 2.5 m/s the legs take the touch softly.
  * Hold the button (or Space, or the scene) to fire the engine. "Autopilot" lands for you.
+ * After touchdown, "Try again" starts the landing over with a full tank.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SYNTH, playSynth } from '../../../audio'
@@ -44,8 +45,10 @@ function autopilotBurn(state) {
   return -state.speed > safe
 }
 
+const START_STATE = Object.freeze({ height: START_HEIGHT, speed: START_SPEED, fuel: FUEL_SECONDS, firing: false })
+
 export function MoonLanding({ onDone }) {
-  const [state, setState] = useState({ height: START_HEIGHT, speed: START_SPEED, fuel: FUEL_SECONDS, firing: false })
+  const [state, setState] = useState(START_STATE)
   const [phase, setPhase] = useState('ready') // ready | flying | landed
   const [auto, setAuto] = useState(false)
   const [outcome, setOutcome] = useState(null)
@@ -109,6 +112,18 @@ export function MoonLanding({ onDone }) {
     return () => cancelAnimationFrame(frame)
   }, [phase])
 
+  /** Back to the top with a full tank, to try the landing again. */
+  const tryAgain = () => {
+    burnRef.current = false
+    autoRef.current = false
+    stateRef.current = START_STATE
+    setState(START_STATE)
+    setAuto(false)
+    setOutcome(null)
+    setPhase('ready')
+    playSynth(SYNTH.whoosh)
+  }
+
   const useAutopilot = () => {
     autoRef.current = true
     setAuto(true)
@@ -163,7 +178,10 @@ export function MoonLanding({ onDone }) {
         {outcome ? (
           <>
             <p className="moon-event__result" aria-live="polite">{outcome.note}</p>
-            <button type="button" className="moon-button moon-button--primary" onClick={() => onDone(outcome)}>Start mapping</button>
+            <div className="moon-landing__actions moon-landing__actions--done">
+              <button type="button" className="moon-button" onClick={tryAgain}>↺ Try again</button>
+              <button type="button" className="moon-button moon-button--primary" onClick={() => onDone(outcome)}>Start mapping</button>
+            </div>
           </>
         ) : (
           <>
