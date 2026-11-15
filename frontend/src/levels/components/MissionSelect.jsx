@@ -14,6 +14,7 @@ import { HistoryBoard, RankBadge, RecordButtons, StatsBoard } from './PlayerBoar
 import { StarRating } from './StarRating.jsx';
 import { BlackHoleBackground } from './BlackHoleBackground.jsx';
 import { SPRITES } from '../assets/sprites.js';
+import { UPCOMING_MISSIONS } from '../data/upcomingMissions.js';
 import { SettingsMenu } from '../../settings/SettingsMenu.jsx';
 import { AppLogo } from '../../brand/AppLogo.jsx';
 import { useSettings } from '../../settings/SettingsContext.jsx';
@@ -114,6 +115,22 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
             </li>
           );
         })}
+        {/* Missions 4 and 5: on the path, locked, "Coming soon". */}
+        {UPCOMING_MISSIONS.map((m) => (
+          <li key={m.id} className="ms-stop ms-stop--locked ms-stop--soon">
+            <button className="ms-stop__btn" disabled aria-label={`Mission ${m.number}, ${m.title}. Coming soon.`}>
+              <Planet planet={m.planet} size={130} locked />
+              {SPRITES.lock?.src && (
+                <span className="ms-lock" aria-hidden="true">
+                  <img className={`ms-lock__img${SPRITES.lock.pixelArt ? ' is-pixel' : ''}`} src={SPRITES.lock.src} alt="" draggable="false" />
+                </span>
+              )}
+            </button>
+            <div className="ms-stop__num">Mission {m.number}</div>
+            <div className="ms-stop__title">{m.title}</div>
+            <div className="ms-stop__hint ms-stop__soon">Coming soon</div>
+          </li>
+        ))}
       </ol>
       </div>
 

@@ -23,6 +23,8 @@
 import earth from './earth.svg';
 import moon from './moon.svg';
 import mars from './mars.svg';
+import saturn from './saturn.svg';
+import whiteHole from './white_hole.svg';
 
 import space from '../../assets/images/backgrounds/space.svg';
 import spaceRaw from '../../assets/images/backgrounds/space.svg?raw';
@@ -33,6 +35,9 @@ export const SPRITES = {
     earth: { src: earth, frames: 1, pixelArt: true },
     moon: { src: moon, frames: 1, pixelArt: true },
     mars: { src: mars, frames: 1, pixelArt: true },
+    // Missions 4 and 5, shown as "Coming soon" (data/upcomingMissions.js)
+    saturn: { src: saturn, frames: 1, pixelArt: true },
+    whiteHole: { src: whiteHole, frames: 1, pixelArt: true },
   },
   // raw: the SVG text, so SpaceBackground can split its twinkling stars and shooting stars
   // into their own layers (see lib/svgLayers.js) instead of redrawing the whole sky each frame.
