@@ -138,12 +138,12 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
         {/* Missions 4 and 5: on the path and locked. Tapping one says "Coming soon!" for a moment. */}
         {UPCOMING_MISSIONS.map((m) => (
           <li key={m.id} className="ms-stop ms-stop--locked ms-stop--soon">
-            {soonId === m.id && <div className="ms-bubble ms-bubble--soon" role="status">Coming soon!</div>}
+            {soonId === m.id && <div className="ms-bubble ms-bubble--soon" role="status">{t('Coming soon!')}</div>}
             <button
               type="button"
               className="ms-stop__btn"
               aria-disabled="true"
-              aria-label={`Mission ${m.number}, ${m.title}. Locked. Coming soon.`}
+              aria-label={t('Mission {{number}}, {{title}}. Locked. Coming soon.', { number: m.number, title: t(m.title) })}
               onClick={() => showSoon(m.id)}
             >
               <Planet planet={m.planet} size={130} locked />
@@ -153,8 +153,8 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
                 </span>
               )}
             </button>
-            <div className="ms-stop__num">Mission {m.number}</div>
-            <div className="ms-stop__title">{m.title}</div>
+            <div className="ms-stop__num">{t('Mission {{number}}', { number: m.number })}</div>
+            <div className="ms-stop__title">{t(m.title)}</div>
           </li>
         ))}
       </ol>

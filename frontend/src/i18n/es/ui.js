@@ -107,6 +107,7 @@ export const ui = {
   'Rocket Space Simulator': 'Rocket Space Simulator',
   'Close': 'Cerrar',
   'Next': 'Siguiente',
+  'Coming soon!': '¡Próximamente!',
   'Missions': 'Misiones',
   'Hangar': 'Hangar',
   'Launch': 'Lanzar',
