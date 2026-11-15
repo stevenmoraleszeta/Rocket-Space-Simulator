@@ -105,10 +105,19 @@ export function screenToWorldAngle(view, screenX, screenY) {
   return Math.atan2(-(screenY - view.centerY), screenX - view.centerX)
 }
 
-/** Screen position of a launch site on the rim of the Earth. */
+/**
+ * Screen position of a launch site on the polar map.
+ * The sprite puts the North Pole at the center and the South Pole on the rim,
+ * with the same angle as the orbit view (0° east to the right, 90° east up).
+ */
 export function siteScreenPosition(view, site) {
   const point = pointOnCircle(EARTH_RADIUS_METERS, degreesToRadians(site.longitudeDeg))
-  return worldToScreen(view, point.x, point.y)
+  const onRim = worldToScreen(view, point.x, point.y)
+  const radiusFraction = (90 - site.latitudeDeg) / 180
+  return {
+    x: view.centerX + (onRim.x - view.centerX) * radiusFraction,
+    y: view.centerY + (onRim.y - view.centerY) * radiusFraction,
+  }
 }
 
 function drawCircle(ctx, x, y, radius, fill) {
@@ -152,6 +161,7 @@ function drawEarth(ctx, view, images, clockSeconds = 0) {
     const scale = images.earth.naturalWidth / 256
     const size = view.earthRadiusPixels * 2
     ctx.save()
+    ctx.imageSmoothingEnabled = false
     ctx.beginPath()
     ctx.arc(view.centerX, view.centerY, view.earthRadiusPixels, 0, Math.PI * 2)
     ctx.clip()
@@ -263,17 +273,22 @@ function drawOrbitRings(ctx, view, orbits, selectedOrbitId, step) {
   }
 }
 
-function drawArrivalMarker(ctx, view, arrival) {
+const ARRIVAL_DRAW_SIZE = 32
+
+/** The point the rocket has to reach, drawn from the arrival-target sprite. */
+function drawArrivalMarker(ctx, view, arrival, images) {
   if (!arrival) return
   const screen = worldToScreen(view, arrival.x, arrival.y)
-  ctx.strokeStyle = COLORS.ringSelected
-  ctx.lineWidth = 3
-  ctx.beginPath()
-  ctx.arc(screen.x, screen.y, 14, 0, Math.PI * 2)
-  ctx.stroke()
-  ctx.fillStyle = COLORS.ringSelected
-  ctx.fillRect(Math.round(screen.x - 4), Math.round(screen.y - 4), 8, 8)
-  ctx.lineWidth = 1
+  const image = images?.arrivalTarget
+  if (!image?.complete || image.naturalWidth <= 0) return
+  const half = ARRIVAL_DRAW_SIZE / 2
+  ctx.drawImage(
+    image,
+    Math.round(screen.x - half),
+    Math.round(screen.y - half),
+    ARRIVAL_DRAW_SIZE,
+    ARRIVAL_DRAW_SIZE,
+  )
 }
 
 function pathColor(outcomeType) {
@@ -397,7 +412,7 @@ export function drawOrbitScene(ctx, view, scene) {
   else drawSatelliteDots(ctx, view, scene.satellites, simTime)
   drawEarth(ctx, view, scene.images, scene.clockSeconds)
   drawOrbitRings(ctx, view, scene.orbits, scene.selectedOrbitId, scene.step)
-  if (scene.step !== 'site') drawArrivalMarker(ctx, view, scene.arrival)
+  if (scene.step !== 'site') drawArrivalMarker(ctx, view, scene.arrival, scene.images)
 
   if (scene.step === 'aim') {
     drawPrediction(ctx, view, scene.prediction)

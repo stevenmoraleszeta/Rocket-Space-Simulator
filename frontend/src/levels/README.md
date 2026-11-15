@@ -7,7 +7,7 @@ It handles:
 - the **3 missions** and their order,
 - **unlocking** each mission when the previous one is completed,
 - **stars** (1–3) for each mission,
-- **saving progress** (localStorage today, Firestore ready),
+- **saving progress** (Firestore for the signed-in player, with a copy in localStorage),
 - the **selection screen** and the **mission card** with a "Launch!" button.
 
 Everything else (gameplay, results screen, menus, stats) belongs to other parts of the project.
@@ -77,6 +77,9 @@ const outcome = completeMission(mission.id, {
 ```
 
 ### Saving to Firestore
+
+The app does this in `src/lib/cloudStorage.js`: an anonymous user, then `progress/{uid}`.
+`createFirestoreAdapter` is the same shape if another screen needs it.
 
 ```js
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';

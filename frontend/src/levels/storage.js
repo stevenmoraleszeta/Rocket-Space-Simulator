@@ -3,9 +3,9 @@
  * The level system does not care where progress is stored: it receives an "adapter"
  * with two async functions, load(userId) and save(userId, progress).
  *
- * - localStorageAdapter: works today, no backend needed (good for development and demos).
+ * - localStorageAdapter: on-device copy, also the fallback when Firebase is unavailable.
  * - memoryAdapter: for tests.
- * - createFirestoreAdapter: for when Firebase is ready. It does not import Firebase here;
+ * - createFirestoreAdapter: Firestore copy. It does not import Firebase here;
  *   the SDK functions are injected so this module has no Firebase dependency.
  *
  * @typedef {Object} ProgressStorage
@@ -60,7 +60,10 @@ export function createFirestoreAdapter({ db, doc, getDoc, setDoc, collection = '
       return snap.exists() ? snap.data() : null;
     },
     async save(userId, progress) {
-      await setDoc(doc(db, collection, userId), { ...progress, updatedAt: new Date().toISOString() });
+      const updatedAt = typeof progress?.updatedAt === 'string' && progress.updatedAt
+        ? progress.updatedAt
+        : new Date().toISOString();
+      await setDoc(doc(db, collection, userId), { ...progress, updatedAt });
     },
   };
 }

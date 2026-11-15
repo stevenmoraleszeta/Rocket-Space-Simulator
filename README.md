@@ -21,7 +21,7 @@ Licencia MIT. El texto completo está en [LICENSE](LICENSE).
 frontend/          Cliente React. Firebase se inicializa en src/lib/firebase.js
 backend/           API FastAPI. Dependencias en requirements.txt
 firebase.json      Emuladores, reglas y hosting del build de frontend/dist
-firestore.rules    Lectura y escritura cerradas
+firestore.rules    Cada jugador solo lee y escribe su progreso y sus ajustes
 storage.rules      Lectura y escritura cerradas
 ```
 
@@ -67,4 +67,20 @@ npm run dev:web
 
 `npm run build:web` genera el cliente en `frontend/dist`, que es la carpeta que publica Firebase Hosting.
 
-Firestore y Storage quedan cerrados (`allow read, write: if false`) hasta que existan las reglas del juego.
+## Datos del jugador
+
+Con Firebase configurado, el juego entra con una sesión anónima y guarda en Firestore. En Ajustes se puede iniciar sesión con Google. Si esa cuenta se enlaza a la sesión anónima, se conservan las estrellas. El punto rojo del botón de ajustes avisa cuando falta el nombre o la sesión de Google.
+
+- `progress/{uid}`: misiones completadas, estrellas, mejor puntaje e intentos
+- `settings/{uid}`: nombre del jugador y volumen de la música y del ambiente
+
+Cada documento solo lo puede leer y escribir ese jugador. También queda una copia en el navegador por si la red falla. Lo que se arma en el hangar pertenece a la partida en curso y no se guarda.
+
+El acceso anónimo ya está activo y las reglas de Firestore ya están publicadas. El botón de Google sigue apagado hasta activar ese proveedor en Authentication. Si cambias las reglas o los proveedores:
+
+```powershell
+npx firebase deploy --only firestore:rules
+npx firebase deploy --only auth
+```
+
+Storage sigue cerrado: el juego no sube archivos.

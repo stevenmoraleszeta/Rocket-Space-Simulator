@@ -2,7 +2,7 @@
  * The 3 missions of the first prototype, in the order they are played.
  * The order of this array IS the progression: mission i unlocks when mission i-1 is completed.
  *
- * Text is written for players aged 8–15: short sentences, no jargon.
+ * Text is written for players aged 7–12: short sentences, everyday words.
  *
  * @typedef {Object} Mission
  * @property {string} id        stable id, used to save progress and to tell gameplay which mission to load
@@ -19,11 +19,11 @@
  * @property {Object} loadout   hangar limits and what the trip needs
  * @property {number} loadout.budget  credits the player can spend
  * @property {number} loadout.mass    kilograms the rocket can still lift
- * @property {number} loadout.energy  spare power on the ship
+ * @property {number} loadout.energy  power the ship can supply, in hangar points (1 point = 40 W)
  * @property {number} loadout.heat    heat protection the trip needs
  * @property {number} loadout.thrust  thrust the trip needs
- * @property {number} loadout.food    meals the crew needs
- * @property {number} loadout.air     air the crew needs
+ * @property {number} loadout.minCrew people who must be aboard
+ * @property {number} loadout.durationSeconds how long food and oxygen must last
  */
 
 /** @type {Mission[]} */
@@ -37,20 +37,25 @@ export const MISSIONS = [
     goal: 'Pack a rocket and fly once around Earth.',
     intro: 'A short trip around Earth.',
     story: [
-      'You fly into orbit to look down at Earth.',
-      'The trip is short, but the astronaut will get hungry. With nothing to eat, the trip is over.',
-      'The way up is very hot. Too much heat can break the rocket.',
-      'The rocket\'s own push is not enough to reach orbit.',
-      'The cabin already has air for a short trip.',
+      'You are the engineer. Fly once around Earth and look down.',
+      'One loop takes about 99 minutes, plus the climb up.',
+      'Someone has to fly. An empty rocket cannot finish the trip.',
+      'The trip is short, but the crew gets hungry. With nothing to eat, the trip stops.',
+      'Going up gets very hot. Too much heat can break the rocket.',
+      'The rocket needs a bigger push to reach space.',
+      'The cabin already has air for this short trip.',
+      'Money is tight. Pack only what this trip needs.',
     ],
     hints: [
-      'What could end the trip: hunger, heat, or a weak push?',
-      'This trip is short. Something on the rocket may already be enough.',
-      'A green bar is ready. A yellow bar is still short.',
+      'What could stop the trip: no one aboard, hunger, heat, a weak push, or no power?',
+      'This trip is short. The cabin may already hold enough air.',
+      'A green bar is ready. A yellow bar is low. A red bar means too much.',
     ],
-    funFact: 'The International Space Station goes around the Earth about every 90 minutes!',
+    funFact: 'The space station goes all the way around Earth in about 90 minutes!',
     passPct: 60,
-    loadout: { budget: 140, mass: 110, energy: 50, heat: 20, thrust: 40, food: 20, air: 12 },
+    // 108 credits is the one loadout that can fly. 2 credits are left, not enough for anything else.
+    // 6,518 s = a 10 minute climb + one 98.6 minute loop at 700 km.
+    loadout: { budget: 110, mass: 94, energy: 40, heat: 20, thrust: 40, minCrew: 1, durationSeconds: 6518 },
   },
   {
     id: 'moon',
@@ -58,22 +63,22 @@ export const MISSIONS = [
     planet: 'moon',
     title: 'Moon Explorer',
     place: 'The Moon',
-    goal: 'Fly to the Moon and look for ice in the dark.',
+    goal: 'Fly to the Moon and look for ice where it is dark.',
     intro: 'A long trip to the Moon.',
     story: [
       'You fly to the Moon to look for ice in the dark.',
-      'The trip takes many days. People need to eat every day.',
-      'The Moon has no air. The crew still has to breathe.',
-      'The way there is hot, and the Moon is much farther than orbit.',
+      'The trip takes 8 days. The crew has to eat every day.',
+      'The Moon has no air. The cabin alone cannot last that long.',
+      'The way there is hot, and the Moon is much farther than a loop around Earth.',
     ],
     hints: [
-      'Eating once is not the same as eating for many days.',
+      'Food for one person is not food for two.',
       'There is no air outside the ship. The crew still has to breathe.',
-      'Farther than orbit, heat and push still matter.',
+      'This trip is farther. Heat and push still matter.',
     ],
-    funFact: 'Some craters near the Moon\'s south pole never get any sunlight at all.',
+    funFact: 'Some craters near the south pole of the Moon never see the Sun.',
     passPct: 60,
-    loadout: { budget: 160, mass: 120, energy: 40, heat: 30, thrust: 55, food: 50, air: 40 },
+    loadout: { budget: 160, mass: 120, energy: 40, heat: 30, thrust: 55, minCrew: 1, durationSeconds: 8 * 86400 },
   },
   {
     id: 'mars',
@@ -84,19 +89,20 @@ export const MISSIONS = [
     goal: 'Send a rover to Mars and look at the red rocks.',
     intro: 'A very long trip to Mars.',
     story: [
-      'You send a rover to Mars, far past the Moon.',
-      'The crew is away much longer than on the Moon. They eat the whole time.',
-      'Breathing for a short time is not the same as breathing for the whole trip.',
+      'You send a crew to Mars. It is much farther than the Moon.',
+      'The trip takes 12 days. They eat the whole way.',
+      'A little air is not enough. They need air for the whole trip.',
+      'Two people can breathe the tanks dry before they arrive.',
       'The way is still hot, and Mars is the farthest place yet.',
       'Money, weight, and power can run out. Packing extra can leave you short.',
     ],
     hints: [
       'This trip lasts longer than the Moon. What has to last the whole way?',
-      'A yellow bar is still short. Try a little more, then look again.',
+      'A second person can use up the oxygen.',
       'A red bar means you packed too much.',
     ],
-    funFact: 'Mars looks red because its dust has a lot of rust in it.',
+    funFact: 'Mars looks red because its dust is rusty, like an old bike in the rain.',
     passPct: 60,
-    loadout: { budget: 175, mass: 130, energy: 44, heat: 35, thrust: 60, food: 90, air: 60 },
+    loadout: { budget: 175, mass: 130, energy: 44, heat: 35, thrust: 60, minCrew: 1, durationSeconds: 12 * 86400 },
   },
 ];

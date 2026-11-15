@@ -217,6 +217,7 @@ button.orbit-site:focus-visible .orbit-site__name { outline: 3px solid var(--ms-
 }
 .launch-fact.is-good { border-color: rgba(79, 195, 255, 0.6); background: rgba(79, 195, 255, 0.08); }
 .launch-fact p { margin: 0; }
+.launch-fact__hi { margin-top: 4px !important; color: var(--ms-yellow); font-size: 16px; }
 .launch-fact__label { font-family: var(--ms-font-pixel); font-size: 10px; line-height: 1.6; color: #ff8fa6; }
 .launch-fact.is-good .launch-fact__label { color: var(--ms-accent); }
 .launch-fact__title { margin-top: 6px !important; font-weight: 700; font-size: 18px; }

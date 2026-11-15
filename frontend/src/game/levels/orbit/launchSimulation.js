@@ -38,6 +38,13 @@ export const LOST_ALTITUDE_KILOMETERS = 2500
 /** After passing the arrival point, moving this much farther away counts as a miss. */
 const MISS_RECEDING_KILOMETERS = 2000
 /**
+ * Below this thrust-to-weight the rocket never leaves the pad, so every sample sits on the
+ * launch site and the dotted path does not appear. Aiming still has to draw that path,
+ * even when the hangar rocket has no extra parts, so a weaker rocket flies the preview at
+ * this thrust-to-weight. Its own propellant and delta-v are unchanged.
+ */
+const MIN_PATH_THRUST_TO_WEIGHT = 1.35
+/**
  * After a miss the rocket keeps flying with gravity alone: if it falls back it crashes (earthImpact,
  * and it explodes). If it is still up after this long (about one trip around the Earth) it stays
  * in a wrong orbit and the flight ends as missedTarget.
@@ -85,6 +92,17 @@ function insertionDeltaVAt(state) {
   return Math.hypot(along.x * speed - state.vx, along.y * speed - state.vy)
 }
 
+/** Same vehicle, with enough thrust to leave the pad so the aimed path can be drawn. */
+function vehicleForPath(vehicle) {
+  if (vehicle.thrustToWeight >= MIN_PATH_THRUST_TO_WEIGHT) return vehicle
+  const thrustToWeight = MIN_PATH_THRUST_TO_WEIGHT
+  return {
+    ...vehicle,
+    thrustNewtons: vehicle.liftoffMassKg * STANDARD_GRAVITY * thrustToWeight,
+    thrustToWeight,
+  }
+}
+
 /**
  * Runs the flight.
  * @param {object} params
@@ -97,6 +115,7 @@ function insertionDeltaVAt(state) {
  * @param {object[]} params.satellites      real satellites to avoid
  */
 export function simulateLaunch({ siteAngleRadians, rotationBoost, arrival, vehicle, aimTiltRadians, ascentDeltaV, satellites }) {
+  const flying = vehicleForPath(vehicle)
   const start = pointOnCircle(EARTH_RADIUS_METERS, siteAngleRadians)
   const eastward = eastwardDirection(siteAngleRadians)
   // The air in this plane turns with the ground below it.
@@ -108,7 +127,7 @@ export function simulateLaunch({ siteAngleRadians, rotationBoost, arrival, vehic
     y: start.y,
     vx: eastward.x * rotationBoost,
     vy: eastward.y * rotationBoost,
-    massKg: vehicle.liftoffMassKg,
+    massKg: flying.liftoffMassKg,
   }
   const samples = [{ t: 0, x: state.x, y: state.y, burning: true }]
   const toleranceMeters = kilometersToMeters(TARGET_TOLERANCE_KILOMETERS)
@@ -131,13 +150,10 @@ export function simulateLaunch({ siteAngleRadians, rotationBoost, arrival, vehic
     }
   }
 
-  // Thrust smaller than weight: the rocket never leaves the pad.
-  if (vehicle.thrustToWeight <= 1) return finish(OUTCOMES.NO_LIFTOFF)
-
-  const ascentDeltaVClamped = Math.min(Math.max(0, ascentDeltaV), vehicle.totalDeltaV)
-  const ascentEndMassKg = vehicle.liftoffMassKg / Math.exp(ascentDeltaVClamped / (vehicle.specificImpulseSeconds * STANDARD_GRAVITY))
-  const massFlowKgPerSecond = vehicle.thrustNewtons / (vehicle.specificImpulseSeconds * STANDARD_GRAVITY)
-  const burnDurationSeconds = (vehicle.liftoffMassKg - ascentEndMassKg) / massFlowKgPerSecond
+  const ascentDeltaVClamped = Math.min(Math.max(0, ascentDeltaV), flying.totalDeltaV)
+  const ascentEndMassKg = flying.liftoffMassKg / Math.exp(ascentDeltaVClamped / (flying.specificImpulseSeconds * STANDARD_GRAVITY))
+  const massFlowKgPerSecond = flying.thrustNewtons / (flying.specificImpulseSeconds * STANDARD_GRAVITY)
+  const burnDurationSeconds = (flying.liftoffMassKg - ascentEndMassKg) / massFlowKgPerSecond
   let hasLeftGround = false
   /** State and distance to the arrival point one step ago (coast only). */
   let previous = null
@@ -149,13 +165,13 @@ export function simulateLaunch({ siteAngleRadians, rotationBoost, arrival, vehic
     let thrust = null
     if (burning) {
       // Pitch program: tilt grows linearly from 0 (straight up) to the aim tilt at burnout.
-      const tilt = aimTiltRadians * Math.min(1, state.t / burnDurationSeconds)
+      const tilt = burnDurationSeconds > 0 ? aimTiltRadians * Math.min(1, state.t / burnDurationSeconds) : aimTiltRadians
       const direction = Math.atan2(state.y, state.x) + tilt
-      thrust = { forceNewtons: vehicle.thrustNewtons, directionX: Math.cos(direction), directionY: Math.sin(direction) }
+      thrust = { forceNewtons: flying.thrustNewtons, directionX: Math.cos(direction), directionY: Math.sin(direction) }
     } else if (!burnoutTime) {
       burnoutTime = state.t
     }
-    state = stepState(state, vehicle, thrust, SIMULATION_STEP_SECONDS, airRotationRate)
+    state = stepState(state, flying, thrust, SIMULATION_STEP_SECONDS, airRotationRate)
     if (burning && state.massKg < ascentEndMassKg) state = { ...state, massKg: ascentEndMassKg }
     if (state.t % SAMPLE_EVERY_SECONDS === 0) samples.push({ t: state.t, x: state.x, y: state.y, burning })
 
@@ -188,7 +204,7 @@ export function simulateLaunch({ siteAngleRadians, rotationBoost, arrival, vehic
     if (previous && previous.distance < toleranceMeters && distanceToArrival > previous.distance) {
       const closest = previous.state
       const insertionDeltaV = insertionDeltaVAt(closest)
-      const availableDeltaV = remainingDeltaV(vehicle, closest.massKg)
+      const availableDeltaV = remainingDeltaV(flying, closest.massKg)
       if (!bestInsertion || insertionDeltaV < bestInsertion.insertionDeltaV) {
         bestInsertion = { insertionDeltaV, availableDeltaV }
       }

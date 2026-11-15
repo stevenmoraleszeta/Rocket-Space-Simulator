@@ -1,10 +1,17 @@
 /**
  * Settings button (top-right corner) that opens a panel to change
- * the music volume, the ambient/effects volume and the player's name.
+ * the music volume, the ambient/effects volume and the player's name,
+ * and to sign in with Google.
  */
 import { useEffect, useId, useRef, useState } from 'react';
+import googleMark from '../assets/images/icons/google-g.png';
+import { googleSignInMessage, signInWithGoogle } from '../lib/playerSession.js';
 import { useSettings } from './SettingsContext.jsx';
-import { MAX_NAME_LENGTH } from './settingsStore.js';
+import { engineerName, MAX_NAME_LENGTH } from './settingsStore.js';
+
+function GoogleMark() {
+  return <img className="st-google__mark" src={googleMark} alt="" />;
+}
 
 function VolumeSlider({ label, icon, value, onChange }) {
   const id = useId();
@@ -31,13 +38,19 @@ function VolumeSlider({ label, icon, value, onChange }) {
   );
 }
 
-export function SettingsMenu() {
+export function SettingsMenu({ googleSignedIn = false }) {
   const { musicVolume, ambientVolume, playerName, update } = useSettings();
   const [open, setOpen] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const [authError, setAuthError] = useState('');
   const panelRef = useRef(null);
   const buttonRef = useRef(null);
   const nameRef = useRef(null);
   const nameId = useId();
+  const name = engineerName(playerName);
+  const needsName = !name;
+  const needsGoogle = !googleSignedIn;
+  const needsYou = needsName || needsGoogle;
 
   // Close with Esc or by clicking outside the panel
   useEffect(() => {
@@ -57,43 +70,97 @@ export function SettingsMenu() {
     };
   }, [open]);
 
+  async function onGoogleClick() {
+    setAuthError('');
+    setSigningIn(true);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      if (error?.code !== 'auth/popup-closed-by-user' && error?.code !== 'auth/cancelled-popup-request') {
+        setAuthError(googleSignInMessage(error));
+      }
+    } finally {
+      setSigningIn(false);
+    }
+  }
+
   return (
     <div className="st-root">
       <button
         ref={buttonRef}
-        className="st-toggle"
-        aria-label="Settings"
+        className={needsYou ? 'st-toggle is-needed' : 'st-toggle'}
+        aria-label={needsYou ? 'Settings. Add your name or sign in with Google.' : 'Settings'}
         aria-expanded={open}
         aria-controls="st-panel"
         onClick={() => setOpen((o) => !o)}
       >
         <span aria-hidden="true">⚙</span>
+        {needsYou && <span className="st-dot" title="Add your name or sign in with Google" />}
       </button>
 
       {open && (
         <div id="st-panel" ref={panelRef} className="st-panel" role="dialog" aria-label="Settings">
-          <h2 className="st-title">Settings</h2>
+          <h2 className="st-title">{name ? `Engineer ${name}` : 'Settings'}</h2>
+          {needsYou && (
+            <p className="st-note">
+              {needsName && needsGoogle && 'The red dot stays until you add your name and sign in with Google.'}
+              {needsName && !needsGoogle && 'The red dot stays until you add your name.'}
+              {!needsName && needsGoogle && 'The red dot stays until you sign in with Google.'}
+            </p>
+          )}
 
           <div className="st-field">
             <label className="st-label" htmlFor={nameId}>
               <span aria-hidden="true">🧑‍🚀</span> Your name
+              {needsName && <span className="st-dot" aria-hidden="true" />}
             </label>
             <input
               id={nameId}
               ref={nameRef}
               className="st-input"
               type="text"
-              placeholder="Astronaut"
+              placeholder="Type your name"
               autoComplete="nickname"
               maxLength={MAX_NAME_LENGTH}
               value={playerName}
               onChange={(e) => update({ playerName: e.target.value })}
               onKeyDown={(e) => { if (e.key === 'Enter') setOpen(false); }}
             />
+            <p className="st-hint">
+              {name ? `The game will call you engineer ${name}.` : 'Type your name so the game can talk to you.'}
+            </p>
+          </div>
+
+          <div className="st-field">
+            <p className="st-label">
+              <GoogleMark /> Save your stars
+              {needsGoogle && <span className="st-dot" aria-hidden="true" />}
+            </p>
+            {googleSignedIn ? (
+              <p className="st-signed" role="status">
+                <GoogleMark />
+                <span>Signed in with Google. Your stars stay with you.</span>
+              </p>
+            ) : (
+              <>
+                <p className="st-hint">Sign in so your name and stars are still here next time.</p>
+                <button
+                  type="button"
+                  className="ms-btn st-google"
+                  onClick={onGoogleClick}
+                  disabled={signingIn}
+                  aria-busy={signingIn}
+                >
+                  <GoogleMark />
+                  <span>{signingIn ? 'Opening Google…' : 'Sign in with Google'}</span>
+                </button>
+                {authError && <p className="st-error" role="alert">{authError}</p>}
+              </>
+            )}
           </div>
 
           <VolumeSlider label="Music" icon="🎵" value={musicVolume} onChange={(v) => update({ musicVolume: v })} />
-          <VolumeSlider label="Ambient & effects" icon="🔊" value={ambientVolume} onChange={(v) => update({ ambientVolume: v })} />
+          <VolumeSlider label="Sounds" icon="🔊" value={ambientVolume} onChange={(v) => update({ ambientVolume: v })} />
 
           <button className="ms-btn st-done" onClick={() => setOpen(false)}>Done</button>
         </div>

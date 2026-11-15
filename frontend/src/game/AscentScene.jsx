@@ -9,6 +9,7 @@ import { SPRITES } from '../levels';
 import { SFX, playSfx } from '../audio';
 import { PlanetHorizon } from './PlanetHorizon.jsx';
 import { Rocket } from './Rocket.jsx';
+import { outsideTemperatureCelsius, rocketSkinCelsius } from './lifeSupport.js';
 import './ascent.css';
 
 export const ASCENT_MS = 6000;
@@ -33,7 +34,29 @@ const CLOUDS = [
  * before it leaves the atmosphere (the parent ends the scene after that).
  */
 export function AscentScene({ equipped, hud, overheating = false }) {
+  const [progress, setProgress] = useState(0);
   const [exploded, setExploded] = useState(false);
+  // The climb is animated, so altitude and speed here follow the picture.
+  // The temperatures at that height are the real atmosphere and heating curves.
+  useEffect(() => {
+    const started = performance.now();
+    let frame = 0;
+    const tick = (now) => {
+      const next = Math.min(1, (now - started) / ASCENT_MS);
+      setProgress(next);
+      if (next < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  // Thick air is slow (about the speed of sound near 12 km). Speed climbs after the air thins.
+  const altitudeMeters = progress ** 1.35 * 140_000;
+  const speedMetersPerSecond = altitudeMeters < 20_000
+    ? 80 + (altitudeMeters / 20_000) * 500
+    : 580 + ((altitudeMeters - 20_000) / 120_000) * 6800;
+  const outside = Math.round(outsideTemperatureCelsius(altitudeMeters));
+  const skin = Math.round(rocketSkinCelsius(altitudeMeters, speedMetersPerSecond));
+  const cabin = overheating ? Math.min(80, Math.round(22 + progress * 70)) : 22;
   useEffect(() => {
     if (!overheating) return undefined;
     const timer = setTimeout(() => {
@@ -81,6 +104,9 @@ export function AscentScene({ equipped, hud, overheating = false }) {
         {hud}
         <p className="flight__status ascent__status">
           {overheating ? 'Too hot! There is no heat shield…' : 'Leaving the atmosphere…'}
+        </p>
+        <p className="flight__status ascent__status">
+          {`Outside ${outside}°C · Cabin ${cabin}°C · Rocket ${skin}°C`}
         </p>
       </div>
     </div>

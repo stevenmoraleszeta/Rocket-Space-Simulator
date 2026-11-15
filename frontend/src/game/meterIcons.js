@@ -5,6 +5,7 @@ import heat from '../assets/images/icons/heat.svg';
 import thrust from '../assets/images/icons/thrust.svg';
 import food from '../assets/images/icons/food.svg';
 import air from '../assets/images/icons/air.svg';
+import crew from '../assets/images/items/astronaut.svg';
 
 /** Pixel icon for each supply meter, keyed by the meter id from stats.js. */
-export const METER_ICONS = { budget, mass, energy, heat, thrust, food, air };
+export const METER_ICONS = { budget, mass, energy, heat, thrust, food, air, crew };
