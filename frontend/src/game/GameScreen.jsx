@@ -51,7 +51,7 @@ const SWAP_IN_MS = 1700;
  *                       (the orbit trajectory plays the liftoff itself, see LaunchSequence.jsx)
  *   initialEquipped     loadout to start with (keeps the parts when coming back to the hangar)
  */
-export function GameScreen({ mission, onExit, onRevise, onLaunch, initialEquipped }) {
+export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
   const playerName = engineerName(useSettings().playerName);
   const { completeMission } = useProgress();
   const loggedTrip = useRef(false);
@@ -345,9 +345,6 @@ export function GameScreen({ mission, onExit, onRevise, onLaunch, initialEquippe
             <BulbIcon />
             <span className="bulb__label">Story</span>
           </button>
-          {onRevise && (
-            <button type="button" className="game__back" onClick={onRevise}>Choices</button>
-          )}
         </div>
         <Meters meters={meters} />
         <div className="dock">
