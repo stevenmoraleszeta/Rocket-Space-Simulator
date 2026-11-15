@@ -156,9 +156,8 @@ function drawPlanets(ctx, view, images, day) {
 }
 
 /**
- * Hazards: before the launch only a colored dot and its danger zone (gray = rocket debris,
- * yellow = satellite); once launched, the satellite sprites show and debris looks like a tumbling
- * rocket stage.
+ * Hazards: before the launch only a blinking pixel light (drawBlinkingPixel); once launched,
+ * the satellite sprites show and debris looks like a tumbling rocket stage.
  */
 /**
  * Before the launch each hazard is a tiny blinking pixel light. Colors step through RGB, each one
