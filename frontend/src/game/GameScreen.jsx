@@ -12,6 +12,9 @@ import { METER_ICONS } from './meterIcons.js';
 import { PadClouds } from './PadClouds.jsx';
 import { PadFlag } from './PadFlag.jsx';
 import { PadCrew } from './PadCrew.jsx';
+import { LaikaStory, PadLaika } from './PadLaika.jsx';
+import { MissionChecklist } from './MissionChecklist.jsx';
+import { FunFactToast } from './FunFactToast.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
 import { LaunchSequence } from './LaunchSequence.jsx';
 import { flightNotes } from './flightSummary.js';
@@ -53,6 +56,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
   const [openPart, setOpenPart] = useState(null);
   const [partAnchor, setPartAnchor] = useState(null);
   const sidePopout = useWideScreen();
+  const [laikaTalking, setLaikaTalking] = useState(false);
   const [equipped, setEquipped] = useState(initialEquipped ?? EMPTY_LOADOUT);
   const [flightSeconds, setFlightSeconds] = useState(0);
   const [flightHeld, setFlightHeld] = useState(false);
@@ -282,9 +286,16 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
               <PadCrew />
             </div>
           </div>
+          <PadLaika talking={laikaTalking} onTalk={() => setLaikaTalking(true)} />
         </div>
       </div>
       {hud}
+      {/* Packing checklist: top left over the pad, clear of the supplies column on the right. */}
+      {!launching && (
+        <div className="game__checklist">
+          <MissionChecklist mission={mission} equipped={equipped} onOpenPart={(id, button) => { setOpenPart(id); setPartAnchor(button); }} />
+        </div>
+      )}
       <div className="bay" inert={launching}>
         <div className="pad-story">
           <button
@@ -360,6 +371,8 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       {storyOpen && (
         <Briefing mission={mission} onClose={() => setStoryOpen(false)} />
       )}
+      {laikaTalking && !launching && <LaikaStory onClose={() => setLaikaTalking(false)} />}
+      <FunFactToast paused={launching || storyOpen || laikaTalking} />
     </div>
   );
 }

@@ -1,0 +1,203 @@
+/* Laika on the launch pad, and her story bubble. */
+.pad-laika {
+  position: absolute;
+  z-index: 4;
+  aspect-ratio: 20 / 14;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+  cursor: pointer;
+  filter: drop-shadow(0 0.25rem 0 rgba(0, 0, 0, 0.3));
+}
+
+.pad-laika svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.pad-laika:focus-visible {
+  outline: 0.1875rem solid var(--ms-yellow);
+  outline-offset: 0.25rem;
+}
+
+.pad-laika__tail {
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+  animation: laika-wag 0.36s ease-in-out infinite alternate;
+}
+
+.pad-laika__body {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: laika-breathe 2.4s ease-in-out infinite;
+}
+
+.pad-laika__head {
+  transform-box: fill-box;
+  transform-origin: 20% 90%;
+  animation: laika-look 5s ease-in-out infinite;
+}
+
+.pad-laika:hover .pad-laika__head,
+.pad-laika.is-talking .pad-laika__head {
+  animation: laika-bark 0.5s ease-in-out infinite;
+}
+
+.pad-laika__bubble {
+  position: absolute;
+  left: 70%;
+  bottom: 100%;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.875rem;
+  color: #2a2000;
+  background: var(--ms-yellow);
+  box-shadow: 0.1875rem 0.1875rem 0 #05061a;
+  animation: laika-call 1.2s steps(2, end) infinite;
+}
+
+@keyframes laika-wag {
+  from { transform: rotate(-22deg); }
+  to { transform: rotate(18deg); }
+}
+
+@keyframes laika-breathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.05); }
+}
+
+@keyframes laika-look {
+  0%, 70%, 100% { transform: rotate(0); }
+  78%, 90% { transform: rotate(-10deg); }
+}
+
+@keyframes laika-bark {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-12deg) translateY(-0.5px); }
+}
+
+@keyframes laika-call {
+  50% { transform: translateY(-0.25rem); }
+}
+
+/* Story bubble: a comic card in the lower left, above the dog. */
+.laika-talk {
+  position: fixed;
+  z-index: 30;
+  left: 1rem;
+  bottom: 1rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.875rem;
+  width: min(32rem, calc(100vw - 2rem));
+  padding: 1rem 1.125rem 1rem 1rem;
+  color: #1a1d33;
+  font-family: var(--ms-font);
+  background: #fffaf0;
+  box-shadow: inset 0.1875rem 0.1875rem #ffffff, inset -0.1875rem -0.1875rem #d8cdb4, 0.375rem 0.375rem 0 #05061a;
+  animation: laika-talk-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.laika-talk__art {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 3rem;
+  background: #ffe9a8;
+  box-shadow: inset 0 0 0 0.1875rem #e2b84a;
+  animation: laika-art-pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.laika-talk .laika-talk__who {
+  margin: 0 0 0.25rem;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.5625rem;
+  color: #8a5a34;
+  text-transform: uppercase;
+}
+
+.laika-talk h2 {
+  margin: 0 0 0.375rem;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.laika-talk p {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.4;
+}
+
+.laika-talk__foot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.laika-talk__dots {
+  display: flex;
+  gap: 0.3125rem;
+  margin-right: auto;
+}
+
+.laika-talk__dots span {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #d8cdb4;
+}
+
+.laika-talk__dots span.is-on {
+  background: #8a5a34;
+}
+
+@keyframes laika-talk-in {
+  from { transform: translateY(2rem) scale(0.9); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes laika-art-pop {
+  from { transform: scale(0.5) rotate(-12deg); }
+  to { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pad-laika__tail,
+  .pad-laika__body,
+  .pad-laika__head,
+  .pad-laika__bubble,
+  .laika-talk,
+  .laika-talk__art {
+    animation: none;
+  }
+}
+
+/* Laika's story: a card in the middle of the screen. */
+.laika-shade {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(3, 6, 22, 0.55);
+  animation: laika-shade-in 0.25s ease-out both;
+}
+
+.laika-shade .laika-talk {
+  position: relative;
+  left: auto;
+  bottom: auto;
+}
+
+@keyframes laika-shade-in { from { opacity: 0; } to { opacity: 1; } }

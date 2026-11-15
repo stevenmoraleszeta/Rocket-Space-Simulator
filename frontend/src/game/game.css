@@ -2067,3 +2067,13 @@
   margin: 0 0 20px;
   color: var(--ms-muted, #b9c2ec);
 }
+
+/* The bay spans the whole screen under the HUD. Let clicks through its empty parts,
+   so Laika on the pad (PadLaika.jsx) can be tapped. */
+.game--pad .bay {
+  pointer-events: none;
+}
+
+.game--pad .bay > :not(.pad-story) {
+  pointer-events: auto;
+}

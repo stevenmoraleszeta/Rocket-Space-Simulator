@@ -148,3 +148,8 @@ export function playSfx(sound) {
     else start();
   }
 }
+
+/** Effects loudness (0..1) from the settings, for sounds built in code (synth.js). */
+export function effectsLoudness() {
+  return loudness(channels.ambient.volume);
+}
