@@ -148,11 +148,10 @@ export function launchFailure(equipped, mission) {
   if (report.cost > report.limits.budget) return LAUNCH_FAILURES.overBudget;
   if (report.massKg > report.limits.mass) return LAUNCH_FAILURES.tooHeavy;
   if (report.crew <= 0) return LAUNCH_FAILURES.noCrew;
-  if (report.crew < report.minCrew) {
+    if (report.crew < report.minCrew) {
     return {
       ...LAUNCH_FAILURES.fewCrew,
-      bubble: `We need ${report.minCrew} astronauts!`,
-      message: `This trip needs ${report.minCrew} astronauts, and only ${report.crew} got on board. Mission control called off the launch.`,
+      vars: { need: report.minCrew, have: report.crew },
     };
   }
   // Plants drink water: with none on board they cannot fly (mission 1 carries no water).

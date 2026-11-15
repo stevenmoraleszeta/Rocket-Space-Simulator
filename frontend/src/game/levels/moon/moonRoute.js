@@ -28,6 +28,8 @@
  * Space on the way to the Moon is almost empty.
  */
 
+import { t } from '../../../i18n/index.js'
+
 /** Pointing short of this never reaches the Moon. */
 export const POWER_SHORT = 0.82
 /** Reaches the Moon, but too slow to be captured. Extra fuel loosens this. */
@@ -326,25 +328,28 @@ const EXPLAIN = {
 export function describeTransit(prediction) {
   const found = EXPLAIN[prediction.outcome.type] ?? EXPLAIN[MOON_OUTCOMES.SHORT]
   if (prediction.outcome.type === MOON_OUTCOMES.ROCK && prediction.outcome.bodyName) {
-    return { tone: 'bad', text: `The road hits ${prediction.outcome.bodyName}. Stay nearer the middle.` }
+    return {
+      tone: 'bad',
+      text: t('The road hits {{name}}. Stay nearer the middle.', { name: t(prediction.outcome.bodyName) }),
+    }
   }
   if (prediction.outcome.type === MOON_OUTCOMES.OFF_CORRIDOR) {
     return {
       tone: 'warn',
       text: prediction.outcome.high
-        ? 'Too high. The ship misses the crater and flies past the limb.'
-        : 'Too low. The ship hits the ground outside the gate.',
+        ? t('Too high. The ship misses the crater and flies past the limb.')
+        : t('Too low. The ship hits the ground outside the gate.'),
     }
   }
   if (prediction.outcome.type === MOON_OUTCOMES.BAD_SPEED) {
     return {
       tone: 'warn',
       text: prediction.outcome.fast
-        ? 'Too fast at the gate. The lander cannot stop. Aim a little shorter.'
-        : 'Too slow at the gate. The Moon’s pull will not catch the ship. Aim a little closer.',
+        ? t('Too fast at the gate. The lander cannot stop. Aim a little shorter.')
+        : t('Too slow at the gate. The Moon’s pull will not catch the ship. Aim a little closer.'),
     }
   }
-  return found
+  return { ...found, text: t(found.text) }
 }
 
 /** Supply fraction for this window, or null when the stores last the whole coast. */

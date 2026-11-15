@@ -6,8 +6,10 @@
  */
 import { useEffect, useRef } from 'react'
 import { MISSIONS, Planet, StarRating } from '../../../levels'
+import { t } from '../../../i18n/index.js'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
+import { MissionReport } from '../../design/MissionReport.jsx'
 import { LaunchFact } from './LaunchFact.jsx'
 
 function nextMissionAfter(missionId) {
@@ -15,7 +17,7 @@ function nextMissionAfter(missionId) {
   return index >= 0 ? (MISSIONS[index + 1] ?? null) : null
 }
 
-export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain, lead }) {
+export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain, lead, design }) {
   const playerName = engineerName(useSettings().playerName)
   const nextMission = nextMissionAfter(mission.id)
   const continueRef = useRef(null)
@@ -33,12 +35,12 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
       </div>
 
       <div className="mission-complete__card">
-        <p className="mission-complete__kicker">Mission {mission.number} · {mission.title}</p>
+        <p className="mission-complete__kicker">{t('Mission {{number}} · {{place}}', { number: mission.number, place: t(mission.title) })}</p>
         <h2 id="mission-complete-title" className="mission-complete__title">
-          {playerName ? sayTo(playerName, 'You did it!') : 'You did it!'}
+          {playerName ? sayTo(playerName, t('You did it!')) : t('You did it!')}
         </h2>
         <p className="mission-complete__lead">
-          {sayTo(playerName, lead ?? 'Your satellite is flying around the Earth.')}
+          {sayTo(playerName, lead ?? t('Your satellite is flying around the Earth.'))}
         </p>
 
         <div className="mission-complete__stars">
@@ -46,12 +48,14 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
         </div>
 
         <dl className="orbit-stats mission-complete__stats">
-          <div><dt>Score</dt><dd>{result.pct}%</dd></div>
-          {Number.isFinite(result.outcome?.missKm) && (
-            <div><dt>Off target</dt><dd>{Math.round(result.outcome.missKm)} km</dd></div>
+          <div><dt>{t('Score')}</dt><dd>{result.pct}%</dd></div>
+          {!design && Number.isFinite(result.outcome?.missKm) && (
+            <div><dt>{t('Off target')}</dt><dd>{Math.round(result.outcome.missKm)} km</dd></div>
           )}
-          {directionDeg != null && <div><dt>Your direction</dt><dd>{directionDeg}°</dd></div>}
+          {!design && directionDeg != null && <div><dt>{t('Your direction')}</dt><dd>{directionDeg}°</dd></div>}
         </dl>
+
+        <MissionReport design={design} success={result.success} />
 
         <LaunchFact result={result} className="mission-complete__fact" />
 
@@ -59,22 +63,22 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
           <div className="mission-complete__unlock">
             <Planet planet={nextMission.planet} size={72} />
             <div>
-              <p className="mission-complete__unlock-label">Next level unlocked!</p>
+              <p className="mission-complete__unlock-label">{t('Next level unlocked!')}</p>
               <p className="mission-complete__unlock-name">
-                Mission {nextMission.number} · {nextMission.title}
+                {t('Mission {{number}} · {{place}}', { number: nextMission.number, place: t(nextMission.title) })}
               </p>
             </div>
           </div>
         ) : (
           <p className="mission-complete__unlock-label">
-            {playerName ? sayTo(playerName, 'You finished every mission!') : 'You finished every mission!'}
+            {playerName ? sayTo(playerName, t('You finished every mission!')) : t('You finished every mission!')}
           </p>
         )}
 
         <div className="mission-complete__actions">
-          <button type="button" className="game__back" onClick={onFlyAgain}>Fly again</button>
+          <button type="button" className="game__back" onClick={onFlyAgain}>{t('Fly again')}</button>
           <button ref={continueRef} type="button" className="ms-btn" onClick={onContinue}>
-            {nextMission ? 'Next mission' : 'Missions'}
+            {nextMission ? t('Next mission') : t('Missions')}
           </button>
         </div>
       </div>

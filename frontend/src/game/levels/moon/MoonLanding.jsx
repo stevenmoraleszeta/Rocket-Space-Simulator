@@ -8,6 +8,7 @@
  * After touchdown, "Try again" starts the landing over with a full tank.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { t } from '../../../i18n/index.js'
 import { SYNTH, playSynth } from '../../../audio'
 
 const GRAVITY = 1.62
@@ -18,12 +19,25 @@ const FUEL_SECONDS = 16
 const SOFT_SPEED = 2.5
 const HARD_SPEED = 5
 
-/** How the touchdown went, and what it does to the mission. */
+export function landingCopy(outcome) {
+  if (!outcome) return { title: t('Land the lunar lander'), note: '' }
+  if (outcome.id === 'auto') {
+    return { title: t('The computer landed it'), note: t('Autopilot landed the lander. A safe, slow touchdown.') }
+  }
+  const speed = outcome.speed != null ? Number(outcome.speed).toFixed(1) : '0.0'
+  if (outcome.id === 'soft') {
+    return { title: t('Soft landing!'), note: t('Touchdown at {{speed}} m/s. Perfect! The crew plants the flag. Science +5%.', { speed }) }
+  }
+  if (outcome.id === 'hard') {
+    return { title: t('Bumpy landing'), note: t('Touchdown at {{speed}} m/s. A leg bent, but the crew is fine. Science −8%.', { speed }) }
+  }
+  return { title: t('Crash landing!'), note: t('Hit the ground at {{speed}} m/s. The crew escaped with the top half of the lander, but tools broke. Science −20%.', { speed }) }
+}
 function landingOutcome(speed, auto = false) {
-  if (auto) return { id: 'auto', title: 'The computer landed it', note: 'Autopilot landed the lander. A safe, slow touchdown.', scienceFactor: 1, dataLoss: 0 }
-  if (speed <= SOFT_SPEED) return { id: 'soft', title: 'Soft landing!', note: `Touchdown at ${speed.toFixed(1)} m/s. Perfect! The crew plants the flag. Science +5%.`, scienceFactor: 1.05, dataLoss: 0 }
-  if (speed <= HARD_SPEED) return { id: 'hard', title: 'Bumpy landing', note: `Touchdown at ${speed.toFixed(1)} m/s. A leg bent, but the crew is fine. Science −8%.`, scienceFactor: 0.92, dataLoss: 0 }
-  return { id: 'crash', title: 'Crash landing!', note: `Hit the ground at ${speed.toFixed(1)} m/s. The crew escaped with the top half of the lander, but tools broke. Science −20%.`, scienceFactor: 0.8, dataLoss: 10 }
+  if (auto) return { id: 'auto', speed: 0, title: 'The computer landed it', note: 'Autopilot landed the lander. A safe, slow touchdown.', scienceFactor: 1, dataLoss: 0 }
+  if (speed <= SOFT_SPEED) return { id: 'soft', speed, title: 'Soft landing!', note: `Touchdown at ${speed.toFixed(1)} m/s. Perfect! The crew plants the flag. Science +5%.`, scienceFactor: 1.05, dataLoss: 0 }
+  if (speed <= HARD_SPEED) return { id: 'hard', speed, title: 'Bumpy landing', note: `Touchdown at ${speed.toFixed(1)} m/s. A leg bent, but the crew is fine. Science −8%.`, scienceFactor: 0.92, dataLoss: 0 }
+  return { id: 'crash', speed, title: 'Crash landing!', note: `Hit the ground at ${speed.toFixed(1)} m/s. The crew escaped with the top half of the lander, but tools broke. Science −20%.`, scienceFactor: 0.8, dataLoss: 10 }
 }
 
 /** One physics step (seconds), so the autopilot and the player share the same rules. */
@@ -138,8 +152,8 @@ export function MoonLanding({ onDone }) {
   return (
     <div className="moon-event-shade">
       <section className="moon-landing moon-panel" role="dialog" aria-modal="true" aria-labelledby="moon-landing-title">
-        <p className="moon-kicker">Landing</p>
-        <h2 id="moon-landing-title">{outcome ? outcome.title : 'Land the lunar lander'}</h2>
+        <p className="moon-kicker">{t('Landing')}</p>
+        <h2 id="moon-landing-title">{landingCopy(outcome).title}</h2>
         <div
           className={`moon-landing__scene is-${outcome?.id ?? phase}`}
           onPointerDown={(event) => { event.preventDefault(); if (!auto && phase !== 'landed') press(true) }}
@@ -167,25 +181,25 @@ export function MoonLanding({ onDone }) {
         </div>
 
         <dl className="moon-landing__gauges">
-          <div><dt>Height</dt><dd>{state.height.toFixed(0)} m</dd></div>
-          <div className={`is-${tone}`}><dt>Falling</dt><dd>{Math.max(0, falling).toFixed(1)} m/s</dd></div>
+          <div><dt>{t('Height')}</dt><dd>{state.height.toFixed(0)} m</dd></div>
+          <div className={`is-${tone}`}><dt>{t('Falling')}</dt><dd>{Math.max(0, falling).toFixed(1)} m/s</dd></div>
           <div>
-            <dt>Fuel</dt>
+            <dt>{t('Fuel')}</dt>
             <dd><span className="moon-landing__fuel"><span style={{ width: `${(state.fuel / FUEL_SECONDS) * 100}%` }} /></span></dd>
           </div>
         </dl>
 
         {outcome ? (
           <>
-            <p className="moon-event__result" aria-live="polite">{outcome.note}</p>
+            <p className="moon-event__result" aria-live="polite">{landingCopy(outcome).note}</p>
             <div className="moon-landing__actions moon-landing__actions--done">
-              <button type="button" className="moon-button" onClick={tryAgain}>↺ Try again</button>
-              <button type="button" className="moon-button moon-button--primary" onClick={() => onDone(outcome)}>Start mapping</button>
+              <button type="button" className="moon-button" onClick={tryAgain}>{t('↺ Try again')}</button>
+              <button type="button" className="moon-button moon-button--primary" onClick={() => onDone(outcome)}>{t('Start mapping')}</button>
             </div>
           </>
         ) : (
           <>
-            <p className="moon-landing__how">Hold the engine button to slow down. Touch the ground slower than <b>{SOFT_SPEED} m/s</b> (green).</p>
+            <p className="moon-landing__how">{t('Hold the engine button to slow down. Touch the ground slower than {{speed}} m/s (green).', { speed: SOFT_SPEED })}</p>
             <div className="moon-landing__actions">
               <button
                 type="button"
@@ -195,9 +209,9 @@ export function MoonLanding({ onDone }) {
                 onPointerUp={() => press(false)}
                 onPointerLeave={() => press(false)}
               >
-                🔥 Hold to fire engine
+                🔥 {t('Hold to fire engine')}
               </button>
-              <button type="button" className="moon-button" disabled={auto || phase !== 'ready'} onClick={useAutopilot}>🤖 Autopilot</button>
+              <button type="button" className="moon-button" disabled={auto || phase !== 'ready'} onClick={useAutopilot}>{t('Autopilot')}</button>
             </div>
           </>
         )}

@@ -2,15 +2,41 @@
  * Settings button that opens a panel to change the music volume,
  * the ambient/effects volume and the player's name, and to sign in with Google.
  */
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import googleMark from '../assets/images/icons/google-g.png';
 import settingsIcon from '../assets/images/icons/settings.svg';
-import { googleSignInMessage, signInWithGoogle } from '../lib/playerSession.js';
+import { loadGoogleSignIn, renderGoogleButton } from '../lib/googleSignIn.js';
+import { googleSignInMessage } from '../lib/playerSession.js';
+import { LANGUAGES, t } from '../i18n/index.js';
 import { useSettings } from './SettingsContext.jsx';
 import { engineerName, MAX_NAME_LENGTH } from './settingsStore.js';
 
 function GoogleMark() {
   return <img className="st-google__mark" src={googleMark} alt="" />;
+}
+
+function GoogleSignInButton({ onError }) {
+  const hostRef = useRef(null);
+
+  useEffect(() => {
+    let active = true;
+    const host = hostRef.current;
+    loadGoogleSignIn()
+      .then(() => {
+        requestAnimationFrame(() => {
+          if (active && host) renderGoogleButton(host);
+        });
+      })
+      .catch((error) => {
+        if (active) onError(googleSignInMessage(error));
+      });
+    return () => {
+      active = false;
+      host?.replaceChildren();
+    };
+  }, [onError]);
+
+  return <div ref={hostRef} className="st-google-host" />;
 }
 
 function VolumeSlider({ label, value, onChange }) {
@@ -38,10 +64,10 @@ function VolumeSlider({ label, value, onChange }) {
 }
 
 export function SettingsMenu({ googleSignedIn = false, authError: redirectError = '' }) {
-  const { musicVolume, ambientVolume, playerName, update } = useSettings();
+  const { musicVolume, ambientVolume, playerName, language, update } = useSettings();
   const [open, setOpen] = useState(false);
-  const [signingIn, setSigningIn] = useState(false);
   const [authError, setAuthError] = useState('');
+  const onGoogleError = useCallback((message) => setAuthError(message), []);
   const panelRef = useRef(null);
   const buttonRef = useRef(null);
   const nameRef = useRef(null);
@@ -69,50 +95,53 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
     };
   }, [open]);
 
-  async function onGoogleClick() {
-    setAuthError('');
-    setSigningIn(true);
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      if (error?.code !== 'auth/popup-closed-by-user' && error?.code !== 'auth/cancelled-popup-request') {
-        setAuthError(googleSignInMessage(error));
-      }
-    } finally {
-      setSigningIn(false);
-    }
-  }
-
   return (
     <div className="st-root">
       <button
         ref={buttonRef}
         type="button"
         className={`ms-btn ms-btn--ghost ms-btn--icon st-toggle${needsYou ? ' is-needed' : ''}`}
-        aria-label={needsYou ? 'Settings. Add your name or sign in with Google.' : 'Settings'}
+        aria-label={needsYou ? t('Settings. Add your name or sign in with Google.') : t('Settings')}
         aria-expanded={open}
         aria-controls="st-panel"
         onClick={() => setOpen((o) => !o)}
       >
         <img className="ms-pixel" src={settingsIcon} alt="" width={28} height={28} draggable="false" />
-        Settings
-        {needsYou && <span className="st-dot" title="Add your name or sign in with Google" />}
+        {t('Settings')}
+        {needsYou && <span className="st-dot" title={t('Add your name or sign in with Google')} />}
       </button>
 
       {open && (
-        <div id="st-panel" ref={panelRef} className="st-panel" role="dialog" aria-label="Settings">
-          <h2 className="st-title">{name ? `Engineer ${name}` : 'Settings'}</h2>
+        <div id="st-panel" ref={panelRef} className="st-panel" role="dialog" aria-label={t('Settings')}>
+          <h2 className="st-title">{name ? t('Engineer {{name}}', { name }) : t('Settings')}</h2>
           {needsYou && (
             <p className="st-note">
-              {needsName && needsGoogle && 'The red dot stays until you add your name and sign in with Google.'}
-              {needsName && !needsGoogle && 'The red dot stays until you add your name.'}
-              {!needsName && needsGoogle && 'The red dot stays until you sign in with Google.'}
+              {needsName && needsGoogle && t('The red dot stays until you add your name and sign in with Google.')}
+              {needsName && !needsGoogle && t('The red dot stays until you add your name.')}
+              {!needsName && needsGoogle && t('The red dot stays until you sign in with Google.')}
             </p>
           )}
 
           <div className="st-field">
+            <p className="st-label" id="st-language">{t('Language')}</p>
+            <div className="st-lang" role="group" aria-labelledby="st-language">
+              {LANGUAGES.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`ms-btn${language === item.id ? ' is-on' : ''}`}
+                  aria-pressed={language === item.id}
+                  onClick={() => update({ language: item.id })}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="st-field">
             <label className="st-label" htmlFor={nameId}>
-              Your name
+              {t('Your name')}
               {needsName && <span className="st-dot" aria-hidden="true" />}
             </label>
             <input
@@ -120,7 +149,7 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
               ref={nameRef}
               className="st-input"
               type="text"
-              placeholder="Type your name"
+              placeholder={t('Type your name')}
               autoComplete="nickname"
               maxLength={MAX_NAME_LENGTH}
               value={playerName}
@@ -128,7 +157,7 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
               onKeyDown={(e) => { if (e.key === 'Enter') setOpen(false); }}
             />
             <p className="st-hint">
-              {name ? `The game will call you engineer ${name}.` : 'Type your name so the game can talk to you.'}
+              {name ? t('The game will call you engineer {{name}}.', { name }) : t('Type your name so the game can talk to you.')}
             </p>
           </div>
 
@@ -136,35 +165,26 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
             {googleSignedIn ? (
               <p className="st-signed" role="status">
                 <GoogleMark />
-                <span>Signed in with Google. Your stars stay with you.</span>
+                <span>{t('Signed in with Google. Your stars stay with you.')}</span>
               </p>
             ) : (
               <>
                 <p className="st-label">
-                  <GoogleMark /> Save your stars
+                  <GoogleMark /> {t('Save your stars')}
                   <span className="st-dot" aria-hidden="true" />
                 </p>
-                <p className="st-hint">Sign in so your name and stars are still here next time.</p>
-                <button
-                  type="button"
-                  className="ms-btn st-google"
-                  onClick={onGoogleClick}
-                  disabled={signingIn}
-                  aria-busy={signingIn}
-                >
-                  <GoogleMark />
-                  <span>{signingIn ? 'Opening Google…' : 'Sign in with Google'}</span>
-                </button>
-                {(authError || redirectError) && <p className="st-error" role="alert">{authError || redirectError}</p>}
-                <p className="st-hint">Google opens on this page so you can finish the sign-in, then the game comes back.</p>
+                <p className="st-hint">{t('Sign in so your name and stars are still here next time.')}</p>
+                <GoogleSignInButton onError={onGoogleError} />
+                {(authError || redirectError) && <p className="st-error" role="alert">{t(authError || redirectError)}</p>}
+                <p className="st-hint">{t('Choose your Google account here. A passkey or password can finish, and your stars stay with you.')}</p>
               </>
             )}
           </div>
 
-          <VolumeSlider label="Music" value={musicVolume} onChange={(v) => update({ musicVolume: v })} />
-          <VolumeSlider label="Sounds" value={ambientVolume} onChange={(v) => update({ ambientVolume: v })} />
+          <VolumeSlider label={t('Music')} value={musicVolume} onChange={(v) => update({ musicVolume: v })} />
+          <VolumeSlider label={t('Sounds')} value={ambientVolume} onChange={(v) => update({ ambientVolume: v })} />
 
-          <button className="ms-btn st-done" onClick={() => setOpen(false)}>Done</button>
+          <button className="ms-btn st-done" onClick={() => setOpen(false)}>{t('Done')}</button>
         </div>
       )}
     </div>

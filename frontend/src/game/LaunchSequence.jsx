@@ -17,7 +17,8 @@ import { PadClouds } from './PadClouds.jsx';
 import { PadFlag } from './PadFlag.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
-import { Rocket } from './Rocket.jsx';
+import { failureBubble, failureMessage } from '../i18n/text.js';
+import { t } from '../i18n/index.js';
 import './game.css';
 
 export const LIFTOFF_MS = 3600;
@@ -87,7 +88,7 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
         hud={hud}
         overheating={failure?.at === 'ascent'}
         fallingBack={failure?.at === 'climb'}
-        failureMessage={failure?.message}
+        failureMessage={failure ? failureMessage(failure) : null}
       />
     );
   }
@@ -112,21 +113,21 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
                 exploding={phase === 'padExplosion'}
                 turningBack={phase === 'turnBack'}
               />
-              <PadCrew scrub={phase === 'scrubbed'} bubble={failure?.bubble} />
+              <PadCrew scrub={phase === 'scrubbed'} bubble={failure ? failureBubble(failure) || undefined : undefined} />
             </div>
           </div>
         </div>
       </div>
       {(phase === 'turnBack' || phase === 'landedBack') && failure && (
         <div className="launch-callback" role="alert">
-          <p className="launch-callback__title">{phase === 'turnBack' ? 'Come back!' : 'Back on the ground'}</p>
-          <p className="launch-callback__text">{failure.message}</p>
+          <p className="launch-callback__title">{phase === 'turnBack' ? t('Come back!') : t('Back on the ground')}</p>
+          <p className="launch-callback__text">{failureMessage(failure)}</p>
         </div>
       )}
       {phase === 'padExplosion' && failure && (
         <div className="launch-boom" role="alert">
-          <p className="launch-boom__title">Boom!</p>
-          <p className="launch-boom__text">{failure.message}</p>
+          <p className="launch-boom__title">{t('Boom!')}</p>
+          <p className="launch-boom__text">{failureMessage(failure)}</p>
         </div>
       )}
       {hud}

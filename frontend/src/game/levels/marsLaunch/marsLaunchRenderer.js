@@ -3,6 +3,7 @@
  * the hazards on the road, the dotted path and the rocket. Sizes are not to scale (planets and
  * hazards are drawn big so they can be seen); distances from the Sun are.
  */
+import { t } from '../../../i18n/index.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import {
   ANGLE_WINDOW,
@@ -19,9 +20,12 @@ import {
 
 /** Mars's orbit uses this fraction of half the smaller side of the canvas. */
 const MAP_FILL = 0.86
-/** Drag this far (fraction of the smaller side) for full power. */
-const AIM_MAX_VIEW_FRACTION = 0.42
-const PLANET_PIXELS = { earth: 34, mars: 28, sun: 46 }
+// Whole multiples of the 32-block pictures, so every block is the same size on screen.
+const PLANET_PIXELS = { earth: 32, mars: 32, sun: 96 }
+/** Size of the animated Sun picture: 96 px makes each 8-unit block exactly 3 px. */
+export const SUN_PIXELS = PLANET_PIXELS.sun
+/** The planet pictures (32 × 32 blocks) leave 2 blocks of halo on each side: the body is 28/32 of the size. */
+const PLANET_BODY_FRACTION = 28 / 32
 const ROCKET_PIXELS = 30
 const HAZARD_PIXELS = 18
 const EXPLOSION = { frameSize: 32, frames: 8, fps: 10, pixels: 96 }
@@ -33,7 +37,6 @@ const COLORS = {
   marsOrbit: 'rgba(255, 120, 80, 0.4)',
   debris: '#c9d1dc',
   satellite: '#ffe81f',
-  danger: 'rgba(255, 93, 115, 0.32)',
   pathGood: '#3ddc97',
   pathMiss: '#ffd23f',
   pathCrash: '#ff5d73',
@@ -49,7 +52,6 @@ export function createMarsView(width, height) {
     centerX: width / 2,
     centerY: height / 2,
     pixelsPerAu: (smallerSide / 2 / MARS_ORBIT_AU) * MAP_FILL,
-    aimMaxPixels: smallerSide * AIM_MAX_VIEW_FRACTION,
   }
 }
 
@@ -65,7 +67,7 @@ export function baseScreenPosition(view, site, day = 0) {
   const earthWorld = earthPosition(day)
   const earth = toScreen(view, earthWorld.x, earthWorld.y)
   const angle = ((site?.longitudeDeg ?? 0) * Math.PI) / 180
-  const rim = PLANET_PIXELS.earth / 2
+  const rim = (PLANET_PIXELS.earth / 2) * PLANET_BODY_FRACTION
   return { x: earth.x + Math.cos(angle) * rim, y: earth.y - Math.sin(angle) * rim }
 }
 
@@ -80,26 +82,14 @@ export function pathScreenPoint(view, sample, site) {
   const earth = toScreen(view, earthWorld.x, earthWorld.y)
   const base = baseScreenPosition(view, site, 0)
   const pull = 1 - sample.day / BASE_BLEND_DAYS
-  return { x: point.x + (base.x - earth.x) * pull, y: point.y + (base.y - earth.y) * pull }
-}
-
-/** Direction (degrees, counterclockwise from the right) and power from the launch base to the pointer. */
-export function aimFromPointer(view, pointerX, pointerY, site) {
-  const base = baseScreenPosition(view, site)
-  const dx = pointerX - base.x
-  const dy = base.y - pointerY
+  const moved = { x: point.x + (base.x - earth.x) * pull, y: point.y + (base.y - earth.y) * pull }
+  // Never through the planet: while it is still close, the path follows the edge of the Earth.
+  const dx = moved.x - earth.x
+  const dy = moved.y - earth.y
   const distance = Math.hypot(dx, dy)
-  if (distance < 6) return null
-  const angleDeg = (((Math.atan2(dy, dx) * 180) / Math.PI) % 360 + 360) % 360
-  return { angleDeg, power: Math.min(1, Math.max(0.2, distance / view.aimMaxPixels)) }
-}
-
-/** Screen point the pointer would be at for an aim (to draw the aim line from the base). */
-export function aimScreenPoint(view, aim, site) {
-  const base = baseScreenPosition(view, site)
-  const angle = (aim.angleDeg * Math.PI) / 180
-  const length = aim.power * view.aimMaxPixels
-  return { x: base.x + Math.cos(angle) * length, y: base.y - Math.sin(angle) * length }
+  const edge = (PLANET_PIXELS.earth / 2) * PLANET_BODY_FRACTION
+  if (distance >= edge || distance === 0) return moved
+  return { x: earth.x + (dx / distance) * edge, y: earth.y + (dy / distance) * edge }
 }
 
 function circle(ctx, x, y, radius, fill) {
@@ -120,33 +110,57 @@ function dottedRing(ctx, view, radiusAu, color) {
 }
 
 function label(ctx, text, x, y, color = COLORS.label, align = 'center', size = 13) {
+  const shown = t(text)
   ctx.font = `700 ${size}px "Pixelify Sans", monospace`
   ctx.textAlign = align
   ctx.textBaseline = 'middle'
   ctx.lineWidth = 4
   ctx.strokeStyle = 'rgba(5, 6, 26, 0.9)'
-  ctx.strokeText(text, x, y)
+  ctx.strokeText(shown, x, y)
   ctx.fillStyle = color
-  ctx.fillText(text, x, y)
+  ctx.fillText(shown, x, y)
+}
+
+/**
+ * Pixel pictures are painted once at their own grid size (one block = one pixel) and then
+ * enlarged with smoothing off. Drawing the SVG straight at a bigger size leaves thin lines
+ * between the blocks.
+ */
+const PIXEL_GRID = 32
+const pixelCache = new WeakMap()
+function pixelArt(image) {
+  if (!image?.complete || !(image.naturalWidth > 0)) return null
+  let canvas = pixelCache.get(image)
+  if (!canvas) {
+    canvas = document.createElement('canvas')
+    canvas.width = PIXEL_GRID
+    canvas.height = PIXEL_GRID
+    const g = canvas.getContext('2d')
+    g.imageSmoothingEnabled = false
+    g.drawImage(image, 0, 0, PIXEL_GRID, PIXEL_GRID)
+    pixelCache.set(image, canvas)
+  }
+  return canvas
 }
 
 function drawImageCentered(ctx, image, x, y, size) {
-  if (image?.complete && image.naturalWidth > 0) {
-    ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - size / 2), size, size)
-    return true
-  }
-  return false
+  const picture = pixelArt(image)
+  if (!picture) return false
+  ctx.imageSmoothingEnabled = false
+  ctx.drawImage(picture, Math.round(x - size / 2), Math.round(y - size / 2), size, size)
+  return true
 }
 
 function drawPlanets(ctx, view, images, day) {
   const sun = { x: view.centerX, y: view.centerY }
-  circle(ctx, sun.x, sun.y, PLANET_PIXELS.sun * 0.75, 'rgba(255, 200, 60, 0.18)')
-  if (!drawImageCentered(ctx, images.sun, sun.x, sun.y, PLANET_PIXELS.sun)) circle(ctx, sun.x, sun.y, PLANET_PIXELS.sun / 2, '#ffd23f')
+  // The Sun itself is Deykell's animated picture, shown as an <img> under the canvas
+  // (MarsLaunchLevel.jsx) so its float, glow and rays keep moving. Only its name is drawn here.
   label(ctx, 'Sun', sun.x, sun.y + PLANET_PIXELS.sun / 2 + 12, '#ffe8a3')
 
   const earthWorld = earthPosition(day)
   const earth = toScreen(view, earthWorld.x, earthWorld.y)
-  if (!drawImageCentered(ctx, images.earth, earth.x, earth.y, PLANET_PIXELS.earth)) circle(ctx, earth.x, earth.y, PLANET_PIXELS.earth / 2, '#2f8fe6')
+  // The same Earth as the mission menu (levels/assets/earth.svg).
+  if (!drawImageCentered(ctx, images.menuEarth, earth.x, earth.y, PLANET_PIXELS.earth)) circle(ctx, earth.x, earth.y, PLANET_PIXELS.earth / 2, '#2f8fe6')
   label(ctx, 'Earth', earth.x, earth.y + PLANET_PIXELS.earth / 2 + 12, '#9fdcff')
 
   const marsWorld = marsPosition(day)
@@ -156,39 +170,123 @@ function drawPlanets(ctx, view, images, day) {
 }
 
 /**
- * Hazards: before the launch only a colored dot and its danger zone (gray = rocket debris,
- * yellow = satellite); once launched, the satellite sprites show and debris looks like a tumbling
- * rocket stage.
+ * Hazards: before the launch only a pixel light (drawPixelLight); once launched,
+ * the satellite sprites show and debris looks like a tumbling rocket stage.
  */
-function drawHazards(ctx, view, images, day, launched, clockSeconds) {
-  for (const hazard of MARS_HAZARDS) {
-    const world = hazardPosition(hazard, day)
-    const spot = toScreen(view, world.x, world.y)
-    circle(ctx, spot.x, spot.y, hazard.dangerAu * view.pixelsPerAu, COLORS.danger)
-    const color = hazard.kind === 'debris' ? COLORS.debris : COLORS.satellite
-    if (!launched) {
-      ctx.save()
-      ctx.shadowColor = color
-      ctx.shadowBlur = 10
-      circle(ctx, spot.x, spot.y, 5, color)
-      ctx.restore()
-      continue
+/**
+ * Before the launch each hazard is a small pixel light: all the same size, a 4 × 4 grid of equal
+ * pixels with the corners cut off, always on, its color stepping red, green, blue (softened, not at
+ * full saturation). The middle pixels are solid; the edge pixels are see-through, like a glow.
+ * Each light starts on a different color so they do not all match.
+ */
+const PIXEL_LIGHT_COLORS = ['#e8706b', '#6fd68a', '#6f95e8']
+const PIXEL_LIGHT_PIXEL = 3
+/** See-through amount of the edge pixels (the middle 2 × 2 is solid). */
+const PIXEL_LIGHT_EDGE_ALPHA = 0.45
+const PIXEL_LIGHT_GRID = 4
+const PIXEL_LIGHT_STEP_SECONDS = 0.5
+const PIXEL_LIGHT_CELLS = (() => {
+  const cells = []
+  const last = PIXEL_LIGHT_GRID - 1
+  for (let y = 0; y < PIXEL_LIGHT_GRID; y += 1) {
+    for (let x = 0; x < PIXEL_LIGHT_GRID; x += 1) {
+      const corner = (x === 0 || x === last) && (y === 0 || y === last)
+      if (!corner) cells.push([x, y])
     }
-    if (hazard.kind === 'satellite' && images.satellite?.complete && images.satellite.naturalWidth > 0) {
-      drawImageCentered(ctx, images.satellite, spot.x, spot.y, HAZARD_PIXELS + 6)
-    } else {
-      // Tumbling old rocket stage: a gray body with a dark nozzle, slowly turning.
-      ctx.save()
-      ctx.translate(spot.x, spot.y)
-      ctx.rotate(clockSeconds * 0.8 + hazard.startDeg)
-      ctx.fillStyle = color
-      ctx.fillRect(-4, -HAZARD_PIXELS / 2, 8, HAZARD_PIXELS - 4)
-      ctx.fillStyle = '#5c6772'
-      ctx.fillRect(-5, HAZARD_PIXELS / 2 - 5, 10, 4)
-      ctx.restore()
-    }
-    label(ctx, hazard.name, spot.x, spot.y - HAZARD_PIXELS, color, 'center', 12)
   }
+  return cells
+})()
+
+function drawPixelLight(ctx, spot, index, clockSeconds) {
+  const color = PIXEL_LIGHT_COLORS[(Math.floor(clockSeconds / PIXEL_LIGHT_STEP_SECONDS) + index) % PIXEL_LIGHT_COLORS.length]
+  const size = PIXEL_LIGHT_PIXEL
+  const half = (PIXEL_LIGHT_GRID * size) / 2
+  // Snap to the pixel grid so every square stays crisp.
+  const left = Math.round((spot.x - half) / size) * size
+  const top = Math.round((spot.y - half) / size) * size
+  ctx.fillStyle = color
+  const last = PIXEL_LIGHT_GRID - 1
+  for (const [x, y] of PIXEL_LIGHT_CELLS) {
+    const edge = x === 0 || y === 0 || x === last || y === last
+    ctx.globalAlpha = edge ? PIXEL_LIGHT_EDGE_ALPHA : 1
+    ctx.fillRect(left + x * size, top + y * size, size, size)
+  }
+  ctx.globalAlpha = 1
+}
+
+/**
+ * Little pixel-art hand that taps one hazard light when the aiming map opens, to show the lights
+ * can be tapped. It pulses a tiny bit (grows and shrinks) for TAP_HINT_SECONDS, then it is gone.
+ * '#' outline, 'w' glove; the fingertip is the top of column 4.
+ */
+const TAP_HINT_SECONDS = 3
+const TAP_HINT_PIXEL = 2
+const TAP_HINT_HAND = [
+  '....##......',
+  '...#ww#.....',
+  '...#ww#.....',
+  '...#ww###...',
+  '...#ww#ww##.',
+  '.###ww#ww#w#',
+  '#ww#wwwwwww#',
+  '#wwwwwwwwww#',
+  '.#wwwwwwwww#',
+  '..#wwwwwww#.',
+  '...#wwwwww#.',
+  '...########.',
+]
+const TAP_HINT_COLORS = { '#': '#1c1e22', w: '#ffffff' }
+const TAP_HINT_FINGERTIP_COLUMN = 4.5
+
+function drawTapHint(ctx, view, hint, day, clockSeconds) {
+  const elapsed = clockSeconds - hint.startedAt
+  if (elapsed < 0 || elapsed > TAP_HINT_SECONDS) return
+  const hazard = MARS_HAZARDS[hint.hazardIndex]
+  if (!hazard) return
+  const world = hazardPosition(hazard, day)
+  const light = toScreen(view, world.x, world.y)
+  // Grows and shrinks a little, a few times in the 3 seconds.
+  const pixel = TAP_HINT_PIXEL * (1 + 0.08 * Math.sin(elapsed * Math.PI * 2 * 1.6))
+  // The fingertip sits just under the light.
+  const left = light.x - TAP_HINT_FINGERTIP_COLUMN * pixel
+  const top = light.y + 8
+  for (let row = 0; row < TAP_HINT_HAND.length; row += 1) {
+    const line = TAP_HINT_HAND[row]
+    for (let column = 0; column < line.length; column += 1) {
+      const color = TAP_HINT_COLORS[line[column]]
+      if (!color) continue
+      ctx.fillStyle = color
+      ctx.fillRect(left + column * pixel, top + row * pixel, Math.ceil(pixel), Math.ceil(pixel))
+    }
+  }
+}
+
+function drawHazards(ctx, view, images, day, launched, clockSeconds) {
+  MARS_HAZARDS.forEach((hazard, index) => drawHazard(ctx, view, images, day, launched, clockSeconds, hazard, index))
+}
+
+function drawHazard(ctx, view, images, day, launched, clockSeconds, hazard, index) {
+  const world = hazardPosition(hazard, day)
+  const spot = toScreen(view, world.x, world.y)
+  const color = hazard.kind === 'debris' ? COLORS.debris : COLORS.satellite
+  if (!launched) {
+    drawPixelLight(ctx, spot, index, clockSeconds)
+    return
+  }
+  if (hazard.kind === 'satellite' && images.satellite?.complete && images.satellite.naturalWidth > 0) {
+    drawImageCentered(ctx, images.satellite, spot.x, spot.y, HAZARD_PIXELS + 6)
+  } else {
+    // Tumbling old rocket stage: a gray body with a dark nozzle, slowly turning.
+    ctx.save()
+    ctx.translate(spot.x, spot.y)
+    ctx.rotate(clockSeconds * 0.8 + hazard.startDeg)
+    ctx.fillStyle = color
+    ctx.fillRect(-4, -HAZARD_PIXELS / 2, 8, HAZARD_PIXELS - 4)
+    ctx.fillStyle = '#5c6772'
+    ctx.fillRect(-5, HAZARD_PIXELS / 2 - 5, 10, 4)
+    ctx.restore()
+  }
+  label(ctx, hazard.name, spot.x, spot.y - HAZARD_PIXELS, color, 'center', 12)
 }
 
 export function pathColor(outcome) {
@@ -208,7 +306,7 @@ function drawPath(ctx, view, samples, site, color, untilDay = Infinity, alpha = 
   ctx.globalAlpha = 1
 }
 
-/** Little protractor at the launch base: the 0° line to the right and the current direction. */
+/** Little protractor at the launch base: the 0° line to the right and an arc up to the aim angle. */
 function drawProtractor(ctx, view, aim, site) {
   const earth = baseScreenPosition(view, site)
   const radius = 44
@@ -226,16 +324,6 @@ function drawProtractor(ctx, view, aim, site) {
   ctx.beginPath()
   ctx.arc(earth.x, earth.y, radius, 0, -angle, true)
   ctx.stroke()
-  const tip = aimScreenPoint(view, aim, site)
-  ctx.strokeStyle = '#ffffff'
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.moveTo(earth.x, earth.y)
-  ctx.lineTo(tip.x, tip.y)
-  ctx.stroke()
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(Math.round(tip.x) - 7, Math.round(tip.y) - 1, 14, 3)
-  ctx.fillRect(Math.round(tip.x) - 1, Math.round(tip.y) - 7, 3, 14)
 }
 
 function drawRocket(ctx, view, images, here, ahead, site) {
@@ -248,9 +336,7 @@ function drawRocket(ctx, view, images, here, ahead, site) {
   ctx.save()
   ctx.translate(Math.round(a.x), Math.round(a.y))
   ctx.rotate(Math.atan2(b.y - a.y, b.x - a.x) + Math.PI / 2)
-  // The upgraded rocket is drawn bigger (rendering/upgradedRocket.js)
-  const pixels = ROCKET_PIXELS * (image.grow ?? 1)
-  ctx.drawImage(image, cell, sprite.frameY, sprite.frameWidth, sprite.frameHeight, -pixels / 2, -pixels / 2, pixels, pixels)
+  ctx.drawImage(image, cell, sprite.frameY, sprite.frameWidth, sprite.frameHeight, -ROCKET_PIXELS / 2, -ROCKET_PIXELS / 2, ROCKET_PIXELS, ROCKET_PIXELS)
   ctx.restore()
 }
 
@@ -277,7 +363,8 @@ function drawBases(ctx, view, sites, chosenId, day, choosing) {
 }
 
 /**
- * scene: { step, trip, aim, site, sites, flight: { day, secondsSinceEnd } | null, images, clockSeconds }
+ * scene: { step, trip, aim, site, sites, flight: { day, secondsSinceEnd, crash } | null, images, clockSeconds,
+ *          tapHint: { startedAt (seconds), hazardIndex } | null }
  *   step 'site': planets on launch day and every launch base on Earth; the chosen one is yellow
  *   step 'aim': planets on launch day, hazards as dots, the dotted prediction and the protractor
  *   step 'flight' / 'result': everything moves with the trip day; the rocket follows the path
@@ -300,13 +387,22 @@ export function drawMarsScene(ctx, view, scene) {
   if (!launched) {
     drawPath(ctx, view, trip.samples, site, color)
     drawProtractor(ctx, view, scene.aim, site)
-    label(ctx, `Aim: ${TARGET_ANGLE_DEG}° (from ${ANGLE_WINDOW.min}° to ${ANGLE_WINDOW.max}° still works)`, view.width / 2, 22, '#ffd23f', 'center', 15)
+    if (scene.tapHint) drawTapHint(ctx, view, scene.tapHint, 0, scene.clockSeconds)
+    label(ctx, t('Aim: {{best}}° (from {{min}}° to {{max}}° still works)', {
+      best: TARGET_ANGLE_DEG,
+      min: ANGLE_WINDOW.min,
+      max: ANGLE_WINDOW.max,
+    }), view.width / 2, 22, '#ffd23f', 'center', 15)
     return
   }
   drawPath(ctx, view, trip.samples, site, color, Infinity, 0.25)
   drawPath(ctx, view, trip.samples, site, color, day)
   const { outcome } = trip
-  if (day < outcome.day) {
+  const crash = scene.flight?.crash
+  if (crash) {
+    // A crew choice blew up the ship at a close pass.
+    drawExplosion(ctx, view, scene.images, crash, scene.flight.secondsSinceEnd, site)
+  } else if (day < outcome.day) {
     const here = tripPointAt(trip.samples, day)
     drawRocket(ctx, view, scene.images, here, tripPointAt(trip.samples, day + 3), site)
   } else if (outcome.type === MARS_OUTCOMES.HAZARD) {

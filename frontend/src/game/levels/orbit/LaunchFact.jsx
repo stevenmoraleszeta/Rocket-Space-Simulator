@@ -3,6 +3,7 @@
  * so a crash explains why it crashed and a win explains why it worked.
  * Written for players aged 7–12.
  */
+import { t } from '../../../i18n/index.js'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { OUTCOMES } from './launchSimulation.js'
@@ -83,6 +84,10 @@ export const LAUNCH_FACTS = {
   marsShort: {
     title: 'Faster than Earth',
     text: 'To reach Mars, a rocket has to go even faster around the Sun than Earth does, about 3 km every second faster. Too slow, and it never climbs out to Mars\u2019s orbit.',
+  },
+  marsDecision: {
+    title: 'Practice for every surprise',
+    text: 'Astronauts train for years on Earth for problems that might happen in space. When something goes wrong, they stay calm, follow a plan and talk to mission control.',
   },
   marsHazard: {
     title: 'Junk around the Sun',
@@ -220,6 +225,7 @@ export function factForResult(result, mission) {
     case 'marsMissed':
     case 'marsShort':
     case 'marsHazard':
+    case 'marsDecision':
       return LAUNCH_FACTS[outcome.type]
     default:
       return result.reachedArrival ? LAUNCH_FACTS.missedTooFastOrSlow : LAUNCH_FACTS.missedTarget
@@ -231,14 +237,14 @@ export function LaunchFact({ result, mission, className = '', label = 'Did you k
   const playerName = engineerName(useSettings().playerName)
   return (
     <section className={`launch-fact ${result.success ? 'is-good' : 'is-bad'} ${className}`}>
-      <p className="launch-fact__label">{label}</p>
+      <p className="launch-fact__label">{t(label)}</p>
       {playerName && (
         <p className="launch-fact__hi">
-          {sayTo(playerName, result.success ? 'Nice flying.' : 'Here is what happened.')}
+          {sayTo(playerName, t(result.success ? 'Nice flying.' : 'Here is what happened.'))}
         </p>
       )}
-      <p className="launch-fact__title">{fact.title}</p>
-      <p className="launch-fact__text">{fact.text}</p>
+      <p className="launch-fact__title">{t(fact.title)}</p>
+      <p className="launch-fact__text">{t(fact.text)}</p>
     </section>
   )
 }

@@ -10,6 +10,7 @@
  *   What scientists learned helped keep the first astronauts alive. A monument in Moscow honors her.
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { t } from '../i18n/index.js'
 import { SYNTH, playSynth } from '../audio'
 import './padLaika.css'
 
@@ -304,14 +305,14 @@ export function LaikaStory({ onClose }) {
     <section className="laika-talk" role="dialog" aria-modal="true" aria-labelledby="laika-talk-title" onClick={(event) => event.stopPropagation()}>
       <div className="laika-talk__art" aria-hidden="true" key={page}>{current.art}</div>
       <div className="laika-talk__body">
-        <p className="laika-talk__who">Laika · the first space dog</p>
-        <h2 id="laika-talk-title">{current.title}</h2>
-        <p>{current.text}</p>
+        <p className="laika-talk__who">{t('Laika · the first space dog')}</p>
+        <h2 id="laika-talk-title">{t(current.title)}</h2>
+        <p>{t(current.text)}</p>
         <div className="laika-talk__foot">
           <span className="laika-talk__dots" aria-hidden="true">
             {PAGES.map((item, index) => <span key={item.title} className={index === page ? 'is-on' : ''} />)}
           </span>
-          <button type="button" className="game__back" onClick={onClose}>Close</button>
+          <button type="button" className="game__back" onClick={onClose}>{t('Close')}</button>
           {!last && (
             <button
               ref={nextRef}
@@ -322,7 +323,7 @@ export function LaikaStory({ onClose }) {
                 setPage((value) => value + 1)
               }}
             >
-              Next
+              {t('Next')}
             </button>
           )}
         </div>
