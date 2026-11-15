@@ -85,3 +85,13 @@ test('on launch day no hazard light sits on top of Earth or Mars', async () => {
     }
   }
 })
+
+test('a rocket with every food and water pack never starves or runs dry on the way to Mars', async () => {
+  const { hasAllFoodAndWater, FOOD_AND_WATER_FAILURES } = await import('./marsSupplies.js')
+  assert.equal(hasAllFoodAndWater({ food: 4, water: 4 }), true)
+  assert.equal(hasAllFoodAndWater({ food: 4, water: 3 }), false)
+  assert.equal(hasAllFoodAndWater({ food: 2, water: 4 }), false)
+  for (const id of ['noFood', 'outOfFood', 'noWater', 'outOfWater']) assert.ok(FOOD_AND_WATER_FAILURES.has(id))
+  assert.ok(!FOOD_AND_WATER_FAILURES.has('outOfAir'))
+  assert.ok(!FOOD_AND_WATER_FAILURES.has('spaceSick'))
+})

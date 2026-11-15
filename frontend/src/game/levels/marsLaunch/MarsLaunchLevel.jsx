@@ -22,6 +22,7 @@ import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { flightSupplyFailure, launchFailure } from '../../launchFailure.js'
+import { FOOD_AND_WATER_FAILURES, hasAllFoodAndWater } from './marsSupplies.js'
 import { flightNotes } from '../../flightSummary.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
@@ -227,7 +228,13 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
   const anyFailure = useMemo(() => launchFailure(equipped, mission), [equipped, mission])
   // No boosters ('climb'): the liftoff plays, but the rocket cannot speed up enough to leave Earth.
   const sequenceFailure = anyFailure?.at === 'climb' ? null : anyFailure
-  const supplyFailure = useMemo(() => flightSupplyFailure(equipped, mission), [equipped, mission])
+  // Packing every food pack and every water pack means the crew never starves or runs dry on
+  // this trip: only other troubles (air, sickness, crashes) can end it.
+  const fullyStocked = useMemo(() => hasAllFoodAndWater(equipped), [equipped])
+  const supplyFailure = useMemo(() => {
+    const failure = flightSupplyFailure(equipped, mission)
+    return failure && fullyStocked && FOOD_AND_WATER_FAILURES.has(failure.id) ? null : failure
+  }, [equipped, mission, fullyStocked])
   /** Trip day when food, water or air runs out (the mission's supplies are planned for its own length). */
   const supplyFailureDay = supplyFailure
     ? (supplyFailure.returnsHome ? 0.3 : supplyFailure.atSeconds / mission.loadout.durationSeconds) * IDEAL_TRIP_DAYS
@@ -263,7 +270,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
       mildMistakes: mild,
     })
     setStep('result')
-  }, [aim, trip, completeMission, mission.id, equipped, site])
+  }, [aim, trip, completeMission, mission.id, equipped, site, setStep])
 
   const failLaunch = useCallback(() => {
     setLiftingOff(false)
@@ -292,7 +299,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
     setEncounter(null)
     setTelemetryDay(0)
     setStep('flight')
-  }, [anyFailure, finish, supplyFailureDay, trip])
+  }, [anyFailure, finish, supplyFailureDay, trip, setStep])
 
   const finishCruise = useCallback(() => {
     const ranOut = supplyFailureDay != null && supplyFailureDay < trip.outcome.day
