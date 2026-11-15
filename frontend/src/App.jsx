@@ -4,10 +4,13 @@ import { BlackHoleBackground, MISSIONS, MissionSelect, ProgressProvider } from '
 import { MissionFlow } from './game/MissionFlow.jsx'
 import { SettingsMenu, SettingsProvider } from './settings'
 import { AMBIENCE, AudioVolumeSync, MUSIC, useSoundtrack } from './audio'
+import { IntroTrailer, introSeen } from './intro'
 import { menuRoute, missionRoute, readAppRoute, routesEqual, writeAppRoute } from './lib/appRoute.js'
 import { t } from './i18n/index.js'
 import { createCloudProgressStorage, createCloudSettingsStorage } from './lib/cloudStorage.js'
 import { usePlayerSession } from './lib/playerSession.js'
+import { ProjectPage } from './project/ProjectPage.jsx'
+import { isProjectLocation } from './project/projectRoute.js'
 import './levels/missions.css'
 import './settings/settings.css'
 
@@ -17,6 +20,17 @@ function MenuSoundtrack() {
 }
 
 export default function App() {
+  const [projectPage, setProjectPage] = useState(isProjectLocation)
+  useEffect(() => {
+    const syncProject = () => setProjectPage(isProjectLocation())
+    window.addEventListener('popstate', syncProject)
+    window.addEventListener('hashchange', syncProject)
+    return () => {
+      window.removeEventListener('popstate', syncProject)
+      window.removeEventListener('hashchange', syncProject)
+    }
+  }, [])
+
   const session = usePlayerSession()
   // The open mission and tab come from the hash, so a refresh stays on that screen.
   const [route, setRoute] = useState(() => readAppRoute())
@@ -30,6 +44,8 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    // /project and #/project are the judge page. Writing the game hash would erase them.
+    if (isProjectLocation()) return undefined
     writeAppRoute(readAppRoute(), 'replace')
     const sync = () => setRoute(readAppRoute())
     window.addEventListener('popstate', sync)
@@ -41,6 +57,10 @@ export default function App() {
   }, [])
 
   const mission = MISSIONS.find((item) => item.id === route.missionId) ?? null
+  // Intro trailer: 'first' opens by itself the first time the menu shows on this device;
+  // 'replay' is the Trailer button on the menu. null = closed.
+  const [intro, setIntro] = useState(() => (introSeen() ? null : 'first'))
+  const closeIntro = useCallback(() => setIntro(null), [])
   const progressStorage = useMemo(
     () => (session.remote ? createCloudProgressStorage() : null),
     [session.remote],
@@ -49,6 +69,8 @@ export default function App() {
     () => (session.remote ? createCloudSettingsStorage() : null),
     [session.remote],
   )
+
+  if (projectPage) return <ProjectPage />
 
   if (!session.ready) {
     return (
@@ -65,7 +87,9 @@ export default function App() {
     <SettingsProvider userId={session.uid} storage={settingsStorage}>
       <AudioVolumeSync />
       <ProgressProvider userId={session.uid} storage={progressStorage ?? undefined}>
-        {mission ? (
+        {intro && !mission ? (
+          <IntroTrailer replay={intro === 'replay'} onDone={closeIntro} />
+        ) : mission ? (
           <MissionFlow
             key={mission.id}
             mission={mission}
@@ -81,6 +105,7 @@ export default function App() {
               googleSignedIn={session.google}
               authError={session.authError}
               onStartMission={(next) => navigate(missionRoute(next.id))}
+              onWatchTrailer={() => setIntro('replay')}
             />
           </>
         )}

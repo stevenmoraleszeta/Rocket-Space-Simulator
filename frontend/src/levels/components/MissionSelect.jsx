@@ -21,9 +21,10 @@ import { useSettings } from '../../settings/SettingsContext.jsx';
 import { t } from '../../i18n/index.js';
 import { engineerName, sayTo } from '../../settings/settingsStore.js';
 import adminIcon from '../../assets/images/icons/admin.svg';
+import trailerIcon from '../../assets/images/icons/camera.svg';
 import { PixelIcon } from '../../game/PixelIcon.jsx';
 
-export function MissionSelect({ onStartMission, googleSignedIn = false, authError = '' }) {
+export function MissionSelect({ onStartMission, onWatchTrailer, googleSignedIn = false, authError = '' }) {
   const { missions, progress, getState, getStars, totalStars, maxStars, loading, adminMode, setAdminMode, playerUnlocked } = useProgress();
   const [open, setOpen] = useState(null);
   // Mission 4 or 5 that was just tapped: its "Coming soon!" bubble shows for a moment.
@@ -55,6 +56,9 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
       <div className="ms-bar">
         <RankBadge stars={totalStars} />
         <nav className="ms-tools" aria-label={t('Menu')}>
+          <a className="ms-btn ms-btn--ghost" href="/project">
+            {t('Project')}
+          </a>
           <button
             type="button"
             className={`ms-btn ms-btn--ghost ms-btn--icon ms-admin-toggle${adminMode ? ' ms-btn--admin' : ''}`}
@@ -67,6 +71,12 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
             <img className="ms-pixel" src={adminIcon} alt="" width={28} height={28} draggable="false" />
             {adminMode ? t('Play as player') : t('Become admin')}
           </button>
+          {onWatchTrailer && (
+            <button type="button" className="ms-btn ms-btn--ghost ms-btn--icon" aria-label={t('Watch the trailer')} onClick={onWatchTrailer}>
+              <img className="ms-pixel" src={trailerIcon} alt="" width={28} height={28} draggable="false" />
+              {t('Trailer')}
+            </button>
+          )}
           <RecordButtons onHistory={() => setBoard('history')} onStats={() => setBoard('stats')} />
           <SettingsMenu googleSignedIn={googleSignedIn} authError={authError} />
         </nav>

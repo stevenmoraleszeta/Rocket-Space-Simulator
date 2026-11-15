@@ -4,6 +4,7 @@ import { parts } from './es/parts.js'
 import { failures } from './es/failures.js'
 import { moon } from './es/moon.js'
 import { world } from './es/world.js'
+import { intro } from './es/intro.js'
 
 export const es = {
   ...ui,
@@ -12,4 +13,5 @@ export const es = {
   ...failures,
   ...moon,
   ...world,
+  ...intro,
 }
