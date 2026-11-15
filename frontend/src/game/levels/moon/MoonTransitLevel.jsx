@@ -16,6 +16,7 @@ import { StarRating, getMission, useProgress } from '../../../levels'
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../../../audio'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
+import { t } from '../../../i18n/index.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { HudMission } from '../../HudMission.jsx'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
@@ -393,10 +394,10 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
   const hud = (
     <header className="game__hud orbit-level__hud">
       <button type="button" className="game__back" onClick={onExit}>
-        Missions
+        {t('Missions')}
       </button>
-      <HudMission kicker={`Level ${stageInfo.levelNumber} · ${stageInfo.title}`} title={mission.title} />
-      <div className="game__place">{mission.place}</div>
+      <HudMission kicker={t('Level {{number}} · {{title}}', { number: stageInfo.levelNumber, title: t(stageInfo.title) })} title={t(mission.title)} />
+      <div className="game__place">{t(mission.place)}</div>
     </header>
   )
 
@@ -412,7 +413,7 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
         <MissionCompleteScreen
           mission={mission}
           result={result}
-          lead="The rover is in a dark crater, looking for ice."
+          lead={t('The rover is in a dark crater, looking for ice.')}
           onContinue={onExit}
           onFlyAgain={retry}
         />
@@ -423,7 +424,7 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
           <canvas
             ref={canvasRef}
             className={`orbit-canvas orbit-canvas--${step === 'aim' ? 'aim' : 'target'}`}
-            aria-label="The trip from Earth to the Moon, with the radiation belts and a few rocks beside the road"
+            aria-label={t('The trip from Earth to the Moon, with the radiation belts and a few rocks beside the road')}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
@@ -437,13 +438,13 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
                 top: card.y,
               }}
               role="dialog"
-              aria-label={card.name}
+              aria-label={t(card.name)}
             >
-              <button type="button" className="satellite-card__close" aria-label="Close" onClick={() => setCard(null)}>
+              <button type="button" className="satellite-card__close" aria-label={t('Close')} onClick={() => setCard(null)}>
                 ✕
               </button>
-              <h3 className="satellite-card__name">{card.name}</h3>
-              <p className="satellite-card__summary">{card.summary}</p>
+              <h3 className="satellite-card__name">{t(card.name)}</h3>
+              <p className="satellite-card__summary">{t(card.summary)}</p>
             </div>
           )}
           <div className="orbit-sites">
@@ -456,8 +457,8 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
                 <>
                   <span className="orbit-site__dot" />
                   <span className="orbit-site__name">
-                    {item.name}
-                    <span className="orbit-site__country">{item.detail}</span>
+                    {t(item.name)}
+                    <span className="orbit-site__country">{t(item.detail)}</span>
                   </span>
                 </>
               )
@@ -487,50 +488,50 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
         <aside className="orbit-panel" aria-live="polite">
           {step === 'window' && (
             <>
-              <h2 className="orbit-panel__title">1. Pick a path</h2>
+              <h2 className="orbit-panel__title">{t('1. Pick a path')}</h2>
               <p className="orbit-panel__hint">
-                {sayTo(playerName, 'Tap a trip. Each one is a real kind of flight to the Moon. The belts stay. The gate, the storm, and the radio change.')}
+                {sayTo(playerName, t('Tap a trip. Each one is a real kind of flight to the Moon. The belts stay. The gate, the storm, and the radio change.'))}
               </p>
               {cruise ? (
                 <div className="orbit-detail">
-                  <p className="orbit-detail__name">{cruise.name}</p>
-                  <p><b>{cruise.durationDays} days</b> on the way.</p>
-                  <p>{cruise.why}</p>
-                  <p>{cruise.whatFor}</p>
+                  <p className="orbit-detail__name">{t(cruise.name)}</p>
+                  <p><b>{t('{{days}} days', { days: cruise.durationDays })}</b> {t('on the way.')}</p>
+                  <p>{t(cruise.why)}</p>
+                  <p>{t(cruise.whatFor)}</p>
                 </div>
               ) : (
                 <p className="orbit-detail">
-                  {sayTo(playerName, 'There is no asteroid belt on the way to the Moon. Tap a belt or a rock to read what it is.')}
+                  {sayTo(playerName, t('There is no asteroid belt on the way to the Moon. Tap a belt or a rock to read what it is.'))}
                 </p>
               )}
               <div className="orbit-panel__actions">
-                <button type="button" className="game__back" onClick={onBackToHangar}>Hangar</button>
-                <button type="button" className="ms-btn" disabled={!cruise} onClick={goToAim}>Next</button>
+                <button type="button" className="game__back" onClick={onBackToHangar}>{t('Hangar')}</button>
+                <button type="button" className="ms-btn" disabled={!cruise} onClick={goToAim}>{t('Next')}</button>
               </div>
             </>
           )}
 
           {step === 'aim' && cruise && aim && (
             <>
-              <h2 className="orbit-panel__title">2. Aim at the gate</h2>
+              <h2 className="orbit-panel__title">{t('2. Aim at the gate')}</h2>
               <p className="orbit-panel__hint">
-                {sayTo(playerName, 'Hold and drag. Up and down picks the road. Let go with the path in the yellow gate. The middle of the road is almost empty.')}
+                {sayTo(playerName, t('Hold and drag. Up and down picks the road. Let go with the path in the yellow gate. The middle of the road is almost empty.'))}
               </p>
               <dl className="orbit-stats">
-                <div><dt>Road</dt><dd>{aim.lane >= 0.08 ? 'High' : aim.lane <= -0.08 ? 'Low' : 'Middle'}</dd></div>
-                <div><dt>Reach</dt><dd>{Math.round(Math.min(1.35, aim.power) * 100)}%</dd></div>
+                <div><dt>{t('Road')}</dt><dd>{aim.lane >= 0.08 ? t('High') : aim.lane <= -0.08 ? t('Low') : t('Middle')}</dd></div>
+                <div><dt>{t('Reach')}</dt><dd>{Math.round(Math.min(1.35, aim.power) * 100)}%</dd></div>
               </dl>
               {summary && <p className={`orbit-prediction is-${summary.tone}`}>{sayTo(playerName, summary.text)}</p>}
               <div className="orbit-panel__actions">
-                <button type="button" className="game__back" onClick={() => { playSfx(SFX.cancel); setStep('window') }}>Back</button>
-                <button type="button" className="ms-btn" onClick={launch}>Launch</button>
+                <button type="button" className="game__back" onClick={() => { playSfx(SFX.cancel); setStep('window') }}>{t('Back')}</button>
+                <button type="button" className="ms-btn" onClick={launch}>{t('Launch')}</button>
               </div>
             </>
           )}
 
           {step === 'flight' && (
             <>
-              <h2 className="orbit-panel__title">{sayTo(playerName, 'On the way to the Moon')}</h2>
+              <h2 className="orbit-panel__title">{sayTo(playerName, t('On the way to the Moon'))}</h2>
               {telemetry && <FlightReadout rows={telemetry} />}
             </>
           )}
@@ -538,15 +539,16 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
           {step === 'result' && result && (
             <>
               <h2 className="orbit-panel__title">
-                {result.success ? sayTo(playerName, 'Ice in the dark') : sayTo(playerName, 'Not this time')}
+                {result.success ? sayTo(playerName, t('Ice in the dark')) : sayTo(playerName, t('Not this time'))}
               </h2>
               <p className={`orbit-prediction is-${result.success ? 'good' : 'bad'}`}>
                 {sayTo(
                   playerName,
                   result.failure?.message
-                    ?? (result.success
-                      ? 'The crew landed and the rover can look for ice.'
-                      : describeTransit({ outcome: result.outcome }).text),
+                    ? t(result.failure.message)
+                    : result.success
+                      ? t('The crew landed and the rover can look for ice.')
+                      : summaryText,
                 )}
               </p>
               {result.success && (
