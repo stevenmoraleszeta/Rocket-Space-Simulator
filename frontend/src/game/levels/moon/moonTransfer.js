@@ -332,11 +332,19 @@ function circularRate(altitudeKm) {
 }
 
 /** Angle (radians) of a traffic object around Earth, `seconds` after the launch date. */
+/**
+ * The flight plays days in a few seconds, so at real speed the ISS would circle Earth about seven
+ * times a second on screen. Satellites and junk clouds move on this slower clock instead: about one
+ * ISS lap every 5 seconds. Hits use the same angles, so what the player sees is still what counts.
+ */
+export const TRAFFIC_TIME_SCALE = 1 / 36
+
 export function trafficAngle(object, launchDate, seconds) {
+  const shown = seconds * TRAFFIC_TIME_SCALE
   if (object.longitudeDeg != null) {
-    return normalizeAngle(getGreenwichSiderealAngle(launchDate) + EARTH_SIDEREAL_RATE * seconds + object.longitudeDeg * DEG)
+    return normalizeAngle(getGreenwichSiderealAngle(launchDate) + EARTH_SIDEREAL_RATE * shown + object.longitudeDeg * DEG)
   }
-  const sinceEpoch = launchDate.getTime() / 1000 - TRAFFIC_EPOCH_SECONDS + seconds
+  const sinceEpoch = launchDate.getTime() / 1000 - TRAFFIC_EPOCH_SECONDS + shown
   return normalizeAngle(object.startAngleDeg * DEG + circularRate(object.altitudeKm) * sinceEpoch)
 }
 
