@@ -29,7 +29,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
     return (
       <SpaceBackground>
         <div className="brand-splash">
-          <AppLogo size={96} wordmark />
+          <AppLogo size={96} wordmark bare />
           <p className="brand-splash__status">Loading…</p>
         </div>
       </SpaceBackground>
@@ -49,7 +49,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
 
       <div className="ms-stage">
       <header className="ms-head">
-        <AppLogo size={64} wordmark />
+        <AppLogo size={64} wordmark bare />
         <p className="ms-ages">A space game for kids ages 7 to 12</p>
         <h1>Choose your mission!</h1>
         <p className="ms-greet">

@@ -31,11 +31,12 @@
 }
 
 /* Top bar stays at the top; the mission picker is centered in the space below it. */
-.ms-select { font-family: var(--ms-font); color: var(--ms-text); font-size: 1.125rem; max-width: 61.25rem; min-height: 100svh; box-sizing: border-box; margin: 0 auto; padding: 1.25rem 1rem 2.5rem; display: flex; flex-direction: column; justify-content: flex-start; }
+.ms-select { font-family: var(--ms-font); color: var(--ms-text); font-size: 1.125rem; min-height: 100svh; box-sizing: border-box; margin: 0 auto; padding: 1.25rem 1rem 2.5rem; display: flex; flex-direction: column; justify-content: flex-start; }
 .ms-loading { font-family: var(--ms-font-pixel); color: var(--ms-muted); text-align: center; padding: 3.75rem; font-size: 0.875rem; }
 
 .ms-bar { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem 1.5rem; width: 100%; }
-.ms-stage { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+/* The top bar spans the whole screen (title in the left corner); only the missions keep a centered max width. */
+.ms-stage { flex: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; max-width: 61.25rem; margin-inline: auto; }
 .ms-bar .ms-rank { flex: 1 1 20rem; min-width: min(100%, 17.5rem); max-width: 32.5rem; }
 .ms-bar .ms-rank .ms-pixel { width: 3.5rem; height: 3.5rem; }
 .ms-bar .ms-rank__cheer, .ms-bar .ms-rank__next { text-wrap: balance; }
