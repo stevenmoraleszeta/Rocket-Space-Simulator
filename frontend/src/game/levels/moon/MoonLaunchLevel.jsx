@@ -37,6 +37,8 @@ import { LAUNCH_SITES } from '../orbit/launchSites.js'
 import { REAL_SATELLITES } from '../orbit/realSatellites.js'
 import { createView as createEarthView, drawOrbitScene, siteScreenPosition } from '../orbit/orbitRenderer.js'
 import { SitePin } from '../orbit/SitePin.jsx'
+import { PixelIcon } from '../../PixelIcon.jsx'
+import { SunRating } from './SunRating.jsx'
 import { useLaunchRoute } from '../orbit/useLaunchRoute.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
@@ -76,6 +78,7 @@ import { tipsTurnedOff } from './moonTipsStorage.js'
 import { FunFactToast } from '../../FunFactToast.jsx'
 import { choiceBlockedReason, pickOrbitEvents, resolveOrbitEvent } from './moonOrbitEvents.js'
 import handPointerUrl from '../../../assets/images/icons/hand_pointer.svg'
+import parachuteUrl from '../../../assets/images/items/parachute.svg'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
 import './moonMission.css'
@@ -145,14 +148,14 @@ const CYCLE_HOURS = MAX_DAY * 24 + 23
 const DEG = Math.PI / 180
 
 const OUTCOME_TEXT = {
-  [TRANSFER_OUTCOMES.ARRIVED]: { tone: 'good', icon: '✅', text: 'The dots reach the Moon. Ready to launch!' },
-  [TRANSFER_OUTCOMES.MOON_IMPACT]: { tone: 'bad', icon: '💥', text: 'Too close: the ship would crash into the Moon. Aim a little to the side.' },
-  [TRANSFER_OUTCOMES.EARTH_IMPACT]: { tone: 'bad', icon: '💥', text: 'The dots fall back into Earth. Drag the other way.' },
-  [TRANSFER_OUTCOMES.SHORT]: { tone: 'warn', icon: '⬆️', text: 'Not enough power. Drag farther from the base.' },
-  [TRANSFER_OUTCOMES.PAST]: { tone: 'warn', icon: '🌙', text: 'The dots miss the Moon. Change the hour, or drag in another direction.' },
-  [TRANSFER_OUTCOMES.TOO_EARLY]: { tone: 'warn', icon: '⏩', text: 'Too fast: the ship gets there before day 3, and the Moon is not at the yellow ring yet. Drag closer to the base for less power.' },
-  [TRANSFER_OUTCOMES.LOOP]: { tone: 'warn', icon: '↪️', text: 'The dots swing around Earth. Drag straight out from the base, toward the yellow ring.' },
-  [TRANSFER_OUTCOMES.TOO_LATE]: { tone: 'warn', icon: '⏪', text: 'Too slow: the ship gets there after day 3, and the Moon has already moved on. Drag farther from the base for more power.' },
+  [TRANSFER_OUTCOMES.ARRIVED]: { tone: 'good', icon: 'check', text: 'The dots reach the Moon. Ready to launch!' },
+  [TRANSFER_OUTCOMES.MOON_IMPACT]: { tone: 'bad', icon: 'boom', text: 'Too close: the ship would crash into the Moon. Aim a little to the side.' },
+  [TRANSFER_OUTCOMES.EARTH_IMPACT]: { tone: 'bad', icon: 'boom', text: 'The dots fall back into Earth. Drag the other way.' },
+  [TRANSFER_OUTCOMES.SHORT]: { tone: 'warn', icon: 'arrowUp', text: 'Not enough power. Drag farther from the base.' },
+  [TRANSFER_OUTCOMES.PAST]: { tone: 'warn', icon: 'moon-crescent', text: 'The dots miss the Moon. Change the hour, or drag in another direction.' },
+  [TRANSFER_OUTCOMES.TOO_EARLY]: { tone: 'warn', icon: 'fastForward', text: 'Too fast: the ship gets there before day 3, and the Moon is not at the yellow ring yet. Drag closer to the base for less power.' },
+  [TRANSFER_OUTCOMES.LOOP]: { tone: 'warn', icon: 'spiral', text: 'The dots swing around Earth. Drag straight out from the base, toward the yellow ring.' },
+  [TRANSFER_OUTCOMES.TOO_LATE]: { tone: 'warn', icon: 'rewind', text: 'Too slow: the ship gets there after day 3, and the Moon has already moved on. Drag farther from the base for more power.' },
 }
 
 const FAIL_TEXT = {
@@ -366,6 +369,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
     commsSatellite: loadImage(ASSETS.commsSatellite.src),
     spaceTelescope: loadImage(ASSETS.spaceTelescope.src),
     hand: loadImage(handPointerUrl),
+    parachute: loadImage(parachuteUrl),
   }))
 
   const finishFlightRef = useRef(null)
@@ -959,10 +963,10 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
           <FunFactToast paused={!(step === 'aim' || step === 'flight' || step === 'return') || tipsOpen || liftingOff} />
           {telemetry && (step === 'flight' || step === 'orbit' || step === 'return') && (
             <div className="moon-clock" aria-live="off">
-              <span className="moon-clock__face" aria-hidden="true">🕒</span>
+              <span className="moon-clock__face" aria-hidden="true"><PixelIcon name="clock" /></span>
               <span>
                 <b>{formatDate(new Date(date.getTime() + telemetry.seconds * 1000), CLOCK_OPTIONS)}</b>
-                <small>{t('Day {{day}} of the mission · ⏩ time ×{{times}} faster (1 s = {{hours}} h)', {
+                <small>{t('Day {{day}} of the mission · time ×{{times}} faster (1 s = {{hours}} h)', {
                   day: (telemetry.seconds / 86400).toFixed(1),
                   times: shortNumber(telemetry.speedUp),
                   hours: (telemetry.speedUp / 3600).toFixed(1),
@@ -1019,7 +1023,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
                 <div className={`moon-spot${hovered ? ' is-on' : ''}`} aria-live="polite">
                   {hovered ? (
                     <>
-                      <span className="moon-spot__icon" aria-hidden="true">{hovered.kind === 'debris' ? '💥' : '🛰️'}</span>
+                      <span className="moon-spot__icon" aria-hidden="true"><PixelIcon name={hovered.kind === 'debris' ? 'junk' : 'satellite'} /></span>
                       <span>
                         <b>{t(hovered.shortName)}</b> · {t(hovered.type)}
                         <small>{t(hovered.summary)}</small>
@@ -1027,8 +1031,8 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
                     </>
                   ) : (
                     <span className="moon-spot__legend">
-                      <span><i className="moon-spot__sat" aria-hidden="true">🛰️</i> {t('Satellite')}</span>
-                      <span><i className="moon-spot__junk" aria-hidden="true">✦✧</i> {t('Space junk')}</span>
+                      <span><i className="moon-spot__sat" aria-hidden="true"><PixelIcon name="satellite" /></i> {t('Satellite')}</span>
+                      <span><i className="moon-spot__junk" aria-hidden="true"><PixelIcon name="junk" /></i> {t('Space junk')}</span>
                       <small>{t('Point at one to see what it is')}</small>
                     </span>
                   )}
@@ -1097,28 +1101,28 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
                 </div>
                 <p className="moon-days__hint">{t('Each little Moon is how it looks the day you arrive. Slide to a bright one.')}</p>
                 <p className={`moon-light is-${arrivalRating.tone}`}>
-                  <span aria-hidden="true">{'☀'.repeat(arrivalRating.level)}</span>
+                  <SunRating level={arrivalRating.level} />
                   {t('{{label}} for the cameras · {{percent}}% lit', { label: t(arrivalRating.label), percent: Math.round(arrivalLook.illumination * 100) })}
                 </p>
               </div>
               <div className="moon-picker" role="group" aria-label={t('Launch hour')}>
                 <button type="button" onClick={() => shiftHours(-1)} disabled={cycleHours === 0} aria-label={t('One hour earlier')}>◀</button>
-                <p><span className="moon-picker__icon" aria-hidden="true">🕒</span> {launchClock}<small>{t('Earth turns')}</small></p>
+                <p><span className="moon-picker__icon" aria-hidden="true"><PixelIcon name="clock" /></span> {launchClock}<small>{t('Earth turns')}</small></p>
                 <button type="button" onClick={() => shiftHours(1)} disabled={cycleHours === CYCLE_HOURS} aria-label={t('One hour later')}>▶</button>
               </div>
-              {summary && <p className={`orbit-prediction is-${summary.tone}`}>{summary.icon} {sayTo(playerName, t(summary.text))}</p>}
+              {summary && <p className={`orbit-prediction is-${summary.tone}`}><PixelIcon name={summary.icon} /> {sayTo(playerName, t(summary.text))}</p>}
               {prediction?.outcome.type === TRANSFER_OUTCOMES.ARRIVED && !hasLander && (
                 <p className="orbit-prediction is-warn">{t('No lunar lander packed: nothing can slow the ship at the Moon.')}</p>
               )}
               {hits.length > 0 ? (
                 <div className="moon-hazards__warn">
-                  <b>⚠ {t('The dots hit: {{names}}', { names: hits.map((hit) => t(hit.object.shortName)).join(', ') })}</b>
+                  <b><PixelIcon name="warning" /> {t('The dots hit: {{names}}', { names: hits.map((hit) => t(hit.object.shortName)).join(', ') })}</b>
                   <span>{t('Both ships get hurt. Try another hour.')}</span>
                 </div>
               ) : (
-                prediction && <p className="moon-hazards__clear">✓ {t('No satellites or junk in the way.')}</p>
+                prediction && <p className="moon-hazards__clear"><PixelIcon name="check" /> {t('No satellites or junk in the way.')}</p>
               )}
-              <button type="button" className="moon-help" onClick={helpAim}>✨ {t('Help me aim')}</button>
+              <button type="button" className="moon-help" onClick={helpAim}><PixelIcon name="sparkle" /> {t('Help me aim')}</button>
               {helpMessage && <p className="moon-help__note">{t(helpMessage)}</p>}
               <div className="orbit-panel__actions">
                 <button type="button" className="game__back" onClick={goBack}>{t('Back')}</button>
@@ -1131,12 +1135,12 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
             <>
               <h2 className="orbit-panel__title">{sayTo(playerName, t('On the way!'))}</h2>
               <div className="moon-trip" aria-hidden="true">
-                <span className="moon-trip__end">🌍</span>
+                <span className="moon-trip__end"><PixelIcon name="earth" /></span>
                 <span className="moon-trip__track">
                   <span className="moon-trip__fill" style={{ width: `${(telemetry?.progress ?? 0) * 100}%` }} />
-                  <span className="moon-trip__ship" style={{ left: `${(telemetry?.progress ?? 0) * 100}%` }}>🚀</span>
+                  <span className="moon-trip__ship" style={{ left: `${(telemetry?.progress ?? 0) * 100}%` }}><PixelIcon name="rocket" /></span>
                 </span>
-                <span className="moon-trip__end">🌕</span>
+                <span className="moon-trip__end"><PixelIcon name="moon" /></span>
               </div>
               {telemetry && (
                 <dl className="orbit-stats">
@@ -1146,7 +1150,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
                 </dl>
               )}
               {hits.slice(0, seenHits).map((hit) => (
-                <p key={hit.object.id} className="orbit-prediction is-bad">💥 {t(hit.object.shortName)}: {t(hit.object.damage)}</p>
+                <p key={hit.object.id} className="orbit-prediction is-bad"><PixelIcon name="boom" /> {t(hit.object.shortName)}: {t(hit.object.damage)}</p>
               ))}
             </>
           )}
@@ -1155,23 +1159,23 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
             <>
               <h2 className="orbit-panel__title">{sayTo(playerName, t('Coming home!'))}</h2>
               <div className="moon-trip" aria-hidden="true">
-                <span className="moon-trip__end">🌕</span>
+                <span className="moon-trip__end"><PixelIcon name="moon" /></span>
                 <span className="moon-trip__track">
                   <span className="moon-trip__fill is-home" style={{ width: `${(telemetry?.phase === 'home' ? telemetry.progress : 0) * 100}%` }} />
-                  <span className="moon-trip__ship is-home" style={{ left: `${(telemetry?.phase === 'home' ? telemetry.progress : 0) * 100}%` }}>🚀</span>
+                  <span className="moon-trip__ship is-home" style={{ left: `${(telemetry?.phase === 'home' ? telemetry.progress : 0) * 100}%` }}><PixelIcon name="rocket" /></span>
                 </span>
-                <span className="moon-trip__end">🌍</span>
+                <span className="moon-trip__end"><PixelIcon name="earth" /></span>
               </div>
               <p className="orbit-panel__hint">{t('One engine burn behind the Moon, then gravity does the rest: the Moon flings the ship out and Earth pulls it home.')}</p>
               {returnPrediction && (
-                <p className="orbit-detail">🔥 {t(
+                <p className="orbit-detail"><PixelIcon name="fire" /> {t(
                   returnPrediction.perigeeAltitudeKm > 20 && returnPrediction.perigeeAltitudeKm < 70
                     ? 'Burn: {{speed}} m/s · lowest point {{km}} km up, inside the safe corridor.'
                     : 'Burn: {{speed}} m/s · lowest point {{km}} km up.',
                   { speed: (returnPrediction.burn * 1000).toFixed(0), km: Math.round(returnPrediction.perigeeAltitudeKm) },
                 )}</p>
               )}
-              <p className="orbit-detail">🛡️ {t('The heat shield keeps the crew safe when the ship hits the air at about 40,000 km/h.')}</p>
+              <p className="orbit-detail"><PixelIcon name="shield" /> {t('The heat shield keeps the crew safe when the ship hits the air at about 40,000 km/h.')}</p>
             </>
           )}
 
@@ -1180,7 +1184,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
               <h2 className="orbit-panel__title">{sayTo(playerName, t('Mapping the Moon'))}</h2>
               <p className="orbit-panel__hint">{t('The lander slowed the ship into orbit. Watch for surprises.')}</p>
               <p className={`moon-light is-${arrivalRating.tone}`}>
-                <span aria-hidden="true">{'☀'.repeat(arrivalRating.level)}</span>
+                <SunRating level={arrivalRating.level} />
                 {t('{{phase}}: {{label}} for the cameras', { phase: t(arrivalLook.name), label: t(arrivalRating.label).toLowerCase() })}
               </p>
               {hits.length > 0 && (
@@ -1189,7 +1193,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
               <ul className="moon-hazards">
                 {landing && (
                   <li className="moon-hazards__item">
-                    <b>🛬 {landingCopy(landing).title}</b>
+                    <b><PixelIcon name="lander" /> {landingCopy(landing).title}</b>
                     <span>{landingCopy(landing).note}</span>
                   </li>
                 )}

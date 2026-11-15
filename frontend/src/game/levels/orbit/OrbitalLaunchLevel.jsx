@@ -52,6 +52,7 @@ import {
 import { REAL_SATELLITES, SATELLITE_KIND_COLORS } from './realSatellites.js'
 import { useUiScale } from '../../../lib/uiScale.js'
 import { SitePin } from './SitePin.jsx'
+import { PixelIcon } from '../../PixelIcon.jsx'
 import '../../game.css'
 import './orbitalLaunch.css'
 
@@ -646,7 +647,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launc
             >
               {!hoveredSatellite && (
                 <button type="button" className="satellite-card__close" aria-label={t('Close')} onClick={() => setSatelliteInfo(null)}>
-                  ✕
+                  <PixelIcon name="close" />
                 </button>
               )}
               <h3 className="satellite-card__name">{t(shownSatellite.satellite.shortName)}</h3>

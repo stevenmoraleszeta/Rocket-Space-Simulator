@@ -28,7 +28,7 @@ export const MOON_ORBIT_EVENTS = [
   {
     id: 'shadow',
     name: 'Behind the Moon',
-    icon: '🌘',
+    icon: 'moon-dark-crescent',
     seconds: 15,
     text: 'The Moon is between you and Earth. Nobody at home can hear the radio.',
     choices: [
@@ -45,7 +45,7 @@ export const MOON_ORBIT_EVENTS = [
   {
     id: 'storm',
     name: 'Solar storm',
-    icon: '☀️',
+    icon: 'sunBig',
     seconds: 15,
     text: 'The Sun threw out a cloud of very fast particles. It reaches the Moon in minutes.',
     choices: [
@@ -62,7 +62,7 @@ export const MOON_ORBIT_EVENTS = [
   {
     id: 'ice',
     name: 'Dark crater',
-    icon: '🧊',
+    icon: 'ice',
     seconds: 15,
     text: 'You fly over a crater near the south pole that never sees the Sun.',
     choices: [
@@ -79,7 +79,7 @@ export const MOON_ORBIT_EVENTS = [
   {
     id: 'air',
     name: 'Stuffy cabin',
-    icon: '🫧',
+    icon: 'bubbles',
     seconds: 15,
     text: 'The crew breathes out a gas that slowly fills the cabin.',
     choices: [
@@ -95,7 +95,7 @@ export const MOON_ORBIT_EVENTS = [
   {
     id: 'rock',
     name: 'Tiny meteor',
-    icon: '☄️',
+    icon: 'asteroid',
     seconds: 15,
     text: 'A grain of space rock, faster than a bullet, is coming at the ship.',
     choices: [
@@ -117,7 +117,7 @@ export const MOON_ORBIT_EVENTS = [
   {
     id: 'misfire',
     name: 'Engine hiccup',
-    icon: '🚀',
+    icon: 'rocket',
     seconds: 15,
     timing: true,
     text: 'The engine that keeps you in orbit coughs. Fire it at the right moment.',

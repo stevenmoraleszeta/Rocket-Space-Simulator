@@ -13,6 +13,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { t } from '../i18n/index.js'
 import { SYNTH, playSynth } from '../audio'
 import './padLaika.css'
+import { PixelIcon } from './PixelIcon.jsx'
 
 /*
  * Real Laika colours: a mostly white mixed-breed dog with light-brown (tan) patches over her
@@ -256,27 +257,27 @@ export function PadLaika({ onTalk, talking, launching = false }) {
 
 const PAGES = [
   {
-    art: '🐕',
+    art: 'dog',
     title: 'Woof! I’m Laika.',
     text: 'I was a street dog in Moscow: small, calm, and brave. Scientists picked me because street dogs are used to cold and hunger.',
   },
   {
-    art: '🛰️',
+    art: 'satellite',
     title: '3 November 1957',
     text: 'I flew on Sputnik 2 and became the first animal to go all the way around Earth. A radio sent my heartbeat to the scientists.',
   },
   {
-    art: '🌡️',
+    art: 'thermometer',
     title: 'A one-way trip',
     text: 'My capsule was never built to come back, and it got too hot inside. I did not survive. Many people were sad, and it changed how we treat animals in science.',
   },
   {
-    art: '👩‍🚀',
+    art: 'astronaut',
     title: 'Why it mattered',
     text: 'What they learned from my flight helped keep the first astronauts alive. Today a statue of me stands in Moscow.',
   },
   {
-    art: '🚀',
+    art: 'rocket',
     title: 'Your turn, engineer!',
     text: 'Pack food, water, air, and a way to slow down. Your crew has to come home safe. Woof!',
   },
@@ -303,7 +304,7 @@ export function LaikaStory({ onClose }) {
   return (
     <div className="laika-shade" onClick={onClose}>
     <section className="laika-talk" role="dialog" aria-modal="true" aria-labelledby="laika-talk-title" onClick={(event) => event.stopPropagation()}>
-      <div className="laika-talk__art" aria-hidden="true" key={page}>{current.art}</div>
+      <div className="laika-talk__art" aria-hidden="true" key={page}><PixelIcon name={current.art} className="laika-talk__sprite" /></div>
       <div className="laika-talk__body">
         <p className="laika-talk__who">{t('Laika · the first space dog')}</p>
         <h2 id="laika-talk-title">{t(current.title)}</h2>

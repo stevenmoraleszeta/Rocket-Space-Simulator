@@ -1,0 +1,18 @@
+/* Pixel sprites shown in place of emojis (PixelIcon.jsx). 1em = the size the emoji had. */
+.pixel-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  object-fit: contain;
+  image-rendering: pixelated;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Picture boxes that centered an emoji: the sprite fills the same square. */
+.mission-failed__sprite,
+.fun-fact__sprite,
+.laika-talk__sprite {
+  display: block;
+}

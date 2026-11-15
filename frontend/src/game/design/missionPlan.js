@@ -305,7 +305,7 @@ export function planMeters(design) {
     {
       id: 'photos',
       label: 'Photos',
-      icon: '📷',
+      icon: 'camera',
       current: photos.delivered,
       max: Math.max(1, photos.made),
       text: `${photos.delivered} home`,
@@ -315,7 +315,7 @@ export function planMeters(design) {
     {
       id: 'radio',
       label: 'Radio',
-      icon: '📡',
+      icon: 'antenna',
       current: design?.radio ? 1 : 0,
       max: 1,
       text: design?.radio ? 'On' : 'Off',
@@ -325,7 +325,7 @@ export function planMeters(design) {
     {
       id: 'mass',
       label: 'Weight',
-      icon: '⚖️',
+      icon: 'weight',
       current: toolById(design?.toolId)?.heavy ? 2 : 1,
       max: 2,
       text: weightWord(design),

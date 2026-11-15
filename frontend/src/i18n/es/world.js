@@ -217,7 +217,6 @@ export const world = {
   'Aim between {{min}}° and {{max}}° (best: {{best}}°). Use the arrow keys to fine-tune.': 'Apunta entre {{min}}° y {{max}}° (lo mejor: {{best}}°). Usa las flechas para afinar.',
   'Your rocket reached Mars after {{days}} days!': '¡Tu cohete llegó a Marte después de {{days}} días!',
   'Tap a launch base on the Earth. The rocket leaves from that city.': 'Toca una base de lanzamiento en la Tierra. El cohete sale de esa ciudad.',
-  'Launch 🚀': 'Lanzar 🚀',
   'Photos of Earth': 'Fotos de la Tierra',
   'Take pictures of Earth so people can see clouds, forests, and cities.': 'Toma fotos de la Tierra para que la gente vea nubes, bosques y ciudades.',
   'Ice on the Moon': 'Hielo en la Luna',

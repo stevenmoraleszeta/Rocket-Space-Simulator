@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { t } from '../../../i18n/index.js'
 import { SYNTH, playSynth } from '../../../audio'
+import { PixelIcon } from '../../PixelIcon.jsx'
 
 const GRAVITY = 1.62
 const THRUST = 4.2
@@ -160,7 +161,7 @@ export function MoonLanding({ onDone }) {
           onPointerUp={() => press(false)}
           onPointerLeave={() => press(false)}
         >
-          <span className="moon-landing__earth" aria-hidden="true">🌍</span>
+          <span className="moon-landing__earth" aria-hidden="true"><PixelIcon name="earth" /></span>
           <span className="moon-landing__pad" aria-hidden="true" />
           <div className="moon-landing__lander" style={{ top: `${top}%` }} aria-hidden="true">
             <svg viewBox="0 0 24 24" shapeRendering="crispEdges">
@@ -174,9 +175,9 @@ export function MoonLanding({ onDone }) {
               {state.firing && <rect className="moon-landing__flame" x="10" y="15" width="4" height="7" fill="#ffb347" />}
             </svg>
           </div>
-          {phase === 'landed' && outcome?.id !== 'crash' && <span className="moon-landing__flag" aria-hidden="true">🚩</span>}
+          {phase === 'landed' && outcome?.id !== 'crash' && <span className="moon-landing__flag" aria-hidden="true"><PixelIcon name="flag" /></span>}
           {phase === 'landed' && <span className="moon-landing__dust" aria-hidden="true" />}
-          {phase === 'landed' && outcome?.id === 'crash' && <span className="moon-landing__boom" aria-hidden="true">💥</span>}
+          {phase === 'landed' && outcome?.id === 'crash' && <span className="moon-landing__boom" aria-hidden="true"><PixelIcon name="boom" /></span>}
           <span className="moon-landing__ground" aria-hidden="true" />
         </div>
 
@@ -209,7 +210,7 @@ export function MoonLanding({ onDone }) {
                 onPointerUp={() => press(false)}
                 onPointerLeave={() => press(false)}
               >
-                🔥 {t('Hold to fire engine')}
+                <PixelIcon name="fire" /> {t('Hold to fire engine')}
               </button>
               <button type="button" className="moon-button" disabled={auto || phase !== 'ready'} onClick={useAutopilot}>{t('Autopilot')}</button>
             </div>

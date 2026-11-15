@@ -17,6 +17,7 @@ import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { LaunchFact } from './LaunchFact.jsx'
 import { failureLook } from './failureLooks.js'
 import './orbitalLaunch.css'
+import { PixelIcon } from '../../PixelIcon.jsx'
 
 export function MissionFailedScreen({ mission, result, reason, hint, onRetry, onHangar }) {
   const playerName = engineerName(useSettings().playerName)
@@ -33,7 +34,7 @@ export function MissionFailedScreen({ mission, result, reason, hint, onRetry, on
       <div className="mission-complete__card mission-failed__card">
         <p className="mission-complete__kicker">{t('Mission {{number}} · {{place}}', { number: mission.number, place: t(mission.title) })}</p>
         <div className={`mission-failed__art is-${look.motion}`} aria-hidden="true">
-          <span>{look.art}</span>
+          <span><PixelIcon name={look.art} className="mission-failed__sprite" /></span>
         </div>
         <p className="mission-failed__lose">{playerName ? sayTo(playerName, t('You lose')) : t('You lose')}</p>
         <h2 id="mission-failed-title" className="mission-complete__title mission-failed__title">
