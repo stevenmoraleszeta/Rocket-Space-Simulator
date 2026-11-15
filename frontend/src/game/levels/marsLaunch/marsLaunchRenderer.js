@@ -156,46 +156,39 @@ function drawPlanets(ctx, view, images, day) {
 }
 
 /**
- * Hazards: before the launch only a blinking pixel light (drawBlinkingPixel); once launched,
+ * Hazards: before the launch only a pixel light (drawPixelLight); once launched,
  * the satellite sprites show and debris looks like a tumbling rocket stage.
  */
 /**
- * Before the launch each hazard is a round blinking pixel light. Colors step through RGB, each one
- * blinks on its own beat, and there are three sizes so they do not all look the same.
+ * Before the launch each hazard is a small pixel light: all the same size, a 4 × 4 grid of equal
+ * pixels with the corners cut off, always on, its color stepping red, green, blue. Each light
+ * starts on a different color so they do not all match.
  */
-const PIXEL_LIGHT_COLORS = ['#ff3b3b', '#3bff6a', '#3b8bff', '#ffe83b', '#ff3bf2', '#3bf5ff']
-/** Pixel size of one block, and the round lights' radius in blocks (three sizes, taking turns). */
-const PIXEL_LIGHT_BLOCK = 3
-const PIXEL_LIGHT_RADII = [2, 3, 4]
-
-/** Blocks of a round pixel-art disc of this radius: a circle made of squares, no smooth edges. */
-function pixelDisc(radius) {
+const PIXEL_LIGHT_COLORS = ['#ff2d2d', '#2dff4f', '#2d6bff']
+const PIXEL_LIGHT_PIXEL = 4
+const PIXEL_LIGHT_GRID = 4
+const PIXEL_LIGHT_STEP_SECONDS = 0.5
+const PIXEL_LIGHT_CELLS = (() => {
   const cells = []
-  for (let y = -radius; y <= radius; y += 1) {
-    for (let x = -radius; x <= radius; x += 1) {
-      if (x * x + y * y <= radius * radius + radius * 0.6) cells.push([x, y])
+  const last = PIXEL_LIGHT_GRID - 1
+  for (let y = 0; y < PIXEL_LIGHT_GRID; y += 1) {
+    for (let x = 0; x < PIXEL_LIGHT_GRID; x += 1) {
+      const corner = (x === 0 || x === last) && (y === 0 || y === last)
+      if (!corner) cells.push([x, y])
     }
   }
   return cells
-}
-const PIXEL_LIGHT_DISCS = PIXEL_LIGHT_RADII.map(pixelDisc)
+})()
 
-function drawBlinkingPixel(ctx, spot, index, clockSeconds) {
-  // Each light blinks on its own beat: on for most of the beat, off for a short moment.
-  const beat = 0.7 + (index % 3) * 0.25
-  const phase = (clockSeconds / beat + index * 0.37) % 1
-  if (phase > 0.72) return
-  const color = PIXEL_LIGHT_COLORS[(Math.floor(clockSeconds * 2.5) + index) % PIXEL_LIGHT_COLORS.length]
-  const cells = PIXEL_LIGHT_DISCS[index % PIXEL_LIGHT_DISCS.length]
-  const block = PIXEL_LIGHT_BLOCK
-  // Snap to the block grid so every square stays crisp.
-  const x0 = Math.round(spot.x / block) * block
-  const y0 = Math.round(spot.y / block) * block
+function drawPixelLight(ctx, spot, index, clockSeconds) {
+  const color = PIXEL_LIGHT_COLORS[(Math.floor(clockSeconds / PIXEL_LIGHT_STEP_SECONDS) + index) % PIXEL_LIGHT_COLORS.length]
+  const size = PIXEL_LIGHT_PIXEL
+  const half = (PIXEL_LIGHT_GRID * size) / 2
+  // Snap to the pixel grid so every square stays crisp.
+  const left = Math.round((spot.x - half) / size) * size
+  const top = Math.round((spot.y - half) / size) * size
   ctx.fillStyle = color
-  for (const [cx, cy] of cells) ctx.fillRect(x0 + cx * block, y0 + cy * block, block, block)
-  // A small white block up and to the left makes it shine like a light.
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(x0 - block, y0 - block, block, block)
+  for (const [x, y] of PIXEL_LIGHT_CELLS) ctx.fillRect(left + x * size, top + y * size, size, size)
 }
 
 function drawHazards(ctx, view, images, day, launched, clockSeconds) {
@@ -207,7 +200,7 @@ function drawHazard(ctx, view, images, day, launched, clockSeconds, hazard, inde
   const spot = toScreen(view, world.x, world.y)
   const color = hazard.kind === 'debris' ? COLORS.debris : COLORS.satellite
   if (!launched) {
-    drawBlinkingPixel(ctx, spot, index, clockSeconds)
+    drawPixelLight(ctx, spot, index, clockSeconds)
     return
   }
   if (hazard.kind === 'satellite' && images.satellite?.complete && images.satellite.naturalWidth > 0) {
