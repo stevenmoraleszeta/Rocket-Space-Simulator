@@ -19,7 +19,8 @@ import {
 
 /** Mars's orbit uses this fraction of half the smaller side of the canvas. */
 const MAP_FILL = 0.86
-const PLANET_PIXELS = { earth: 34, mars: 28, sun: 92 }
+// Whole multiples of the 32-block pictures, so every block is the same size on screen.
+const PLANET_PIXELS = { earth: 32, mars: 32, sun: 96 }
 /** The planet pictures (32 × 32 blocks) leave 2 blocks of halo on each side: the body is 28/32 of the size. */
 const PLANET_BODY_FRACTION = 28 / 32
 const ROCKET_PIXELS = 30
@@ -116,12 +117,34 @@ function label(ctx, text, x, y, color = COLORS.label, align = 'center', size = 1
   ctx.fillText(text, x, y)
 }
 
-function drawImageCentered(ctx, image, x, y, size) {
-  if (image?.complete && image.naturalWidth > 0) {
-    ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - size / 2), size, size)
-    return true
+/**
+ * Pixel pictures are painted once at their own grid size (one block = one pixel) and then
+ * enlarged with smoothing off. Drawing the SVG straight at a bigger size leaves thin lines
+ * between the blocks.
+ */
+const PIXEL_GRID = 32
+const pixelCache = new WeakMap()
+function pixelArt(image) {
+  if (!image?.complete || !(image.naturalWidth > 0)) return null
+  let canvas = pixelCache.get(image)
+  if (!canvas) {
+    canvas = document.createElement('canvas')
+    canvas.width = PIXEL_GRID
+    canvas.height = PIXEL_GRID
+    const g = canvas.getContext('2d')
+    g.imageSmoothingEnabled = false
+    g.drawImage(image, 0, 0, PIXEL_GRID, PIXEL_GRID)
+    pixelCache.set(image, canvas)
   }
-  return false
+  return canvas
+}
+
+function drawImageCentered(ctx, image, x, y, size) {
+  const picture = pixelArt(image)
+  if (!picture) return false
+  ctx.imageSmoothingEnabled = false
+  ctx.drawImage(picture, Math.round(x - size / 2), Math.round(y - size / 2), size, size)
+  return true
 }
 
 function drawPlanets(ctx, view, images, day) {

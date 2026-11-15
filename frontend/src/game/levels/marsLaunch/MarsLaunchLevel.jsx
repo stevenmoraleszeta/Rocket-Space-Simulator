@@ -52,6 +52,7 @@ import {
 } from './marsEncounters.js'
 import './marsLaunch.css'
 import sunPicture from '../../../levels/assets/sun.svg'
+import { PixelSky } from './PixelSky.jsx'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
 
@@ -187,7 +188,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     // Picking the base uses mission 1's Earth; the Sun map uses the menu's Earth.
     earth: loadImage(ASSETS.earthPlanet.src),
     menuEarth: loadImage(SPRITES.planets.earth.src),
-    mars: loadImage(ASSETS.marsPlanet.src),
+    mars: loadImage(SPRITES.planets.mars.src),
     sun: loadImage(sunPicture),
     rocket: loadImage(ASSETS.rocketUpperStage.src),
     explosion: loadImage(ASSETS.explosion.src),
@@ -518,7 +519,8 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   )
 
   return (
-    <div className="game orbit-level" style={{ backgroundImage: `url(${ASSETS.spaceBackground.src})` }}>
+    <div className="game orbit-level mars-level">
+      <div className="mars-sky" aria-hidden="true"><PixelSky /></div>
       {hud}
       {liftingOff && (
         <div className="orbit-level__liftoff">

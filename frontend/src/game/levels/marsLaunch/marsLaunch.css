@@ -93,3 +93,7 @@
 @media (prefers-reduced-motion: reduce) {
   .mars-fact { animation: none; }
 }
+
+/* The menu's starry sky behind the level, drawn without seams (PixelSky.jsx). */
+.mars-level { isolation: isolate; background-image: none; }
+.mars-sky { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
