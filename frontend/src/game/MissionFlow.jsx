@@ -94,7 +94,6 @@ export function MissionFlow({ mission, onExit, onNextMission }) {
   return (
     <GameScreen
       mission={flightMission}
-      design={design}
       onExit={onExit}
       onRevise={() => setDesigning(true)}
       initialEquipped={equipped ?? undefined}

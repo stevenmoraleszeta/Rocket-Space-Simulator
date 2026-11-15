@@ -345,13 +345,12 @@ export function GameScreen({ mission, onExit, onRevise, onLaunch, initialEquippe
             <BulbIcon />
             <span className="bulb__label">Story</span>
           </button>
+          {onRevise && (
+            <button type="button" className="game__back" onClick={onRevise}>Choices</button>
+          )}
         </div>
-        <Meters meters={shownMeters} />
+        <Meters meters={meters} />
         <div className="dock">
-          {design ? (
-            <DesignReady design={design} onRevise={onRevise} onLaunch={startLaunch} aim={Boolean(onLaunch)} />
-          ) : (
-            <>
           <ul className={catalog.length > 6 ? 'parts parts--wrap' : 'parts'}>
             {catalog.map((part) => {
               const count = partCount(equipped, part.id);
@@ -414,8 +413,6 @@ export function GameScreen({ mission, onExit, onRevise, onLaunch, initialEquippe
           >
             {onLaunch ? 'Aim' : 'Launch'}
           </button>
-            </>
-          )}
         </div>
       </div>
       {openPart && sidePopout && !launching && (
@@ -640,27 +637,6 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose, anchor = null
       </div>
     </section>
   );
-}
-
-function DesignReady({ design, onRevise, onLaunch, aim }) {
-  const job = JOBS[design.jobId]
-  const tool = toolById(design.toolId)
-  const rocket = rocketById(design.rocketId)
-  const path = pathById(design.jobId, design.pathId)
-  return (
-    <div className="dw-ready">
-      <p><b>Job.</b> {job?.line}</p>
-      <p><b>Tool.</b> {tool?.name}. {tool?.line}</p>
-      <p><b>Rocket.</b> {rocket?.name}.</p>
-      {path && <p><b>Road.</b> {path.name}. {path.line}</p>}
-      <p><b>Radio.</b> {design.radio ? 'On. Photos can get home.' : 'Off. Some photos stay on the ship.'}</p>
-      <p>Food, water, and air for the crew are already packed.</p>
-      <div className="dw__actions">
-        <button type="button" className="game__back" onClick={onRevise}>Change choices</button>
-        <button type="button" className="bay__launch" onClick={onLaunch}>{aim ? 'Aim' : 'Launch'}</button>
-      </div>
-    </div>
-  )
 }
 
 /** Budget, mass, energy, and the supplies the mission asks for. */
