@@ -1,6 +1,7 @@
 /**
- * TON 618-style black hole for the start screen, drawn pixel by pixel (no React).
- * See BlackHoleBackground.jsx for what is in the picture.
+ * Black hole for the start screen, drawn pixel by pixel (no React).
+ * Shadow, hot disk and jets follow NASA pictures PIA22085, PIA16695 and
+ * GSFC_20171208_Archive_e000386. See BlackHoleBackground.jsx for what is in the picture.
  */
 export const PIXEL_W = 320
 export const PIXEL_H = 180

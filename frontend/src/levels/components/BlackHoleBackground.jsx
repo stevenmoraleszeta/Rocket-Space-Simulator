@@ -1,8 +1,12 @@
 /**
- * Background of the start screen: a pixel-art black hole eating matter, based on TON 618.
+ * Background of the start screen: a pixel-art black hole eating matter.
  *
- * TON 618 is one of the biggest black holes known (about 66 billion Suns). It is a quasar: the
- * gas falling in glows brighter than a whole galaxy and shoots two jets out of the poles.
+ * The shapes follow NASA's Image and Video Library, the same public catalog the mission
+ * report searches (images-api.nasa.gov):
+ *   PIA22085 — a black hole, a flat accretion disk, and a jet of hot gas (plasma)
+ *   PIA16695 — a supermassive black hole buried in glowing gas
+ *   GSFC_20171208_Archive_e000386 — the event horizon, the black region no light can leave,
+ *     with gravity bending the far side of the disk up over the shadow
  * Drawn live at a small size (PIXEL_W × PIXEL_H) and scaled up with smoothing off, so every
  * pixel is a square:
  *   - black shadow and a thin photon ring
@@ -15,6 +19,7 @@
  * With reduced motion it shows one still frame.
  */
 import { useEffect, useRef } from 'react'
+import { t } from '../../i18n/index.js'
 import { PIXEL_H, PIXEL_W, createScene, drawFrame } from './blackHoleScene.js'
 
 export function BlackHoleBackground({ children }) {
@@ -55,7 +60,7 @@ export function BlackHoleBackground({ children }) {
         width={PIXEL_W}
         height={PIXEL_H}
         role="img"
-        aria-label="A giant black hole, like TON 618, pulling in glowing gas and shooting jets of energy"
+        aria-label={t('A black hole. No light leaves its shadow. Hot gas spins around it, and a jet of energy shoots out.')}
       />
       <div className="ms-bg__content">{children}</div>
     </div>

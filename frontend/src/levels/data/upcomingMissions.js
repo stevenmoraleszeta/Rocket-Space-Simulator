@@ -12,10 +12,10 @@ export const UPCOMING_MISSIONS = [
     place: 'Saturn',
   },
   {
-    id: 'white-hole',
+    id: 'black-hole',
     number: 5,
-    planet: 'whiteHole',
-    title: 'The White Hole',
-    place: 'A white hole',
+    planet: 'blackHole',
+    title: 'The Black Hole',
+    place: 'A black hole',
   },
 ];
