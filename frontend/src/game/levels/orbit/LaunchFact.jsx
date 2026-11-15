@@ -3,6 +3,7 @@
  * so a crash explains why it crashed and a win explains why it worked.
  * Written for players aged 7–12.
  */
+import { t } from '../../../i18n/index.js'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { OUTCOMES } from './launchSimulation.js'
@@ -236,14 +237,14 @@ export function LaunchFact({ result, mission, className = '', label = 'Did you k
   const playerName = engineerName(useSettings().playerName)
   return (
     <section className={`launch-fact ${result.success ? 'is-good' : 'is-bad'} ${className}`}>
-      <p className="launch-fact__label">{label}</p>
+      <p className="launch-fact__label">{t(label)}</p>
       {playerName && (
         <p className="launch-fact__hi">
-          {sayTo(playerName, result.success ? 'Nice flying.' : 'Here is what happened.')}
+          {sayTo(playerName, t(result.success ? 'Nice flying.' : 'Here is what happened.'))}
         </p>
       )}
-      <p className="launch-fact__title">{fact.title}</p>
-      <p className="launch-fact__text">{fact.text}</p>
+      <p className="launch-fact__title">{t(fact.title)}</p>
+      <p className="launch-fact__text">{t(fact.text)}</p>
     </section>
   )
 }
