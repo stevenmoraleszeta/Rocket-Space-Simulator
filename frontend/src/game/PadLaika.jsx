@@ -227,7 +227,7 @@ export function PadLaika({ onTalk, talking, launching = false }) {
       <button
         type="button"
         className={`pad-laika is-${move.action}${move.flip ? ' is-flip' : ''}${talking ? ' is-talking' : ''}`}
-        aria-label="Laika the space dog. Tap to hear her story."
+        aria-label={t('Laika the space dog. Tap to hear her story.')}
         tabIndex={launching ? -1 : 0}
         onClick={() => {
           playSynth(SYNTH.woof)

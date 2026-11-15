@@ -45,6 +45,14 @@ export function formatNumber(value) {
   return Number(value).toLocaleString(numberLocale())
 }
 
+/** A fixed number of decimals, with a comma in Spanish. */
+export function formatDecimal(value, digits) {
+  return Number(value).toLocaleString(numberLocale(), {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })
+}
+
 export function formatDate(date, options) {
   return new Intl.DateTimeFormat(numberLocale(), options).format(date)
 }

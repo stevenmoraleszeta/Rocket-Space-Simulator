@@ -1,4 +1,5 @@
 import explosionSheet from '../assets/images/rockets/animations/explosion_sheet.png';
+import { t } from '../i18n/index.js';
 import { PARTS, ROCKET, partCount } from './parts.js';
 
 /** Plays `frames` cells of one sheet row in a loop (see .rocket__layer--anim in game.css). */
@@ -52,7 +53,7 @@ export function Rocket({
 }) {
   if (exploding) {
     return (
-      <div className="rocket is-exploding" role="img" aria-label="The rocket explodes">
+      <div className="rocket is-exploding" role="img" aria-label={t('The rocket explodes')}>
         <span
           className="rocket__layer rocket__layer--explosion"
           style={{ backgroundImage: `url(${explosionSheet})`, backgroundSize: '256px 64px' }}
@@ -80,7 +81,7 @@ export function Rocket({
     <div className={classes.join(' ')}>
       {/* What rides inside, in a speech bubble beside the closed hull */}
       {open && interior.length > 0 && (
-        <div className="rocket__bubble" aria-label="Inside the rocket">
+        <div className="rocket__bubble" aria-label={t('Inside the rocket')}>
           <div className="rocket__bubble-box">
           <div className="rocket__bubble-list">
           {interior.map((part) => (
@@ -90,7 +91,7 @@ export function Rocket({
                 src={part.src}
                 alt=""
               />
-              <span className="rocket__cargo-name">{part.name}</span>
+              <span className="rocket__cargo-name">{t(part.name)}</span>
               <span className="rocket__qty">×{partCount(equipped, part.id)}</span>
             </span>
           ))}

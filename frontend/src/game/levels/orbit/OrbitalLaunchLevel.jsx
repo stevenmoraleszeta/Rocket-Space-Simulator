@@ -16,7 +16,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { StarRating, getMission, useProgress } from '../../../levels'
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../../../audio'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
-import { formatNumber, t } from '../../../i18n/index.js'
+import { formatDecimal, formatNumber, t } from '../../../i18n/index.js'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
@@ -87,7 +87,7 @@ function loadImage(src) {
 }
 
 const formatKm = (meters) => `${formatNumber(Math.round(meters / 1000))} km`
-const formatKmPerSecond = (metersPerSecond) => `${(metersPerSecond / 1000).toFixed(1)} km/s`
+const formatKmPerSecond = (metersPerSecond) => `${formatDecimal(metersPerSecond / 1000, 1)} km/s`
 const radiansToDegrees = (radians) => Math.round((radians * 180) / Math.PI)
 
 function craftShort(satelliteName) {

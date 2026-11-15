@@ -943,7 +943,7 @@ function drawMoonTravel(ctx, view, fromMoon, toMoon) {
   const middle = from + sweep / 2
   drawLabel(
     ctx,
-    'THE MOON MOVES',
+    t('THE MOON MOVES'),
     view.centerX + (radius + 16) * Math.cos(middle),
     view.centerY - (radius + 16) * Math.sin(middle),
     'center',
@@ -1092,7 +1092,7 @@ export function drawMoonScene(ctx, view, sceneIn) {
     ctx.arc(ghost.x, ghost.y, capture + 2 + Math.sin(clock * 3) * 1.5, 0, Math.PI * 2)
     ctx.stroke()
     ctx.restore()
-    drawLabel(ctx, `MOON ON DAY ${TRIP_DAYS}`, ghost.x, ghost.y + capture + 14, 'center', '#ffd23f', 11)
+    drawLabel(ctx, t('MOON ON DAY {{day}}', { day: TRIP_DAYS }), ghost.x, ghost.y + capture + 14, 'center', '#ffd23f', 11)
     drawLabel(ctx, '(meet it here, right then)', ghost.x, ghost.y + capture + 28, 'center', '#ffd23f', 10)
   }
   ctx.restore()

@@ -17,7 +17,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { SPRITES, useProgress } from '../../../levels'
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../../../audio'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
-import { t } from '../../../i18n/index.js'
+import { formatDecimal, t } from '../../../i18n/index.js'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
@@ -105,7 +105,7 @@ const clampAim = (angleDeg, power) => ({
   power: Math.round(Math.min(POWER_SLIDER.max, Math.max(POWER_SLIDER.min, power)) * 100) / 100,
 })
 
-const formatAngle = (deg) => `${deg.toFixed(2)}°`
+const formatAngle = (deg) => `${formatDecimal(deg, 2)}°`
 
 function loadImage(src) {
   const image = new Image()
@@ -159,7 +159,7 @@ function failureReason(result) {
       }
       return t('You aimed at {{angle}}. Mars moves about {{rate}}° per day around the Sun: with that angle, when you got to its orbit Mars was no longer there. It was {{days}} days away.', {
         angle: formatAngle(result.aimDeg),
-        rate: MARS_DEG_PER_DAY.toFixed(2),
+        rate: formatDecimal(MARS_DEG_PER_DAY, 2),
         days: Math.round(outcome.marsOffsetDays),
       })
   }
@@ -314,7 +314,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
       stars: progress?.stars ?? 0,
       unlockedMissionId: progress?.unlockedMissionId ?? null,
       aimDeg: aim.angleDeg,
-      directionDeg: aim.angleDeg.toFixed(2),
+      directionDeg: formatDecimal(aim.angleDeg, 2),
       angleRight: angleInWindow(aim.angleDeg),
       failure,
       exploded,

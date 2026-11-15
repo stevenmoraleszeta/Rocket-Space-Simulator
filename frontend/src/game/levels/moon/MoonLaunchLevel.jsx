@@ -23,7 +23,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useProgress } from '../../../levels'
 import { AMBIENCE, MUSIC, SFX, SYNTH, playSfx, playSynth, useSoundtrack } from '../../../audio'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
-import { formatDate, formatNumber, t } from '../../../i18n/index.js'
+import { formatDate, formatDecimal, formatNumber, t } from '../../../i18n/index.js'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { useUiScale } from '../../../lib/uiScale.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
@@ -43,7 +43,7 @@ import { useLaunchRoute } from '../orbit/useLaunchRoute.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
 import { MoonLandingStory } from './MoonLandingStory.jsx'
-import { formatLaunchDate, MOON_SYNODIC_MONTH_DAYS } from './moonLaunchPlanning.js'
+import { MOON_SYNODIC_MONTH_DAYS } from './moonLaunchPlanning.js'
 import {
   CAPTURE_KM,
   CAPTURE_KM_WITH_FUEL,
@@ -136,7 +136,7 @@ function arrivalEaseRate(progress) {
 
 /** "38K" style numbers for the time speed-up. */
 function shortNumber(value) {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000_000) return `${formatDecimal(value / 1_000_000, 1)}M`
   if (value >= 1000) return `${Math.round(value / 1000)}K`
   return `${Math.round(value)}`
 }
@@ -280,7 +280,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
   // The calendar starts at the next whole hour after the level opens.
   const anchorMs = Math.ceil(openedAt.getTime() / HOUR_MS) * HOUR_MS
   const date = useMemo(() => new Date(anchorMs + cycleHours * HOUR_MS), [anchorMs, cycleHours])
-  const dateLabel = formatLaunchDate(date)
+  const dateLabel = formatDate(date, { dateStyle: 'medium', timeStyle: 'short' })
   const look = useMemo(() => getMoonLook(date), [date])
   const hourOfDay = cycleHours % 24
   // Each day of the Moon cycle, as the Moon will look (at noon) on the day the ship gets there.
@@ -889,7 +889,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
     setStep('site')
   }
   const launchDay = Math.floor(cycleHours / 24)
-  const launchClock = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(date)
+  const launchClock = formatDate(date, { hour: 'numeric', minute: '2-digit' })
   const shiftHours = (hours) => {
     playSynth(SYNTH.tick)
     setHelpMessage('')
@@ -932,7 +932,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
           result={result}
           design={design}
           lead={result.tripDays
-            ? t('Your crew mapped the Moon and came home after {{days}} days.', { days: result.tripDays.toFixed(1) })
+            ? t('Your crew mapped the Moon and came home after {{days}} days.', { days: formatDecimal(result.tripDays, 1) })
             : t('Your crew mapped the Moon and came home.')}
           onContinue={() => setMoonStory(true)}
           continueLabel={t('Continue')}
@@ -970,9 +970,9 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
               <span>
                 <b>{formatDate(new Date(date.getTime() + telemetry.seconds * 1000), CLOCK_OPTIONS)}</b>
                 <small>{t('Day {{day}} of the mission · time ×{{times}} faster (1 s = {{hours}} h)', {
-                  day: (telemetry.seconds / 86400).toFixed(1),
+                  day: formatDecimal(telemetry.seconds / 86400, 1),
                   times: shortNumber(telemetry.speedUp),
-                  hours: (telemetry.speedUp / 3600).toFixed(1),
+                  hours: formatDecimal(telemetry.speedUp / 3600, 1),
                 })}</small>
               </span>
             </div>
@@ -1147,7 +1147,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
               </div>
               {telemetry && (
                 <dl className="orbit-stats">
-                  <div><dt>{t('Day')}</dt><dd>{telemetry.day.toFixed(1)}</dd></div>
+                  <div><dt>{t('Day')}</dt><dd>{formatDecimal(telemetry.day, 1)}</dd></div>
                   <div><dt>{t('From Earth')}</dt><dd>{formatKm(Math.max(0, telemetry.earthKm))}</dd></div>
                   <div><dt>{t('To the Moon')}</dt><dd>{formatKm(telemetry.moonKm)}</dd></div>
                 </dl>

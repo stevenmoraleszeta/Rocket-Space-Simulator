@@ -16,6 +16,7 @@
  * Power on the ship: 1 hangar energy point = 40 W of draw and 40 W the ship can supply.
  * The level-1 ship (shield + boosters + one astronaut) draws 1,040 W from 1,600 W.
  */
+import { numberLocale } from '../i18n/index.js'
 import { EARTH_RADIUS_METERS, EARTH_MU } from './physics/constants.js'
 import { airDensityAt } from './physics/orbitalMechanics.js'
 import { HULL, PARTS, partCount, partsForMission } from './parts.js'
@@ -249,19 +250,26 @@ export function cabinCelsius(heat, heatNeed, skinCelsius) {
   return Math.min(skinCelsius, CABIN_CELSIUS + soak * 0.45)
 }
 
+function formatFixed(value, digits) {
+  return value.toLocaleString(numberLocale(), {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })
+}
+
 export function formatKg(kg) {
   const safe = Math.max(0, kg)
   if (safe < 0.005) return '0 kg'
-  return safe >= 10 ? `${safe.toFixed(1)} kg` : `${safe.toFixed(2)} kg`
+  return `${formatFixed(safe, safe >= 10 ? 1 : 2)} kg`
 }
 
 export function formatTimeLeft(seconds) {
   if (!Number.isFinite(seconds)) return '—'
   if (seconds <= 0) return '0 min'
   const days = seconds / DAY_SECONDS
-  if (days >= 2) return `${days.toFixed(1)} d`
+  if (days >= 2) return `${formatFixed(days, 1)} d`
   const hours = seconds / 3600
-  if (hours >= 1) return `${hours.toFixed(1)} h`
+  if (hours >= 1) return `${formatFixed(hours, 1)} h`
   const minutes = Math.max(1, Math.round(seconds / 60))
   return `${minutes} min`
 }

@@ -8,7 +8,7 @@
  * After touchdown, "Try again" starts the landing over with a full tank.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { t } from '../../../i18n/index.js'
+import { formatDecimal, t } from '../../../i18n/index.js'
 import { SYNTH, playSynth } from '../../../audio'
 import { PixelIcon } from '../../PixelIcon.jsx'
 import { LunarLander } from './LunarLander.jsx'
@@ -28,7 +28,7 @@ export function landingCopy(outcome) {
   if (outcome.id === 'auto') {
     return { title: t('The computer landed it'), note: t('Autopilot landed the lander. A safe, slow touchdown.') }
   }
-  const speed = outcome.speed != null ? Number(outcome.speed).toFixed(1) : '0.0'
+  const speed = outcome.speed != null ? formatDecimal(outcome.speed, 1) : formatDecimal(0, 1)
   if (outcome.id === 'soft') {
     return { title: t('Soft landing!'), note: t('Touchdown at {{speed}} m/s. Perfect! The crew plants the flag. Science +5%.', { speed }) }
   }
@@ -187,7 +187,7 @@ export function MoonLanding({ onDone }) {
 
         <dl className="moon-landing__gauges">
           <div><dt>{t('Height')}</dt><dd>{state.height.toFixed(0)} m</dd></div>
-          <div className={`is-${tone}`}><dt>{t('Falling')}</dt><dd>{Math.max(0, falling).toFixed(1)} m/s</dd></div>
+          <div className={`is-${tone}`}><dt>{t('Falling')}</dt><dd>{formatDecimal(Math.max(0, falling), 1)} m/s</dd></div>
           <div>
             <dt>{t('Fuel')}</dt>
             <dd><span className="moon-landing__fuel"><span style={{ width: `${(state.fuel / FUEL_SECONDS) * 100}%` }} /></span></dd>
@@ -204,7 +204,7 @@ export function MoonLanding({ onDone }) {
           </>
         ) : (
           <>
-            <p className="moon-landing__how">{t('Hold the engine button to slow down. Touch the ground slower than {{speed}} m/s (green).', { speed: SOFT_SPEED })}</p>
+            <p className="moon-landing__how">{t('Hold the engine button to slow down. Touch the ground slower than {{speed}} m/s (green).', { speed: formatDecimal(SOFT_SPEED, 1) })}</p>
             <div className="moon-landing__actions">
               <button
                 type="button"
