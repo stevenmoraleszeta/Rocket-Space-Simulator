@@ -1,12 +1,13 @@
 /**
  * ORBIT RENDERER — draws the orbit view on a 2D canvas. The only place where meters become pixels.
  *
- * Projection (display only, the physics always uses real meters):
- *   - the angle around the Earth is kept exactly,
- *   - the ALTITUDE is drawn enlarged: displayed = maxHeight · (1 − e^(−altitude / ALTITUDE_DISPLAY_SCALE_KM)).
- * At real scale a 700 km orbit would sit a few pixels above a full Earth and nothing could be read.
- * With this curve low orbits are spread out and readable, higher altitudes are squeezed, and the
- * order of heights never changes (a higher orbit is always drawn higher).
+ * Two pictures of the same flight:
+ *   - Physics stays in the orbital plane, in real meters (gravity, drag, rocket equation).
+ *   - Once a launch site is chosen, the drawing is that orbit's ground track on the polar
+ *     map, so the path passes through the site. See groundTrack.js.
+ *   - Before a site is chosen, altitude is still drawn as a ring outside the disc:
+ *     displayed = maxHeight · (1 − e^(−altitude / ALTITUDE_DISPLAY_SCALE_KM)).
+ *     At real scale a 700 km orbit would sit a few pixels above a full Earth.
  *
  * View:
  *   centerX, centerY     screen position of the center of the Earth (CSS pixels)
@@ -17,6 +18,7 @@ import { circularOrbitAngularSpeed, pointOnCircle } from '../../physics/orbitalM
 import { EXPLODING_OUTCOMES, OUTCOMES, degreesToRadians, satellitePositionAt } from './launchSimulation.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { SATELLITE_KIND_COLORS } from './realSatellites.js'
+import { geographicAtArgument, geographicToScreen, planeToScreen, screenDownrange } from './groundTrack.js'
 
 /** Altitude where the display curve starts to squeeze heights (km). */
 export const ALTITUDE_DISPLAY_SCALE_KM = 1200
@@ -100,6 +102,11 @@ export function worldToScreen(view, x, y) {
   return { x: view.centerX + screenRadius * Math.cos(angle), y: view.centerY - screenRadius * Math.sin(angle) }
 }
 
+/** Sim-plane position → screen. With a ground track, the point sits on the map, through the site. */
+function project(view, x, y, track) {
+  return track ? planeToScreen(view, track, x, y) : worldToScreen(view, x, y)
+}
+
 /** Angle around the Earth (world radians) of a screen point. */
 export function screenToWorldAngle(view, screenX, screenY) {
   return Math.atan2(-(screenY - view.centerY), screenX - view.centerX)
@@ -150,6 +157,35 @@ function drawDottedRing(ctx, view, radius, color, dotSize = 3, spacing = DOT_SPA
       dotSize,
       dotSize,
     )
+  }
+}
+
+/** Dotted ground track of one full orbit. It passes through the launch site. */
+function drawGroundTrack(ctx, view, track, color, dotSize = 4, spacing = DOT_SPACING_PIXELS) {
+  const steps = 240
+  const points = []
+  for (let index = 0; index <= steps; index += 1) {
+    const argument = (index / steps) * Math.PI * 2
+    const { latitudeRad, longitudeRad } = geographicAtArgument(track, argument)
+    points.push(geographicToScreen(view, latitudeRad, longitudeRad))
+  }
+  ctx.fillStyle = color
+  let carried = 0
+  for (let index = 1; index < points.length; index += 1) {
+    const previous = points[index - 1]
+    const point = points[index]
+    const dx = point.x - previous.x
+    const dy = point.y - previous.y
+    const length = Math.hypot(dx, dy)
+    if (length === 0) continue
+    let along = spacing - carried
+    while (along <= length) {
+      const x = previous.x + (dx * along) / length
+      const y = previous.y + (dy * along) / length
+      ctx.fillRect(Math.round(x - dotSize / 2), Math.round(y - dotSize / 2), dotSize, dotSize)
+      along += spacing
+    }
+    carried = length - (along - spacing)
   }
 }
 
@@ -208,10 +244,10 @@ function drawSatelliteSprite(ctx, screen, type, image, clockSeconds, index) {
 }
 
 /** Before the launch: each satellite is only a small dot in the color of its type. */
-function drawSatelliteDots(ctx, view, satellites, timeSeconds) {
+function drawSatelliteDots(ctx, view, satellites, timeSeconds, track) {
   for (const satellite of satellites) {
     const world = satellitePositionAt(satellite, timeSeconds)
-    const screen = worldToScreen(view, world.x, world.y)
+    const screen = project(view, world.x, world.y, track)
     const color = SATELLITE_KIND_COLORS[satellite.kind] ?? COLORS.satellite
     // Bright dot with a soft glow of its own color and a white sparkle in the middle.
     ctx.save()
@@ -223,17 +259,19 @@ function drawSatelliteDots(ctx, view, satellites, timeSeconds) {
   }
 }
 
-function drawSatellites(ctx, view, satellites, timeSeconds, images, clockSeconds) {
-  const drawnRings = new Set()
-  for (const satellite of satellites) {
-    if (drawnRings.has(satellite.altitudeKm)) continue
-    drawnRings.add(satellite.altitudeKm)
-    drawDottedRing(ctx, view, orbitRingRadius(view, satellite.altitudeKm), COLORS.satelliteOrbit, 2, 9)
+function drawSatellites(ctx, view, satellites, timeSeconds, images, clockSeconds, track) {
+  if (!track) {
+    const drawnRings = new Set()
+    for (const satellite of satellites) {
+      if (drawnRings.has(satellite.altitudeKm)) continue
+      drawnRings.add(satellite.altitudeKm)
+      drawDottedRing(ctx, view, orbitRingRadius(view, satellite.altitudeKm), COLORS.satelliteOrbit, 2, 9)
+    }
   }
   const types = satelliteTypes(satellites)
   satellites.forEach((satellite, index) => {
     const world = satellitePositionAt(satellite, timeSeconds)
-    const screen = worldToScreen(view, world.x, world.y)
+    const screen = project(view, world.x, world.y, track)
     // Danger zone around the satellite
     drawCircle(ctx, screen.x, screen.y, SATELLITE_SIZE_PIXELS, COLORS.danger)
     const type = types[index]
@@ -257,28 +295,32 @@ function drawSatellites(ctx, view, satellites, timeSeconds, images, clockSeconds
  * Only the chosen ring gets a label, so labels never pile up. While aiming the ring is faint,
  * so the dotted trajectory stands out.
  */
-function drawOrbitRings(ctx, view, orbits, selectedOrbitId, step) {
+function drawOrbitRings(ctx, view, orbits, selectedOrbitId, step, track) {
   const choosing = step === 'target'
   for (const orbit of orbits) {
     const selected = orbit.id === selectedOrbitId
     if (!choosing && !selected) continue
     const color = orbit.available ? orbit.color : COLORS.ringDisabled
-    const radius = orbitRingRadius(view, orbit.altitudeKm)
     ctx.globalAlpha = choosing ? 1 : 0.35
-    drawDottedRing(ctx, view, radius, color, selected && choosing ? 5 : 4, 10)
-    ctx.globalAlpha = 1
-    if (selected && choosing) {
-      drawLabel(ctx, `${orbit.altitudeKm} km`, view.centerX, view.centerY - radius - 16, 'center', color, 16)
+    if (track) {
+      drawGroundTrack(ctx, view, track, color, selected && choosing ? 5 : 4, 10)
+    } else if (choosing) {
+      const radius = orbitRingRadius(view, orbit.altitudeKm)
+      drawDottedRing(ctx, view, radius, color, selected ? 5 : 4, 10)
+      if (selected) {
+        drawLabel(ctx, `${orbit.altitudeKm} km`, view.centerX, view.centerY - radius - 16, 'center', color, 16)
+      }
     }
+    ctx.globalAlpha = 1
   }
 }
 
 const ARRIVAL_DRAW_SIZE = 32
 
 /** The point the rocket has to reach, drawn from the arrival-target sprite. */
-function drawArrivalMarker(ctx, view, arrival, images) {
+function drawArrivalMarker(ctx, view, arrival, images, track) {
   if (!arrival) return
-  const screen = worldToScreen(view, arrival.x, arrival.y)
+  const screen = project(view, arrival.x, arrival.y, track)
   const image = images?.arrivalTarget
   if (!image?.complete || image.naturalWidth <= 0) return
   const half = ARRIVAL_DRAW_SIZE / 2
@@ -298,13 +340,13 @@ function pathColor(outcomeType) {
 }
 
 /** Square dots evenly spaced along the screen path, up to `untilTime` seconds of flight. */
-function drawDottedPath(ctx, view, samples, color, untilTime = Infinity) {
+function drawDottedPath(ctx, view, samples, color, untilTime = Infinity, track = null) {
   ctx.fillStyle = color
   let carried = 0
   let previous = null
   for (const sample of samples) {
     if (sample.t > untilTime) break
-    const point = worldToScreen(view, sample.x, sample.y)
+    const point = project(view, sample.x, sample.y, track)
     if (previous) {
       const dx = point.x - previous.x
       const dy = point.y - previous.y
@@ -323,14 +365,15 @@ function drawDottedPath(ctx, view, samples, color, untilTime = Infinity) {
 }
 
 /** The predicted trajectory: only dots (no end mark, so a crash is not given away). */
-function drawPrediction(ctx, view, prediction, alpha = 1) {
+function drawPrediction(ctx, view, prediction, alpha = 1, track = null) {
   if (!prediction) return
   const { outcome } = prediction
   const color = pathColor(outcome.type)
   ctx.globalAlpha = alpha
-  drawDottedPath(ctx, view, prediction.samples, color)
+  drawDottedPath(ctx, view, prediction.samples, color, Infinity, track)
   if (outcome.type === OUTCOMES.ORBIT_REACHED) {
-    drawDottedRing(ctx, view, orbitRingRadius(view, (outcome.orbitRadius - EARTH_RADIUS_METERS) / 1000), color, 3, 14)
+    if (track) drawGroundTrack(ctx, view, track, color, 3, 14)
+    else drawDottedRing(ctx, view, orbitRingRadius(view, (outcome.orbitRadius - EARTH_RADIUS_METERS) / 1000), color, 3, 14)
   }
   ctx.globalAlpha = 1
 }
@@ -352,9 +395,12 @@ export function flightPoseAt(samples, timeSeconds) {
   }
 }
 
-function drawRocket(ctx, view, pose, headingPoint, images) {
-  const screen = worldToScreen(view, pose.x, pose.y)
-  const ahead = worldToScreen(view, headingPoint.x, headingPoint.y)
+function drawRocket(ctx, view, pose, headingPoint, images, track) {
+  const screen = project(view, pose.x, pose.y, track)
+  let ahead = project(view, headingPoint.x, headingPoint.y, track)
+  if (track && Math.hypot(ahead.x - screen.x, ahead.y - screen.y) < 2) {
+    ahead = screenDownrange(view, track, pose.x, pose.y)
+  }
   const inSpace = Math.hypot(pose.x, pose.y) - EARTH_RADIUS_METERS > STAGE_SEPARATION_ALTITUDE_METERS
   const upper = images.rocketUpperStage
   const image = inSpace && upper?.complete ? upper : pose.burning ? images.rocketLit : images.rocketOff
@@ -378,10 +424,10 @@ function drawRocket(ctx, view, pose, headingPoint, images) {
   ctx.restore()
 }
 
-function drawExplosion(ctx, view, outcome, secondsSinceEnd, images) {
+function drawExplosion(ctx, view, outcome, secondsSinceEnd, images, track) {
   const frame = Math.floor(secondsSinceEnd * EXPLOSION_FRAMES_PER_SECOND)
   if (frame >= EXPLOSION_FRAME_COUNT || !images.explosion?.complete) return
-  const screen = worldToScreen(view, outcome.x, outcome.y)
+  const screen = project(view, outcome.x, outcome.y, track)
   ctx.drawImage(
     images.explosion,
     frame * EXPLOSION_FRAME_SIZE, 0, EXPLOSION_FRAME_SIZE, EXPLOSION_FRAME_SIZE,
@@ -406,16 +452,18 @@ export function drawOrbitScene(ctx, view, scene) {
   ctx.imageSmoothingEnabled = false
 
   const simTime = scene.flight?.simTime ?? 0
+  const track = scene.track ?? null
+  // Earth first, then the ground track and satellites, so a path across the map stays visible.
+  drawEarth(ctx, view, scene.images, scene.clockSeconds)
+  drawOrbitRings(ctx, view, scene.orbits, scene.selectedOrbitId, scene.step, track)
   // The satellites show up for real once the rocket is launched; before that they are colored dots.
   const launched = scene.step === 'flight' || scene.step === 'result'
-  if (launched) drawSatellites(ctx, view, scene.satellites, simTime, scene.images, scene.clockSeconds)
-  else drawSatelliteDots(ctx, view, scene.satellites, simTime)
-  drawEarth(ctx, view, scene.images, scene.clockSeconds)
-  drawOrbitRings(ctx, view, scene.orbits, scene.selectedOrbitId, scene.step)
-  if (scene.step !== 'site') drawArrivalMarker(ctx, view, scene.arrival, scene.images)
+  if (launched) drawSatellites(ctx, view, scene.satellites, simTime, scene.images, scene.clockSeconds, track)
+  else drawSatelliteDots(ctx, view, scene.satellites, simTime, track)
+  if (scene.step !== 'site') drawArrivalMarker(ctx, view, scene.arrival, scene.images, track)
 
   if (scene.step === 'aim') {
-    drawPrediction(ctx, view, scene.prediction)
+    drawPrediction(ctx, view, scene.prediction, 1, track)
     if (scene.aimPoint) {
       // Small crosshair where the player is pointing.
       ctx.fillStyle = '#ffffff'
@@ -426,19 +474,19 @@ export function drawOrbitScene(ctx, view, scene) {
 
   if ((scene.step === 'flight' || scene.step === 'result') && scene.prediction) {
     const { outcome, samples } = scene.prediction
-    drawPrediction(ctx, view, scene.prediction, 0.3)
-    drawDottedPath(ctx, view, samples, pathColor(outcome.type), simTime)
+    drawPrediction(ctx, view, scene.prediction, 0.3, track)
+    drawDottedPath(ctx, view, samples, pathColor(outcome.type), simTime, track)
     if (simTime <= outcome.t) {
       const pose = flightPoseAt(samples, simTime)
-      drawRocket(ctx, view, pose, pose.next ?? pose, scene.images)
+      drawRocket(ctx, view, pose, pose.next ?? pose, scene.images, track)
     } else if (outcome.type === OUTCOMES.ORBIT_REACHED) {
       const secondsAfter = simTime - outcome.t
-      drawRocket(ctx, view, { ...orbitingPoint(outcome, secondsAfter), burning: false }, orbitingPoint(outcome, secondsAfter + 30), scene.images)
+      drawRocket(ctx, view, { ...orbitingPoint(outcome, secondsAfter), burning: false }, orbitingPoint(outcome, secondsAfter + 30), scene.images, track)
     } else if (EXPLODING_OUTCOMES.includes(outcome.type)) {
-      drawExplosion(ctx, view, outcome, scene.flight.realSecondsSinceEnd, scene.images)
+      drawExplosion(ctx, view, outcome, scene.flight.realSecondsSinceEnd, scene.images, track)
     } else if (outcome.type === OUTCOMES.NO_LIFTOFF) {
       const up = pointOnCircle(EARTH_RADIUS_METERS * 2, Math.atan2(outcome.y, outcome.x))
-      drawRocket(ctx, view, { x: outcome.x, y: outcome.y, burning: true }, up, scene.images)
+      drawRocket(ctx, view, { x: outcome.x, y: outcome.y, burning: true }, up, scene.images, track)
     }
   }
 }

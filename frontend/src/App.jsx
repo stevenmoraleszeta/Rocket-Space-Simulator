@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { MissionSelect, ProgressProvider } from './levels'
+import { AppLogo } from './brand/AppLogo.jsx'
+import { MissionSelect, ProgressProvider, SpaceBackground } from './levels'
 import { MissionFlow } from './game/MissionFlow.jsx'
-import { SettingsMenu, SettingsProvider } from './settings'
+import { SettingsProvider } from './settings'
 import { AMBIENCE, AudioVolumeSync, MUSIC, useSoundtrack } from './audio'
 import { createCloudProgressStorage, createCloudSettingsStorage } from './lib/cloudStorage.js'
 import { usePlayerSession } from './lib/playerSession.js'
@@ -25,7 +26,16 @@ export default function App() {
     [session.remote],
   )
 
-  if (!session.ready) return null
+  if (!session.ready) {
+    return (
+      <SpaceBackground>
+        <div className="brand-splash">
+          <AppLogo size={96} wordmark />
+          <p className="brand-splash__status">Loading…</p>
+        </div>
+      </SpaceBackground>
+    )
+  }
 
   return (
     <SettingsProvider userId={session.uid} storage={settingsStorage}>
@@ -36,8 +46,7 @@ export default function App() {
         ) : (
           <>
             <MenuSoundtrack />
-            <MissionSelect onStartMission={setMission} />
-            <SettingsMenu googleSignedIn={session.google} />
+            <MissionSelect googleSignedIn={session.google} authError={session.authError} onStartMission={setMission} />
           </>
         )}
       </ProgressProvider>

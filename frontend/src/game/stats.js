@@ -1,4 +1,4 @@
-import { FOOD_KG_PER_PERSON_DAY, WATTS_PER_ENERGY_POINT, formatKg, supplyReport } from './lifeSupport.js';
+import { FOOD_KG_PER_PERSON_DAY, WATER_KG_PER_PERSON_DAY, WATTS_PER_ENERGY_POINT, formatKg, supplyReport } from './lifeSupport.js';
 
 /** Short chips shown on a part button. Only the stats that part actually changes. */
 export function partTags(part) {
@@ -11,7 +11,16 @@ export function partTags(part) {
   if (part.heat) tags.push({ kind: 'good', text: `+${part.heat} heat` });
   if (part.thrust) tags.push({ kind: 'good', text: `+${part.thrust} thrust` });
   if (part.foodDays) tags.push({ kind: 'good', text: `+${formatKg(part.foodDays * FOOD_KG_PER_PERSON_DAY)} food${each}` });
+  if (part.waterDays) tags.push({ kind: 'good', text: `+${formatKg(part.waterDays * WATER_KG_PER_PERSON_DAY)} water${each}` });
+  if (part.waterKgPerDay) tags.push({ kind: 'draw', text: `-${formatKg(part.waterKgPerDay)} water/day` });
+  if (part.propellantHangarKg && !part.thrust) tags.push({ kind: 'good', text: '+fuel' });
   if (part.o2Kg) tags.push({ kind: 'good', text: `+${formatKg(part.o2Kg)} oxygen${each}` });
+  if (part.o2Recycle) tags.push({ kind: 'good', text: 'Cleans used air' });
+  if (part.waterRecycle) tags.push({ kind: 'good', text: 'Cleans used water' });
+  if (part.stormShelter) tags.push({ kind: 'good', text: 'Safe in a Sun storm' });
+  if (part.lands) tags.push({ kind: 'good', text: 'Slows the landing' });
+  if (part.explores) tags.push({ kind: 'good', text: 'Looks at the rocks' });
+  if (part.radio) tags.push({ kind: 'good', text: 'Calls home' });
   return tags;
 }
 
@@ -34,16 +43,10 @@ export function rocketStatus(equipped, mission) {
       text: budgetLeft < 0 ? `${-budgetLeft} cr over` : `${budgetLeft} cr left`,
       bar: true,
     },
-    {
-      // The number is the weight. Yellow is only for budget that is running out.
-      // Mass stays green until the rocket is actually too heavy.
-      ...roomMeter('mass', 'Mass', massLeft, limits.mass, 'kg'),
-      text: `${report.massKg} kg`,
-      tone: massLeft < 0 ? 'over' : 'ok',
-    },
+    { ...roomMeter('mass', 'Mass', massLeft, limits.mass, 'kg'), text: `${report.massKg} kg` },
     {
       ...roomMeter('energy', 'Energy', powerLeft, report.supplyWatts, 'W'),
-      text: powerLeft < 0 ? `${Math.round(-powerLeft)} W over` : `${Math.round(powerLeft)} W left`,
+      text: `${Math.round(powerLeft)} W`,
     },
     goalMeter('heat', 'Heat', report.heat, limits.heat),
     goalMeter('thrust', 'Thrust', report.thrust, limits.thrust),
@@ -52,10 +55,19 @@ export function rocketStatus(equipped, mission) {
       ...goalMeter('food', 'Food', report.foodKg, report.foodNeedKg),
       text: formatKg(report.foodKg),
     },
+    report.tracksWater
+      ? {
+        ...goalMeter('water', 'Water', report.waterKg, report.waterNeedKg),
+        text: formatKg(report.waterKg),
+      }
+      : null,
     {
       ...goalMeter('air', 'Oxygen', report.o2Kg, report.o2NeedKg),
       text: formatKg(report.o2Kg),
     },
+    report.tracksMedicine && report.durationSeconds > 86400
+      ? goalMeter('medicine', 'Medicine', report.medicineCount, 1)
+      : null,
   ].filter(Boolean);
 
   const problems = [];
@@ -67,6 +79,10 @@ export function rocketStatus(equipped, mission) {
   if (limits.heat > 0 && report.heat < limits.heat) problems.push('Too hot. The rocket could break');
   if (limits.thrust > 0 && report.thrust < limits.thrust) problems.push('Not enough push to get there');
   if (report.o2Kg + 1e-6 < report.o2NeedKg) problems.push('The crew will run out of air');
+  if (report.tracksWater && report.waterKg + 1e-6 < report.waterNeedKg) problems.push('The crew will run out of water');
+  if (report.tracksMedicine && report.durationSeconds > 86400 && report.medicineCount < 1) {
+    problems.push('No medicine for a long flight');
+  }
 
   return { meters, problems };
 }

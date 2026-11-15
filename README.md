@@ -1,5 +1,7 @@
 # Rocket Space Simulator
 
+![Logotipo de Rocket Space Simulator: un cohete despega sobre la Tierra](frontend/public/favicon.svg)
+
 Base de un videojuego espacial. El cliente, la API y Firebase quedan conectados. Todavía no hay lógica del juego.
 
 Licencia MIT. El texto completo está en [LICENSE](LICENSE).
@@ -72,9 +74,10 @@ npm run dev:web
 Con Firebase configurado, el juego entra con una sesión anónima y guarda en Firestore. En Ajustes se puede iniciar sesión con Google. Si esa cuenta se enlaza a la sesión anónima, se conservan las estrellas. El punto rojo del botón de ajustes avisa cuando falta el nombre o la sesión de Google.
 
 - `progress/{uid}`: misiones completadas, estrellas, mejor puntaje e intentos
+- `progress/{uid}/flights/{id}`: cada viaje, aunque se repita, con lo empacado y las elecciones (base, órbita, ventana, lugar)
 - `settings/{uid}`: nombre del jugador y volumen de la música y del ambiente
 
-Cada documento solo lo puede leer y escribir ese jugador. También queda una copia en el navegador por si la red falla. Lo que se arma en el hangar pertenece a la partida en curso y no se guarda.
+Cada documento solo lo puede leer y escribir ese jugador. También queda una copia en el navegador por si la red falla. El hangar en curso no se guarda hasta que el viaje termina.
 
 El acceso anónimo ya está activo y las reglas de Firestore ya están publicadas. El botón de Google sigue apagado hasta activar ese proveedor en Authentication. Si cambias las reglas o los proveedores:
 

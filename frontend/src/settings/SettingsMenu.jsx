@@ -1,10 +1,10 @@
 /**
- * Settings button (top-right corner) that opens a panel to change
- * the music volume, the ambient/effects volume and the player's name,
- * and to sign in with Google.
+ * Settings button that opens a panel to change the music volume,
+ * the ambient/effects volume and the player's name, and to sign in with Google.
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import googleMark from '../assets/images/icons/google-g.png';
+import settingsIcon from '../assets/images/icons/settings.svg';
 import { googleSignInMessage, signInWithGoogle } from '../lib/playerSession.js';
 import { useSettings } from './SettingsContext.jsx';
 import { engineerName, MAX_NAME_LENGTH } from './settingsStore.js';
@@ -38,7 +38,7 @@ function VolumeSlider({ label, icon, value, onChange }) {
   );
 }
 
-export function SettingsMenu({ googleSignedIn = false }) {
+export function SettingsMenu({ googleSignedIn = false, authError: redirectError = '' }) {
   const { musicVolume, ambientVolume, playerName, update } = useSettings();
   const [open, setOpen] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
@@ -88,13 +88,15 @@ export function SettingsMenu({ googleSignedIn = false }) {
     <div className="st-root">
       <button
         ref={buttonRef}
-        className={needsYou ? 'st-toggle is-needed' : 'st-toggle'}
+        type="button"
+        className={`ms-btn ms-btn--ghost ms-btn--icon st-toggle${needsYou ? ' is-needed' : ''}`}
         aria-label={needsYou ? 'Settings. Add your name or sign in with Google.' : 'Settings'}
         aria-expanded={open}
         aria-controls="st-panel"
         onClick={() => setOpen((o) => !o)}
       >
-        <span aria-hidden="true">⚙</span>
+        <img className="ms-pixel" src={settingsIcon} alt="" width={28} height={28} draggable="false" />
+        Settings
         {needsYou && <span className="st-dot" title="Add your name or sign in with Google" />}
       </button>
 
@@ -154,7 +156,8 @@ export function SettingsMenu({ googleSignedIn = false }) {
                   <GoogleMark />
                   <span>{signingIn ? 'Opening Google…' : 'Sign in with Google'}</span>
                 </button>
-                {authError && <p className="st-error" role="alert">{authError}</p>}
+                {(authError || redirectError) && <p className="st-error" role="alert">{authError || redirectError}</p>}
+                <p className="st-hint">Google opens on this page so you can finish the sign-in, then the game comes back.</p>
               </>
             )}
           </div>

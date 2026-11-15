@@ -20,9 +20,11 @@ import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
+import { HudMission } from '../../HudMission.jsx'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { FlightReadout } from '../../FlightReadout.jsx'
 import { flightReadout } from '../../lifeSupport.js'
+import { flightNotes } from '../../flightSummary.js'
 import { LAUNCH_FAILURES, flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { LAUNCH_SITES } from './launchSites.js'
 import { LaunchFact } from './LaunchFact.jsx'
@@ -30,6 +32,7 @@ import { MissionCompleteScreen } from './MissionCompleteScreen.jsx'
 import { EXPLODING_OUTCOMES, OUTCOMES, arrivalPosition, degreesToRadians, satellitePositionAt, simulateLaunch } from './launchSimulation.js'
 import { buildLaunchVehicle } from './launchVehicle.js'
 import { aimFromPointer, initialAim, siteAngleOf } from './orbitAiming.js'
+import { launchGroundTrack, planeToScreen } from './groundTrack.js'
 import {
   createView,
   drawOrbitScene,
@@ -73,6 +76,12 @@ function loadImage(src) {
 const formatKm = (meters) => `${Math.round(meters / 1000).toLocaleString('en-US')} km`
 const formatKmPerSecond = (metersPerSecond) => `${(metersPerSecond / 1000).toFixed(1)} km/s`
 const radiansToDegrees = (radians) => Math.round((radians * 180) / Math.PI)
+
+function craftShort(satelliteName) {
+  if (!satelliteName) return ''
+  const found = REAL_SATELLITES.find((item) => item.name === satelliteName)
+  return found?.shortName || ''
+}
 
 /**
  * Maps real seconds since Launch to simulated seconds, so every flight lasts a few seconds:
@@ -135,6 +144,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const orbit = useMemo(() => hardestOrbit(), [])
   const siteCheck = site ? checkTargetFromSite(site, orbit) : null
   const rotationBoost = rotationBoostForInclination(orbit.inclinationDeg)
+  const track = useMemo(
+    () => (site ? launchGroundTrack(site, orbit.inclinationDeg) : null),
+    [site, orbit],
+  )
   const arrival = useMemo(
     () => (orbit && arrivalAngle !== null ? arrivalPosition(orbit.altitudeKm, arrivalAngle) : null),
     [orbit, arrivalAngle],
@@ -183,9 +196,15 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   // A rocket without boosters or heat shield blows up during the launch sequence.
   const failure = useMemo(() => launchFailure(equipped, mission), [equipped, mission])
   const supplyFailure = useMemo(() => flightSupplyFailure(equipped, mission), [equipped, mission])
+  const tripNotes = useCallback((extra = {}) => flightNotes(equipped, {
+    site: site ? `${site.name}, ${site.country}` : '',
+    orbit: orbit?.name || '',
+    ...extra,
+  }), [equipped, site, orbit])
+
   const failLaunch = useCallback(() => {
     try {
-      completeMission(mission.id, { pct: 0, success: false })
+      completeMission(mission.id, { pct: 0, success: false, flight: tripNotes() })
     } catch {
       /* mission locked or unknown: show the result anyway */
     }
@@ -193,7 +212,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     setLiftingOff(false)
     setResult({ outcome: { type: failure.id }, success: false, pct: 0, stars: 0, unlockedMissionId: null, failure })
     setStep('result')
-  }, [completeMission, mission.id, failure])
+  }, [completeMission, mission.id, failure, tripNotes])
 
   const finishFlight = () => {
     let outcome = prediction.outcome
@@ -209,9 +228,14 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     }
     const success = outcome.type === OUTCOMES.ORBIT_REACHED
     const pct = success ? scoreOrbitInsertion(orbit, outcome.missKm) : 0
+    const craft = craftShort(outcome.satelliteName)
     let progressOutcome = null
     try {
-      progressOutcome = completeMission(mission.id, { pct, success })
+      progressOutcome = completeMission(mission.id, {
+        pct,
+        success,
+        flight: tripNotes(craft ? { craft } : {}),
+      })
     } catch {
       /* mission locked or unknown: show the result anyway */
     }
@@ -244,6 +268,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       orbitId: orbit.id,
       orbitsForSite,
       arrival,
+      track,
       aimPoint,
       prediction,
       images,
@@ -319,6 +344,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           orbits: current.orbitsForSite,
           selectedOrbitId: current.orbitId,
           arrival: current.arrival,
+          track: current.track,
           satellites: REAL_SATELLITES,
           // A rocket that blew up at launch never flew: no path or rocket on the map.
           prediction: current.blewUp ? null : current.prediction,
@@ -361,7 +387,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     let closest = null
     for (const satellite of REAL_SATELLITES) {
       const world = satellitePositionAt(satellite, simTimeRef.current)
-      const screen = worldToScreen(view, world.x, world.y)
+      const screen = track
+        ? planeToScreen(view, track, world.x, world.y)
+        : worldToScreen(view, world.x, world.y)
       const gap = Math.hypot(point.x - screen.x, point.y - screen.y)
       if (gap < SATELLITE_TAP_PIXELS && (!closest || gap < closest.gap)) closest = { satellite, gap, screen }
     }
@@ -439,10 +467,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       <button type="button" className="game__back" onClick={onExit}>
         Missions
       </button>
-      <div className="game__mission">
-        <div className="game__num">Level {stageInfo.levelNumber} · {stageInfo.title}</div>
-        <h1>{mission.title}</h1>
-      </div>
+      <HudMission kicker={`Level ${stageInfo.levelNumber} · ${stageInfo.title}`} title={mission.title} />
       <div className="game__place">{mission.place}</div>
     </header>
   )

@@ -4,8 +4,19 @@ import rocketHangar from '../assets/images/rockets/rocket_hangar_32x32.png';
 import rocketSheet from '../assets/images/rockets/animations/rocket_sheet.png';
 import shieldSheet from '../assets/images/rockets/animations/heat_shield_sheet.png';
 import boosterSheet from '../assets/images/rockets/animations/side_boosters_small_sheet.png';
+import fuelSheet from '../assets/images/rockets/animations/fuel_tank_sheet.png';
 import food from '../assets/images/items/food.svg';
+import water from '../assets/images/items/water_bottle.svg';
+import medicine from '../assets/images/items/medicine.svg';
+import garden from '../assets/images/items/garden.svg';
 import astronaut from '../assets/images/items/astronaut.svg';
+import pantry from '../assets/images/items/pantry.svg';
+import recycler from '../assets/images/items/recycler.svg';
+import scrubber from '../assets/images/items/scrubber.svg';
+import shelter from '../assets/images/items/shelter.svg';
+import parachute from '../assets/images/items/parachute.svg';
+import rover from '../assets/images/items/rover.svg';
+import antenna from '../assets/images/items/antenna.svg';
 
 /**
  * What the empty rocket already brings to the pad.
@@ -16,6 +27,8 @@ export const HULL = {
   mass: 36,
   thrust: 22,
   o2Kg: 2.4,
+  // A sip of cabin water: enough for one orbit, not for the Moon (20 kg for 8 days).
+  waterKg: 0.5,
 };
 
 /** Still rocket the player builds on. 32×32, transparent background. `off` has a cold nozzle. */
@@ -77,6 +90,28 @@ export const PARTS = [
     frame: 32,
     dropsWithStage: true, // fixed to the rear stage: falls away with it in space
     flightFrames: 5, // lit frames in row frameY, played while flying
+    // Extra propellant the boosters carry (hangar kg). Not thrust.
+    propellantHangarKg: 300,
+  },
+  {
+    id: 'fuel',
+    name: 'Fuel tank',
+    blurb: 'Side tanks with more fuel.',
+    missions: ['earth', 'mars'],
+    cost: 26,
+    mass: 12,
+    // Extra propellant only. The engines are still the boosters.
+    propellantHangarKg: 180,
+    sheet: fuelSheet,
+    sheetWidth: 256,
+    sheetHeight: 64,
+    frameX: 0,
+    frameY: 32,
+    offX: 0,
+    offY: 0,
+    frame: 32,
+    dropsWithStage: true,
+    flightFrames: 8,
   },
   {
     id: 'food',
@@ -92,6 +127,47 @@ export const PARTS = [
     inside: true,
   },
   {
+    id: 'water',
+    name: 'Water',
+    blurb: 'Drinking water for the crew. You can pack more than one.',
+    missions: ['earth', 'mars'],
+    stack: true,
+    max: 4,
+    cost: 14,
+    mass: 8,
+    // 8 person-days. NASA-STD-3001: 2.5 kg of potable water per person per day.
+    waterDays: 8,
+    src: water,
+    inside: true,
+  },
+  {
+    id: 'medicine',
+    name: 'Medicine',
+    blurb: 'A kit for when someone feels sick.',
+    missions: ['earth', 'mars'],
+    cost: 18,
+    mass: 5,
+    // One kit for the crew, the way NASA flies a medical kit.
+    medicine: true,
+    src: medicine,
+    inside: true,
+  },
+  {
+    id: 'veggie',
+    name: 'Plant locker',
+    blurb: 'A small plant locker. The lights use power, and the plants drink water.',
+    missions: ['earth'],
+    cost: 32,
+    mass: 11,
+    // NASA Veggie uses about 70 W. One energy point is 40 W, so this is 80 W.
+    energy: 2,
+    // About half a kilogram a day. Veggie drinks water the whole time it is on.
+    // Lettuce on the station took 33 days. None of these trips last that long.
+    waterKgPerDay: 0.5,
+    src: garden,
+    inside: true,
+  },
+  {
     id: 'astronaut',
     name: 'Astronaut',
     blurb: 'Flies the ship and brings oxygen tanks. Uses power. You can pack more than one.',
@@ -100,13 +176,108 @@ export const PARTS = [
     cost: 22,
     mass: 7,
     energy: 12,
-    // Suit tanks. With the cabin, one astronaut can breathe on the Moon and on Mars.
-    // Two astronauts on Mars use the oxygen up before the trip ends.
+    // Suit tanks. With the cabin, one astronaut can breathe on the Moon.
+    // On Mars the air scrubber has to be aboard. Then one astronaut lasts the
+    // 203-day cruise, and two still breathe the tanks dry.
     o2Kg: 8.5,
     src: astronaut,
     inside: true,
   },
+  // Mission 3 only. Fuel, water, medicine, and the Earth plant locker stay on the missions
+  // their own `missions` list names.
+  {
+    id: 'pantry',
+    name: 'Meal locker',
+    blurb: 'A big locker of meals. A cruise of many months needs this and some food packs.',
+    missions: ['mars'],
+    cost: 24,
+    mass: 10,
+    energy: 2,
+    // 180 person-days. Three food packs (24 more) last the 203-day cruise. Two do not.
+    foodDays: 180,
+    src: pantry,
+    inside: true,
+  },
+  {
+    id: 'recycler',
+    name: 'Water recycler',
+    blurb: 'Cleans most of the water the crew drinks, so one bottle lasts for months.',
+    missions: ['mars'],
+    cost: 20,
+    mass: 8,
+    energy: 3,
+    // Returns 98% of the crew's water. Plants, if any, still drink fresh water.
+    // One astronaut then needs about 10 kg for 203 days. Four bottles alone last about a month.
+    waterRecycle: 0.98,
+    src: recycler,
+    inside: true,
+  },
+  {
+    id: 'scrubber',
+    name: 'Air scrubber',
+    blurb: 'Cleans the air the crew breathes out, so the tanks last for months.',
+    missions: ['mars'],
+    cost: 22,
+    mass: 8,
+    energy: 5,
+    // Keeps 94% of the oxygen in the loop. One astronaut then lasts 203 days. Two do not.
+    o2Recycle: 0.94,
+    src: scrubber,
+    inside: true,
+  },
+  {
+    id: 'shelter',
+    name: 'Storm shelter',
+    blurb: 'A thick little room. The crew hides here when the Sun throws a particle storm.',
+    missions: ['mars'],
+    cost: 26,
+    mass: 11,
+    energy: 2,
+    stormShelter: true,
+    src: shelter,
+    inside: true,
+  },
+  {
+    id: 'parachute',
+    name: 'Parachute',
+    blurb: 'Opens in Mars’s thin air and slows the ship for landing.',
+    missions: ['mars'],
+    cost: 16,
+    mass: 6,
+    lands: true,
+    src: parachute,
+    inside: true,
+  },
+  {
+    id: 'rover',
+    name: 'Rover',
+    blurb: 'Rolls out on Mars and looks at the red rocks.',
+    missions: ['mars'],
+    cost: 20,
+    mass: 12,
+    energy: 3,
+    explores: true,
+    src: rover,
+    inside: true,
+  },
+  {
+    id: 'antenna',
+    name: 'Radio dish',
+    blurb: 'Calls home. Needed when the Sun sits between Earth and Mars.',
+    missions: ['mars'],
+    cost: 18,
+    mass: 5,
+    energy: 2,
+    radio: true,
+    src: antenna,
+    inside: true,
+  },
 ];
+
+/** Parts offered in this mission. A part with no `missions` list is in every hangar. */
+export function partsForMission(missionId) {
+  return PARTS.filter((part) => !part.missions || part.missions.includes(missionId));
+}
 
 /** How many of this part are packed. Missing entries count as zero. */
 export function partCount(equipped, id) {

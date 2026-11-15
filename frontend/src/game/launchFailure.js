@@ -5,8 +5,8 @@
  *   over budget, too heavy, no crew, not enough power, no food, no oxygen,
  *   no boosters (or the engines cannot lift the weight), no heat shield
  *
- * During the trip, food or oxygen can hit zero. Those wait until the clock
- * reaches that moment (flightSupplyFailure).
+ * During the trip, food, water, or oxygen can hit zero. On a long trip
+ * with no medicine, space sickness can stop the crew too.
  */
 import { buildLaunchVehicle } from './levels/orbit/launchVehicle.js';
 import { earliestSupplyEnd, supplyReport } from './lifeSupport.js';
@@ -43,6 +43,12 @@ export const LAUNCH_FAILURES = Object.freeze({
     message: 'There is no food on the rocket. The crew cannot eat.',
     hint: 'Go back to the hangar and pack food.',
   },
+  noWater: {
+    id: 'noWater',
+    at: 'pad',
+    message: 'There is no water on the rocket. The crew cannot drink.',
+    hint: 'Go back to the hangar and pack water.',
+  },
   noAir: {
     id: 'noAir',
     at: 'pad',
@@ -67,6 +73,18 @@ export const LAUNCH_FAILURES = Object.freeze({
     message: 'The food ran out before the trip was over.',
     hint: 'Go back to the hangar and pack more food for the people on board.',
   },
+  outOfWater: {
+    id: 'outOfWater',
+    at: 'flight',
+    message: 'The water ran out before the trip was over.',
+    hint: 'Go back to the hangar and pack more water for the people on board.',
+  },
+  spaceSick: {
+    id: 'spaceSick',
+    at: 'flight',
+    message: 'Someone got space sick, and there was no medicine.',
+    hint: 'Go back to the hangar and pack the medicine kit. On a long trip, people can feel sick.',
+  },
   outOfAir: {
     id: 'outOfAir',
     at: 'flight',
@@ -84,6 +102,7 @@ export function launchFailure(equipped, mission) {
   if (report.crew < report.minCrew) return LAUNCH_FAILURES.noCrew;
   if (report.drawWatts > report.supplyWatts) return LAUNCH_FAILURES.noPower;
   if (report.foodKg <= 0) return LAUNCH_FAILURES.noFood;
+  if (report.tracksWater && report.waterKg <= 0) return LAUNCH_FAILURES.noWater;
   if (report.o2Kg <= 0) return LAUNCH_FAILURES.noAir;
   if (partCount(equipped, 'boosters') <= 0 || vehicle.thrustToWeight <= 1) return LAUNCH_FAILURES.noBoosters;
   if (partCount(equipped, 'shield') <= 0 || report.heat < report.limits.heat) return LAUNCH_FAILURES.noShield;

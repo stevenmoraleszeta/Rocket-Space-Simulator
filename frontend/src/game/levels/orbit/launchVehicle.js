@@ -36,7 +36,8 @@ export function buildLaunchVehicle(equipped) {
     if (count <= 0) continue
     dryHangarKg += (part.mass || 0) * count
     thrustPoints += (part.thrust || 0) * count
-    propellantHangarKg += (PART_PROPELLANT_HANGAR_KG[part.id] || 0) * count
+    const extraFuel = part.propellantHangarKg ?? PART_PROPELLANT_HANGAR_KG[part.id] ?? 0
+    propellantHangarKg += extraFuel * count
   }
 
   const dryMassKg = dryHangarKg * REAL_KG_PER_HANGAR_KG

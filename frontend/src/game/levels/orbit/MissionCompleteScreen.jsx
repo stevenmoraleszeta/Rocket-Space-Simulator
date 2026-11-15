@@ -8,6 +8,7 @@ import { useEffect, useRef } from 'react'
 import { MISSIONS, Planet, StarRating } from '../../../levels'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
+import { AppLogo } from '../../../brand/AppLogo.jsx'
 import { LaunchFact } from './LaunchFact.jsx'
 
 function nextMissionAfter(missionId) {
@@ -15,7 +16,7 @@ function nextMissionAfter(missionId) {
   return index >= 0 ? (MISSIONS[index + 1] ?? null) : null
 }
 
-export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain }) {
+export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain, lead }) {
   const playerName = engineerName(useSettings().playerName)
   const nextMission = nextMissionAfter(mission.id)
   const continueRef = useRef(null)
@@ -33,12 +34,13 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
       </div>
 
       <div className="mission-complete__card">
+        <AppLogo className="mission-complete__logo" size={64} />
         <p className="mission-complete__kicker">Mission {mission.number} · {mission.title}</p>
         <h2 id="mission-complete-title" className="mission-complete__title">
           {playerName ? sayTo(playerName, 'You did it!') : 'You did it!'}
         </h2>
         <p className="mission-complete__lead">
-          {sayTo(playerName, 'Your satellite is flying around the Earth.')}
+          {sayTo(playerName, lead ?? 'Your satellite is flying around the Earth.')}
         </p>
 
         <div className="mission-complete__stars">
@@ -47,7 +49,9 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
 
         <dl className="orbit-stats mission-complete__stats">
           <div><dt>Score</dt><dd>{result.pct}%</dd></div>
-          <div><dt>Off target</dt><dd>{Math.round(result.outcome.missKm)} km</dd></div>
+          {Number.isFinite(result.outcome?.missKm) && (
+            <div><dt>Off target</dt><dd>{Math.round(result.outcome.missKm)} km</dd></div>
+          )}
           {directionDeg != null && <div><dt>Your direction</dt><dd>{directionDeg}°</dd></div>}
         </dl>
 

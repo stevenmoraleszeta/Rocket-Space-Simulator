@@ -8,24 +8,48 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useProgress } from '../ProgressContext.jsx';
+import { statSheet } from '../record.js';
 import { Planet } from './Planet.jsx';
+import { HistoryBoard, RankBadge, RecordButtons, StatsBoard } from './PlayerBoards.jsx';
 import { StarRating } from './StarRating.jsx';
 import { SpaceBackground } from './SpaceBackground.jsx';
 import { SPRITES } from '../assets/sprites.js';
+import { SettingsMenu } from '../../settings/SettingsMenu.jsx';
+import { AppLogo } from '../../brand/AppLogo.jsx';
 import { useSettings } from '../../settings/SettingsContext.jsx';
 import { engineerName, sayTo } from '../../settings/settingsStore.js';
 
-export function MissionSelect({ onStartMission }) {
-  const { missions, getState, getStars, totalStars, maxStars, loading } = useProgress();
+export function MissionSelect({ onStartMission, googleSignedIn = false, authError = '' }) {
+  const { missions, progress, getState, getStars, totalStars, maxStars, loading } = useProgress();
   const [open, setOpen] = useState(null);
+  const [board, setBoard] = useState(null);
   const playerName = engineerName(useSettings().playerName);
 
-  if (loading) return <SpaceBackground><div className="ms-loading">Loading…</div></SpaceBackground>;
+  if (loading) {
+    return (
+      <SpaceBackground>
+        <div className="brand-splash">
+          <AppLogo size={96} wordmark />
+          <p className="brand-splash__status">Loading…</p>
+        </div>
+      </SpaceBackground>
+    );
+  }
 
   return (
     <SpaceBackground>
     <div className="ms-select">
+      <div className="ms-bar">
+        <RankBadge stars={totalStars} />
+        <nav className="ms-tools" aria-label="Menu">
+          <RecordButtons onHistory={() => setBoard('history')} onStats={() => setBoard('stats')} />
+          <SettingsMenu googleSignedIn={googleSignedIn} authError={authError} />
+        </nav>
+      </div>
+
+      <div className="ms-stage">
       <header className="ms-head">
+        <AppLogo size={64} wordmark />
         <p className="ms-ages">A space game for kids ages 7 to 12</p>
         <h1>Choose your mission!</h1>
         <p className="ms-greet">
@@ -73,6 +97,14 @@ export function MissionSelect({ onStartMission }) {
           );
         })}
       </ol>
+      </div>
+
+      {board === 'history' && (
+        <HistoryBoard progress={progress} missions={missions} onClose={() => setBoard(null)} />
+      )}
+      {board === 'stats' && (
+        <StatsBoard sheet={statSheet(progress, missions)} onClose={() => setBoard(null)} />
+      )}
 
       {open && (
         <MissionCard

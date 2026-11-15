@@ -41,6 +41,7 @@ export const MISSIONS = [
       'One loop takes about 99 minutes, plus the climb up.',
       'Someone has to fly. An empty rocket cannot finish the trip.',
       'The trip is short, but the crew gets hungry. With nothing to eat, the trip stops.',
+      'The crew gets thirsty too. People drink water every day.',
       'Going up gets very hot. Too much heat can break the rocket.',
       'The rocket needs a bigger push to reach space.',
       'The cabin already has air for this short trip.',
@@ -49,13 +50,14 @@ export const MISSIONS = [
     hints: [
       'What could stop the trip: no one aboard, hunger, heat, a weak push, or no power?',
       'This trip is short. The cabin may already hold enough air.',
-      'A green bar is ready. A yellow bar is low. A red bar means too much.',
+      'Green money is ready. Yellow money is low. Red money is too much.',
     ],
     funFact: 'The space station goes all the way around Earth in about 90 minutes!',
     passPct: 60,
-    // 108 credits is the one loadout that can fly. 2 credits are left, not enough for anything else.
-    // 6,518 s = a 10 minute climb + one 98.6 minute loop at 700 km.
-    loadout: { budget: 110, mass: 94, energy: 40, heat: 20, thrust: 40, minCrew: 1, durationSeconds: 6518 },
+    // 122 credits is the one loadout that can fly: shield, boosters, food, water, one astronaut.
+    // 2 credits are left. The cheapest extra part costs 14.
+    // Mass 98 of 102. 6,518 s = a 10 minute climb + one 98.6 minute loop at 700 km.
+    loadout: { budget: 124, mass: 102, energy: 40, heat: 20, thrust: 40, minCrew: 1, durationSeconds: 6518 },
   },
   {
     id: 'moon',
@@ -86,23 +88,34 @@ export const MISSIONS = [
     planet: 'mars',
     title: 'Red Planet Rover',
     place: 'Mars',
-    goal: 'Send a rover to Mars and look at the red rocks.',
-    intro: 'A very long trip to Mars.',
+    goal: 'Fly a crew to Mars and set a rover on the red rocks.',
+    intro: 'A long cruise to Mars.',
     story: [
       'You send a crew to Mars. It is much farther than the Moon.',
-      'The trip takes 12 days. They eat the whole way.',
-      'A little air is not enough. They need air for the whole trip.',
-      'Two people can breathe the tanks dry before they arrive.',
-      'The way is still hot, and Mars is the farthest place yet.',
+      'A real cruise lasts about 7 months. Perseverance flew for 203 days.',
+      'The crew eats every day of those months. A few meals will not last.',
+      'They drink every day too. A few bottles will not last seven months.',
+      'They breathe out the whole way. The air in the cabin has to stay clean.',
+      'On a flight this long, someone can feel sick.',
+      'The Sun can throw a storm of fast particles. The crew needs a safe room.',
+      'Mars has air, but it is very thin. The ship is still going very fast at the end.',
+      'You came to look at the red rocks. Something has to roll out and look.',
+      'On some days the Sun sits between Earth and Mars, and the radio goes quiet.',
       'Money, weight, and power can run out. Packing extra can leave you short.',
     ],
     hints: [
-      'This trip lasts longer than the Moon. What has to last the whole way?',
-      'A second person can use up the oxygen.',
-      'A red bar means you packed too much.',
+      'This trip lasts many months. What has to last, and what has to be cleaned?',
+      'A second person needs more air, more meals, more water, and more power.',
+      'The big asteroid belt is past Mars. A few rocks still share this road.',
+      'A shorter path needs fewer meals. A path behind the Sun needs a way to call home.',
+      'Red money means you packed more than you can pay for.',
     ],
-    funFact: 'Mars looks red because its dust is rusty, like an old bike in the rain.',
+    funFact: 'Perseverance flew about 471 million km in 203 days. The asteroid belt is farther out, past Mars.',
     passPct: 60,
-    loadout: { budget: 175, mass: 130, energy: 44, heat: 35, thrust: 60, minCrew: 1, durationSeconds: 12 * 86400 },
+    // 203 days, the Perseverance cruise. One winning pack for the long paths:
+    // shield, boosters, 1 crew, 3 food, meal locker, scrubber, shelter, parachute,
+    // rover, medicine, 1 water, water recycler = 300 cr, 176 kg, 41 energy.
+    // The radio (18 cr, 5 kg, 2 energy) fits only if the meal packs come off, and then only the 180-day path lasts.
+    loadout: { budget: 302, mass: 178, energy: 43, heat: 35, thrust: 60, minCrew: 1, durationSeconds: 203 * 86400 },
   },
 ];

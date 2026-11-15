@@ -173,6 +173,16 @@
 }
 
 .game__mission {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  min-width: 0;
+}
+
+.game__mission-copy {
+  min-width: 0;
   text-align: center;
 }
 
@@ -1149,6 +1159,11 @@
   width: 100%;
 }
 
+.parts--wrap {
+  flex-wrap: wrap;
+  width: min(400px, 100%);
+}
+
 .part-btn,
 .step-btn,
 .part-dialog__close {
@@ -1523,6 +1538,11 @@
     justify-self: center;
   }
 
+  .game__mission {
+    flex-direction: column;
+    gap: 6px;
+  }
+
   .stage__frame {
     transform: translate(-34%, -62%);
   }
@@ -1534,7 +1554,8 @@
 
   .dock,
   .meters,
-  .pad-story {
+  .pad-story,
+  .parts--wrap {
     width: min(320px, 100%);
   }
 

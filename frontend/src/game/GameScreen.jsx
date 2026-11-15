@@ -2,26 +2,28 @@
  * After a mission is launched the player fits the rocket on Earth,
  * then presses Launch and the flight begins.
  */
-import { useCallback, useEffect, useState } from 'react';
-import { SpaceBackground } from '../levels';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { SpaceBackground, useProgress } from '../levels';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
-import { EMPTY_LOADOUT, PARTS, partCount, partMax } from './parts.js';
+import { EMPTY_LOADOUT, partCount, partMax, partsForMission } from './parts.js';
 import { METER_ICONS } from './meterIcons.js';
 import { PadClouds } from './PadClouds.jsx';
 import { PadFlag } from './PadFlag.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
 import { LaunchSequence } from './LaunchSequence.jsx';
+import { flightNotes } from './flightSummary.js';
 import { flightSupplyFailure, launchFailure } from './launchFailure.js';
 import { FlightReadout } from './FlightReadout.jsx';
-import { flightReadout } from './lifeSupport.js';
+import { flightReadout, supplyReport } from './lifeSupport.js';
 import { ASCENT_MS, AscentScene } from './AscentScene.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../audio';
 import { useSettings } from '../settings/SettingsContext.jsx';
 import { engineerName, sayTo } from '../settings/settingsStore.js';
+import { HudMission } from './HudMission.jsx';
 import './game.css';
 
 /**
@@ -41,6 +43,8 @@ const TIMED_PHASES = {
  */
 export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
   const playerName = engineerName(useSettings().playerName);
+  const { completeMission } = useProgress();
+  const loggedTrip = useRef(false);
   const [phase, setPhase] = useState('assemble');
   const [storyOpen, setStoryOpen] = useState(true);
   const [openPart, setOpenPart] = useState(null);
@@ -72,6 +76,28 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
   // Food and oxygen that run out later fail on the flight clock.
   const [failure, setFailure] = useState(null);
 
+  const recordTrip = useCallback((success) => {
+    if (onLaunch || loggedTrip.current) return;
+    loggedTrip.current = true;
+    try {
+      completeMission(mission.id, {
+        pct: success ? 100 : 0,
+        success,
+        flight: flightNotes(equipped, { place: mission.place }),
+      });
+    } catch {
+      /* mission locked or unknown: the flight screen still explains what happened */
+    }
+  }, [onLaunch, completeMission, mission, equipped]);
+
+  function returnToHangar() {
+    loggedTrip.current = false;
+    setFlightHeld(false);
+    setFlightSeconds(0);
+    setFailure(null);
+    setPhase('assemble');
+  }
+
   function startLaunch() {
     if (onLaunch) {
       onLaunch(equipped);
@@ -102,23 +128,26 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       if (supplyFailure && elapsed >= supplyFailure.atSeconds) {
         playSfx(SFX.lose);
         setFailure(supplyFailure);
+        recordTrip(false);
         setPhase('failed');
         return;
       }
       if (elapsed >= duration) {
         setFlightHeld(true);
+        recordTrip(true);
         return;
       }
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [phase, equipped, mission]);
+  }, [phase, equipped, mission, recordTrip]);
 
   const showFailure = useCallback(() => {
     playSfx(SFX.lose);
+    recordTrip(false);
     setPhase('failed');
-  }, []);
+  }, [recordTrip]);
 
   const launching = phase === 'launching';
 
@@ -130,16 +159,26 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
         : { music: MUSIC.assemble },
   );
 
+  const catalog = useMemo(() => partsForMission(mission.id), [mission.id]);
+  const supplies = supplyReport(equipped, mission);
+  const creditsLeft = supplies.limits.budget - supplies.cost;
+
   function changeCount(id, delta) {
-    const part = PARTS.find((item) => item.id === id);
+    const part = catalog.find((item) => item.id === id);
+    if (!part) return;
     const max = partMax(part);
-    // Sound only when the count really changes (not when already at 0 or at the max)
     const before = partCount(equipped, id);
     const after = Math.max(0, Math.min(max, before + delta));
+    if (after === before) return;
+    if (after > before && creditsLeft < part.cost) return;
     if (after > before) playSfx(SFX.equip);
-    else if (after < before) playSfx(SFX.unequip);
+    else playSfx(SFX.unequip);
     setEquipped((current) => {
       const count = Math.max(0, Math.min(max, partCount(current, id) + delta));
+      if (count > partCount(current, id)) {
+        const report = supplyReport(current, mission);
+        if (report.limits.budget - report.cost < part.cost) return current;
+      }
       return { ...current, [id]: count };
     });
   }
@@ -151,11 +190,9 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       <button type="button" className="game__back" onClick={onExit}>
         Missions
       </button>
-        <div className="game__mission">
-        <div className="game__num">Mission {mission.number}</div>
-        <h1>{mission.title}</h1>
+      <HudMission kicker={`Mission ${mission.number}`} title={mission.title}>
         {playerName && <p className="game__engineer">Engineer {playerName}</p>}
-      </div>
+      </HudMission>
       <div className="game__place">{mission.place}</div>
     </header>
   );
@@ -173,7 +210,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
             <h2 className="launch-failed__title">{playerName ? sayTo(playerName, 'Try again') : 'Try again'}</h2>
             <p className="flight__status">{failure?.message}</p>
             <p className="launch-failed__hint">{failure?.hint}</p>
-            <button type="button" className="ms-btn" onClick={() => setPhase('assemble')}>
+            <button type="button" className="ms-btn" onClick={returnToHangar}>
               Back to the hangar
             </button>
           </div>
@@ -201,15 +238,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
             <FlightReadout
               rows={flightReadout(equipped, mission, flightSeconds, { altitudeMeters: 400000, speedMetersPerSecond: 0 })}
             />
-            <button
-              type="button"
-              className="game__back"
-              onClick={() => {
-                setFlightHeld(false);
-                setFlightSeconds(0);
-                setPhase('assemble');
-              }}
-            >
+            <button type="button" className="game__back" onClick={returnToHangar}>
               Hangar
             </button>
           </div>
@@ -251,8 +280,8 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
         </div>
         <Meters meters={meters} />
         <div className="dock">
-          <ul className="parts">
-            {PARTS.map((part) => {
+          <ul className={catalog.length > 6 ? 'parts parts--wrap' : 'parts'}>
+            {catalog.map((part) => {
               const count = partCount(equipped, part.id);
               const open = openPart === part.id;
               return (
@@ -278,8 +307,9 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           </ul>
           {openPart && (
             <PartDialog
-              part={PARTS.find((part) => part.id === openPart)}
+              part={catalog.find((part) => part.id === openPart)}
               count={partCount(equipped, openPart)}
+              creditsLeft={creditsLeft}
               onChange={changeCount}
               onClose={() => setOpenPart(null)}
             />
@@ -368,9 +398,10 @@ function BulbIcon() {
 }
 
 /** Detail for one part. Opens on the right, next to the icon row. */
-function PartDialog({ part, count, onChange, onClose }) {
+function PartDialog({ part, count, creditsLeft, onChange, onClose }) {
   if (!part) return null;
   const max = partMax(part);
+  const broke = creditsLeft < part.cost;
 
   return (
     <section
@@ -405,7 +436,8 @@ function PartDialog({ part, count, onChange, onClose }) {
         <button
           type="button"
           className="step-btn"
-          disabled={count >= max}
+          disabled={count >= max || broke}
+          title={broke && count < max ? 'Not enough money' : undefined}
           aria-label={`Add one ${part.name}`}
           onClick={() => onChange(part.id, 1)}
         >
@@ -423,7 +455,9 @@ function Meters({ meters }) {
       <h2 className="meters__title">Supplies</h2>
       <div className="meters__grid">
         {meters.map((meter) => (
-          <div key={meter.id} className={`meter is-${meter.tone}`}>
+          // Only money colors its bar. The other amounts share one color, so the hangar
+          // does not say whether they are enough before liftoff.
+          <div key={meter.id} className={meter.bar ? `meter is-${meter.tone}` : 'meter is-plain'}>
             {METER_ICONS[meter.id] && (
               <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />
             )}

@@ -10,31 +10,48 @@
  *
  * allowsEastward / allowsPolar say whether rockets can fly in that direction safely,
  * over the sea or empty land instead of over towns.
+ *
+ * United States sites are listed first. Coordinates are the real pads NASA has used:
+ * Kennedy Pad 39B, Vandenberg SLC-3E (Landsat 9) and Kodiak Pad 1 (Kodiak Star).
+ * The later sites are partner countries where a NASA mission has actually launched.
+ * Russian launch sites are omitted, including Baikonur, which Russia operates.
  */
 export const LAUNCH_SITES = [
   {
     id: 'lompoc',
     name: 'Lompoc',
     country: 'USA',
-    spaceport: 'Vandenberg Space Force Base',
-    latitudeDeg: 34.7,
-    longitudeDeg: -120.6,
+    spaceport: 'Vandenberg Space Force Base, Space Launch Complex 3 East',
+    latitudeDeg: 34.64,
+    longitudeDeg: -120.59,
     allowsEastward: false,
     allowsPolar: true,
     why: 'Rockets fly south over the Pacific Ocean, so they reach polar orbits without passing over cities.',
-    whatFor: 'Polar and sun-synchronous orbits. Landsat Earth-imaging satellites launch from here.',
+    whatFor: 'Polar and sun-synchronous orbits. NASA launched Landsat 9 from this pad in 2021.',
   },
   {
-    id: 'cape-canaveral',
-    name: 'Cape Canaveral',
+    id: 'kodiak',
+    name: 'Kodiak',
     country: 'USA',
-    spaceport: 'Cape Canaveral and Kennedy Space Center',
-    latitudeDeg: 28.5,
-    longitudeDeg: -80.6,
+    spaceport: 'Pacific Spaceport Complex – Alaska, Launch Pad 1',
+    latitudeDeg: 57.44,
+    longitudeDeg: -152.34,
+    allowsEastward: false,
+    allowsPolar: true,
+    why: 'An island with open Pacific Ocean to the south, so rockets can fly steep polar paths without crossing cities.',
+    whatFor: 'NASA\'s Kodiak Star satellites launched from here in 2001. This far north, the space-station orbit is impossible.',
+  },
+  {
+    id: 'kennedy',
+    name: 'Kennedy',
+    country: 'USA',
+    spaceport: 'Kennedy Space Center, Launch Pad 39B',
+    latitudeDeg: 28.63,
+    longitudeDeg: -80.62,
     allowsEastward: true,
     allowsPolar: false,
-    why: 'Rockets fly east over the Atlantic and get a push from the spin of the Earth.',
-    whatFor: 'The space station, the Moon and high orbits. Polar launches would fly over towns.',
+    why: 'NASA\'s pad for crewed rockets. They fly east over the Atlantic and get a push from the spin of the Earth.',
+    whatFor: 'Apollo, the Space Shuttle and Artemis left from here. A polar launch would fly over towns.',
   },
   {
     id: 'kourou',
@@ -46,31 +63,7 @@ export const LAUNCH_SITES = [
     allowsEastward: true,
     allowsPolar: true,
     why: 'Very close to the equator, where the spin of the Earth gives the biggest push. Open ocean to the north and east.',
-    whatFor: 'Low-tilt orbits, big communication satellites and polar orbits too.',
-  },
-  {
-    id: 'mirny',
-    name: 'Mirny',
-    country: 'Russia',
-    spaceport: 'Plesetsk Cosmodrome',
-    latitudeDeg: 62.9,
-    longitudeDeg: 40.6,
-    allowsEastward: true,
-    allowsPolar: true,
-    why: 'Far in the north, so its rockets naturally go into steep, almost polar orbits.',
-    whatFor: 'Polar and high-tilt orbits. It cannot reach orbits tilted less than 62.9°.',
-  },
-  {
-    id: 'baikonur',
-    name: 'Baikonur',
-    country: 'Kazakhstan',
-    spaceport: 'Baikonur Cosmodrome',
-    latitudeDeg: 45.9,
-    longitudeDeg: 63.3,
-    allowsEastward: true,
-    allowsPolar: false,
-    why: 'The first spaceport in the world, in a flat steppe. Its latitude matches the tilt of the space station orbit.',
-    whatFor: 'Crews and cargo for the International Space Station.',
+    whatFor: 'Low-tilt orbits and big satellites. NASA\'s James Webb Space Telescope launched from here in 2021.',
   },
   {
     id: 'sullurpeta',
@@ -82,7 +75,7 @@ export const LAUNCH_SITES = [
     allowsEastward: true,
     allowsPolar: true,
     why: 'An island on the Bay of Bengal: rockets go east or south over the sea.',
-    whatFor: 'India launches its Earth-imaging satellites into polar orbits from here.',
+    whatFor: 'Earth-imaging satellites. NASA and India launched NISAR from here in 2025.',
   },
   {
     id: 'minamitane',
@@ -94,7 +87,7 @@ export const LAUNCH_SITES = [
     allowsEastward: true,
     allowsPolar: true,
     why: 'At the southern tip of Tanegashima island: rockets fly east or south over the Pacific Ocean, away from towns.',
-    whatFor: "Japan's rockets: weather and Earth-observation satellites, and cargo for the space station.",
+    whatFor: 'Weather satellites, and cargo ships that Japan flies to the space station for NASA.',
   },
   {
     id: 'mahia',
@@ -106,6 +99,6 @@ export const LAUNCH_SITES = [
     allowsEastward: true,
     allowsPolar: true,
     why: 'A small peninsula with open ocean all around, so small rockets can fly almost any direction.',
-    whatFor: 'Small satellites, including sun-synchronous imaging ones.',
+    whatFor: 'Small satellites. NASA\'s CAPSTONE Moon mission launched from here in 2022.',
   },
 ]

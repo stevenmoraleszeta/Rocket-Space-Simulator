@@ -1,5 +1,6 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore'
 import { MISSIONS } from '../levels/data/missions.js'
+import { mergeFlights, normalizeFlights } from '../levels/flights.js'
 import { normalizeProgress } from '../levels/progression.js'
 import { createFirestoreAdapter, localStorageAdapter } from '../levels/storage.js'
 import {
@@ -34,7 +35,7 @@ export function mergeProgress(a, b) {
       attempts: Math.max(x.attempts, y.attempts),
     }
   }
-  return { version: left.version, missions }
+  return { version: left.version, missions, flights: mergeFlights(left.flights, right.flights) }
 }
 
 function missionSnapshot(progress) {
@@ -56,6 +57,12 @@ function progressStamp(progress) {
   return { version: clean.version, missions, updatedAt }
 }
 
+/** Progress document plus the flight log. The log is not stored inside the progress document. */
+function localRecord(progress) {
+  const clean = normalizeProgress(progress)
+  return { ...progressStamp(clean), flights: clean.flights }
+}
+
 async function readLocalProgress(userId) {
   const own = await localStorageAdapter.load(userId)
   if (userId === 'guest') return own
@@ -73,65 +80,93 @@ export function createCloudProgressStorage() {
   if (!firebaseReady || !db) return null
   const remote = createFirestoreAdapter({ db, doc, getDoc, setDoc })
 
-  async function upload(userId, progress) {
-    const stamped = progressStamp(progress)
-    await localStorageAdapter.save(userId, stamped)
-    await remote.save(userId, stamped)
-    return stamped
+  async function readRemoteFlights(userId) {
+    const snap = await getDocs(collection(db, 'progress', userId, 'flights'))
+    return snap.docs.map((item) => ({ id: item.id, ...item.data() }))
+  }
+
+  async function writeMissingFlights(userId, flights, already) {
+    const known = new Set((already || []).map((flight) => flight.id))
+    const pending = normalizeFlights(flights).filter((flight) => !known.has(flight.id))
+    await Promise.all(pending.map(async (flight) => {
+      const { id, ...data } = flight
+      try {
+        await setDoc(doc(db, 'progress', userId, 'flights', id), data)
+      } catch (error) {
+        console.warn('Could not save a flight log.', error)
+      }
+    }))
+  }
+
+  async function publish(userId, progress, remoteFlights) {
+    const record = localRecord(progress)
+    const flights = mergeFlights(record.flights, remoteFlights)
+    const saved = { ...progressStamp(record), flights }
+    await remote.save(userId, progressStamp(record))
+    await writeMissingFlights(userId, flights, remoteFlights)
+    await localStorageAdapter.save(userId, saved)
+    return saved
   }
 
   return {
     async load(userId) {
       const localData = await readLocalProgress(userId)
       let remoteData = null
+      let remoteFlights = []
       try {
         remoteData = await remote.load(userId)
+        remoteFlights = await readRemoteFlights(userId)
       } catch (error) {
         console.warn('Could not load progress from Firestore. Using the copy on this device.', error)
         return localData
       }
 
+      const flights = mergeFlights(localData?.flights, remoteFlights)
       if (!remoteData) {
-        if (!localData) return null
+        if (!localData && flights.length === 0) return null
+        const base = localData || { version: 1, missions: {}, flights }
         try {
-          return await upload(userId, localData)
+          return await publish(userId, { ...base, flights }, [])
         } catch (error) {
           console.warn('Could not save progress to Firestore. Kept the copy on this device.', error)
-          return localData
+          const kept = localRecord({ ...base, flights })
+          await localStorageAdapter.save(userId, kept)
+          return kept
         }
       }
 
-      const merged = localData ? mergeProgress(localData, remoteData) : remoteData
-      if (missionSnapshot(merged) === missionSnapshot(remoteData)) {
-        if (!localData || missionSnapshot(localData) !== missionSnapshot(remoteData)) {
-          await localStorageAdapter.save(userId, progressStamp(remoteData))
-        }
-        return remoteData
+      const merged = mergeProgress(localData || { version: 1, missions: {} }, remoteData)
+      const withFlights = { ...progressStamp(merged), flights }
+      const remoteIds = new Set(normalizeFlights(remoteFlights).map((flight) => flight.id))
+      const flightsSynced = flights.length === remoteIds.size && flights.every((flight) => remoteIds.has(flight.id))
+      if (missionSnapshot(merged) === missionSnapshot(remoteData) && flightsSynced) {
+        await localStorageAdapter.save(userId, withFlights)
+        return withFlights
       }
       try {
-        return await upload(userId, merged)
+        return await publish(userId, withFlights, remoteFlights)
       } catch (error) {
         console.warn('Could not save progress to Firestore. Kept the copy on this device.', error)
-        return merged
+        await localStorageAdapter.save(userId, withFlights)
+        return withFlights
       }
     },
 
     async save(userId, progress) {
-      const immediate = progressStamp(progress)
+      const immediate = localRecord(progress)
       await localStorageAdapter.save(userId, immediate)
-      let merged = immediate
+      let remoteData = null
+      let remoteFlights = []
       try {
-        const remoteData = await remote.load(userId)
-        if (remoteData) merged = progressStamp(mergeProgress(immediate, remoteData))
+        remoteData = await remote.load(userId)
+        remoteFlights = await readRemoteFlights(userId)
       } catch (error) {
         console.warn('Could not read cloud progress before saving.', error)
       }
+      const merged = remoteData ? mergeProgress(immediate, remoteData) : immediate
+      const flights = mergeFlights(immediate.flights, remoteFlights)
       try {
-        await remote.save(userId, merged)
-        if (missionSnapshot(merged) !== missionSnapshot(immediate)) {
-          await localStorageAdapter.save(userId, merged)
-        }
-        return merged
+        return await publish(userId, { ...merged, flights }, remoteFlights)
       } catch (error) {
         console.warn('Could not save progress to Firestore. Kept the copy on this device.', error)
         throw error

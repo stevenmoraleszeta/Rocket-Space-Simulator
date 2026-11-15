@@ -94,6 +94,46 @@ describe('saved data', () => {
     const n = P.normalizeProgress({ missions: { earth: { completed: 1, stars: 9, bestPct: -5 }, moon: null } });
     expect(n.missions.earth).toEqual({ completed: true, stars: 3, bestPct: 0, attempts: 0 });
     expect(n.missions.moon).toBeUndefined();
+    expect(n.flights).toEqual([]);
+  });
+  it('keeps every flight, including a repeat, and drops junk packing', () => {
+    let progress = P.createEmptyProgress();
+    progress = play(progress, 'earth', {
+      pct: 70,
+      success: true,
+      flight: { packed: { food: 2, shield: 1, laser: 4 }, picks: { site: 'Kennedy, USA', secret: 'no' } },
+    });
+    progress = play(progress, 'earth', {
+      pct: 96,
+      success: true,
+      flight: { packed: { food: 1 }, picks: { site: 'Kennedy, USA', orbit: 'Sun-synchronous orbit' } },
+    });
+    expect(progress.missions.earth.attempts).toBe(2);
+    expect(progress.missions.earth.stars).toBe(3);
+    expect(progress.flights).toHaveLength(2);
+    expect(progress.flights[0].pct).toBe(96);
+    expect(progress.flights[0].picks).toEqual({ site: 'Kennedy, USA', orbit: 'Sun-synchronous orbit' });
+    expect(progress.flights[1].packed).toEqual({ food: 2, shield: 1 });
+    expect(progress.flights[1].stars).toBe(1);
+    const kept = P.normalizeProgress({
+      missions: { earth: { completed: true, stars: 2, bestPct: 92, attempts: 9 } },
+      flights: [
+        {
+          id: 'abc12345',
+          missionId: 'earth',
+          at: '2026-11-15T12:00:00.000Z',
+          success: true,
+          pct: 80,
+          stars: 2,
+          packed: { food: 2 },
+          picks: { site: 'Kennedy, USA' },
+        },
+        { id: 'bad id', missionId: 'earth', at: '2026-11-15T12:00:00.000Z', success: false, pct: 0, stars: 0, packed: {}, picks: {} },
+      ],
+    });
+    expect(kept.missions.earth.attempts).toBe(9);
+    expect(kept.flights).toHaveLength(1);
+    expect(kept.flights[0].packed).toEqual({ food: 2 });
   });
   it('memoryAdapter saves and loads copies', async () => {
     const s = memoryAdapter();
