@@ -146,7 +146,8 @@ img.ms-planet { object-fit: contain; user-select: none; }
 
 /* Buttons. The face sits on a 4 px slab so the press lands on the pixel grid. */
 .ms-btn { position: relative; isolation: isolate; z-index: 0; font-family: var(--ms-font-pixel); font-size: 0.75rem; line-height: 1.6; min-height: 3rem; padding: 0.75rem 1.25rem 1rem; border-radius: 0; border: 0; background: transparent; color: #04213a; cursor: pointer; box-shadow: none; }
-a.ms-btn { display: inline-block; text-align: center; text-decoration: none; }
+a.ms-btn { display: inline-block; box-sizing: border-box; text-align: center; text-decoration: none; }
+a.ms-btn.ms-btn--icon { display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem; }
 .ms-btn::before,
 .ms-btn::after { content: ""; position: absolute; pointer-events: none; clip-path: var(--px-clip); }
 .ms-btn::before { z-index: -2; inset: var(--px) 0 calc(var(--px) * -1); background: var(--ms-accent-dark); }
@@ -161,7 +162,7 @@ a.ms-btn { display: inline-block; text-align: center; text-decoration: none; }
 .ms-btn:disabled { color: var(--ms-muted); cursor: not-allowed; }
 .ms-btn:disabled::before { background: var(--px-ink); }
 .ms-btn:disabled::after { background: var(--ms-locked); box-shadow: inset var(--px) var(--px) 0 var(--ms-line), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim); }
-.ms-btn--icon { display: inline-flex; align-items: center; gap: 10px; }
+.ms-btn--icon { display: inline-flex; align-items: center; gap: 0.625rem; }
 .ms-btn--admin { color: #2a2000; }
 .ms-btn--admin::before { background: #c49212; }
 .ms-btn--admin::after { background: var(--ms-yellow); box-shadow: inset var(--px) var(--px) 0 #fff1a8, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #c49212; }
@@ -169,68 +170,68 @@ a.ms-btn { display: inline-block; text-align: center; text-decoration: none; }
 
 .ms-pixel { display: block; image-rendering: pixelated; flex: none; }
 
-.ms-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; flex: 0 1 auto; margin-left: auto; }
-.ms-tools .ms-btn { padding-left: 14px; padding-right: 14px; }
+.ms-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.75rem; flex: 0 1 auto; margin-left: auto; }
+.ms-tools .ms-btn { padding-left: 0.875rem; padding-right: 0.875rem; }
 
-.ms-rank { display: flex; align-items: center; gap: 14px; text-align: left; max-width: 460px; }
+.ms-rank { display: flex; align-items: center; gap: 0.875rem; text-align: left; max-width: 28.75rem; }
 .ms-rank:not(.is-earned) .ms-pixel { filter: grayscale(1) brightness(.6); }
-.ms-rank__kicker { margin: 0; font-family: var(--ms-font-pixel); font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: var(--ms-accent); }
-.ms-rank__name { margin: 4px 0 0; font-family: var(--ms-font-pixel); font-size: 13px; line-height: 1.5; color: var(--ms-yellow); }
-.ms-rank__cheer, .ms-rank__next { margin: 6px 0 0; font-size: 17px; line-height: 1.35; color: var(--ms-muted); }
+.ms-rank__kicker { margin: 0; font-family: var(--ms-font-pixel); font-size: 0.5625rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ms-accent); }
+.ms-rank__name { margin: 0.25rem 0 0; font-family: var(--ms-font-pixel); font-size: 0.8125rem; line-height: 1.5; color: var(--ms-yellow); }
+.ms-rank__cheer, .ms-rank__next { margin: 0.375rem 0 0; font-size: 1.0625rem; line-height: 1.35; color: var(--ms-muted); }
 
 .ms-card--wide {
-  width: min(720px, 100%); text-align: left;
+  width: min(45rem, 100%); text-align: left;
   display: flex; flex-direction: column; min-height: 0; overflow: hidden;
-  max-height: calc(100dvh - max(12px, env(safe-area-inset-top, 0px)) - max(12px, env(safe-area-inset-bottom, 0px)));
-  padding: 20px 20px 16px;
+  max-height: calc(100dvh - max(0.75rem, env(safe-area-inset-top, 0px)) - max(0.75rem, env(safe-area-inset-bottom, 0px)));
+  padding: 1.25rem 1.25rem 1rem;
 }
 .ms-card--wide h2 { text-align: center; margin-top: 0; }
 .ms-board__head { flex: none; }
 .ms-board__body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ms-accent) transparent; }
-.ms-board__body::-webkit-scrollbar { width: 10px; }
+.ms-board__body::-webkit-scrollbar { width: 0.625rem; }
 .ms-board__body::-webkit-scrollbar-track { background: transparent; }
 .ms-board__body::-webkit-scrollbar-thumb { background: var(--ms-accent); border: 2px solid transparent; background-clip: padding-box; }
-.ms-card--wide .ms-card__actions { flex: none; margin-top: 16px; }
-.ms-board__lead, .ms-board__next { margin: 0 0 16px; font-size: 18px; line-height: 1.35; color: var(--ms-muted); text-align: center; overflow-wrap: break-word; }
-.ms-board__next { margin: 16px 0 0; }
+.ms-card--wide .ms-card__actions { flex: none; margin-top: 1rem; }
+.ms-board__lead, .ms-board__next { margin: 0 0 1rem; font-size: 1.125rem; line-height: 1.35; color: var(--ms-muted); text-align: center; overflow-wrap: break-word; }
+.ms-board__next { margin: 1rem 0 0; }
 
-.ms-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
-.ms-log__row { display: grid; grid-template-columns: 72px 1fr; gap: 14px; align-items: center; }
-.ms-log__num { margin: 0; font-family: var(--ms-font-pixel); font-size: 10px; line-height: 1.6; color: var(--ms-accent); overflow-wrap: break-word; }
-.ms-log__title { margin: 4px 0; font-family: var(--ms-font-pixel); font-size: 13px; font-weight: 400; line-height: 1.45; overflow-wrap: break-word; }
-.ms-log__line { margin: 6px 0 0; font-size: 17px; line-height: 1.35; color: var(--ms-muted); }
+.ms-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.875rem; }
+.ms-log__row { display: grid; grid-template-columns: 4.5rem 1fr; gap: 0.875rem; align-items: center; }
+.ms-log__num { margin: 0; font-family: var(--ms-font-pixel); font-size: 0.625rem; line-height: 1.6; color: var(--ms-accent); overflow-wrap: break-word; }
+.ms-log__title { margin: 0.25rem 0; font-family: var(--ms-font-pixel); font-size: 0.8125rem; font-weight: 400; line-height: 1.45; overflow-wrap: break-word; }
+.ms-log__line { margin: 0.375rem 0 0; font-size: 1.0625rem; line-height: 1.35; color: var(--ms-muted); }
 .ms-log__row--locked .ms-log__title, .ms-log__row--locked .ms-log__num { color: var(--ms-muted); }
-.ms-log__older { margin: 0 0 14px; font-size: 17px; line-height: 1.35; color: var(--ms-yellow); text-align: center; }
-.ms-trip { position: relative; isolation: isolate; display: flex; flex-direction: column; gap: 10px; padding: 12px; min-width: 0; }
+.ms-log__older { margin: 0 0 0.875rem; font-size: 1.0625rem; line-height: 1.35; color: var(--ms-yellow); text-align: center; }
+.ms-trip { position: relative; isolation: isolate; display: flex; flex-direction: column; gap: 0.625rem; padding: 0.75rem; min-width: 0; }
 .ms-trip::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #10163f; clip-path: var(--px-clip); box-shadow: inset var(--px) var(--px) 0 var(--px-edge), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim); }
-.ms-trip__head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: center; }
-.ms-trip__head > .ms-planet { width: 48px; height: 48px; }
+.ms-trip__head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.5rem 0.75rem; align-items: center; }
+.ms-trip__head > .ms-planet { width: 3rem; height: 3rem; }
 .ms-trip__meta { min-width: 0; }
-.ms-trip__when { margin: 0; font-size: 16px; color: var(--ms-muted); overflow-wrap: break-word; }
-.ms-trip__score { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; text-align: left; }
-.ms-trip__score p { margin: 0; font-family: var(--ms-font-pixel); font-size: 9px; line-height: 1.5; color: var(--ms-muted); }
+.ms-trip__when { margin: 0; font-size: 1rem; color: var(--ms-muted); overflow-wrap: break-word; }
+.ms-trip__score { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-width: 0; text-align: left; }
+.ms-trip__score p { margin: 0; font-family: var(--ms-font-pixel); font-size: 0.5625rem; line-height: 1.5; color: var(--ms-muted); }
 .ms-trip.is-made .ms-trip__score p { color: var(--ms-green); }
-.ms-picks, .ms-pack-row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px; }
-.ms-pick { position: relative; isolation: isolate; min-width: 0; padding: 6px 8px; font-size: 16px; line-height: 1.3; overflow-wrap: break-word; }
+.ms-picks, .ms-pack-row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.375rem), 1fr)); gap: 0.5rem; }
+.ms-pick { position: relative; isolation: isolate; min-width: 0; padding: 0.375rem 0.5rem; font-size: 1rem; line-height: 1.3; overflow-wrap: break-word; }
 .ms-pick::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #1c2458; clip-path: var(--px-clip); }
-.ms-pick b { display: block; margin-bottom: 2px; font-family: var(--ms-font-pixel); font-size: 8px; font-weight: 400; letter-spacing: .04em; text-transform: uppercase; color: var(--ms-accent); }
-.ms-pack { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 16px; line-height: 1.2; }
+.ms-pick b { display: block; margin-bottom: 0.125rem; font-family: var(--ms-font-pixel); font-size: 0.5rem; font-weight: 400; letter-spacing: .04em; text-transform: uppercase; color: var(--ms-accent); }
+.ms-pack { display: flex; align-items: center; gap: 0.5rem; min-width: 0; font-size: 1rem; line-height: 1.2; }
 .ms-pack__name { min-width: 0; overflow-wrap: break-word; }
-.ms-pack__count { margin-left: auto; flex: none; font-family: var(--ms-font-pixel); font-size: 11px; font-weight: 400; color: var(--ms-yellow); }
-.ms-pack__sheet { width: 32px; height: 32px; display: block; flex: none; image-rendering: pixelated; background-repeat: no-repeat; }
+.ms-pack__count { margin-left: auto; flex: none; font-family: var(--ms-font-pixel); font-size: 0.6875rem; font-weight: 400; color: var(--ms-yellow); }
+.ms-pack__sheet { width: 2rem; height: 2rem; display: block; flex: none; image-rendering: pixelated; background-repeat: no-repeat; }
 
-.ms-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.ms-stat { position: relative; isolation: isolate; text-align: center; padding: 12px 10px; }
+.ms-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.ms-stat { position: relative; isolation: isolate; text-align: center; padding: 0.75rem 0.625rem; }
 .ms-stat::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #10163f; clip-path: var(--px-clip); box-shadow: inset var(--px) var(--px) 0 var(--px-edge), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim); }
-.ms-stat b { display: block; font-family: var(--ms-font-pixel); font-size: 14px; line-height: 1.5; color: var(--ms-yellow); font-weight: 400; }
-.ms-stat span { display: block; margin-top: 4px; font-size: 16px; color: var(--ms-muted); }
+.ms-stat b { display: block; font-family: var(--ms-font-pixel); font-size: 0.875rem; line-height: 1.5; color: var(--ms-yellow); font-weight: 400; }
+.ms-stat span { display: block; margin-top: 0.25rem; font-size: 1rem; color: var(--ms-muted); }
 
-.ms-ladder { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.ms-ladder__row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-width: 0; }
+.ms-ladder { list-style: none; margin: 1rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.625rem; }
+.ms-ladder__row { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: 0.75rem; align-items: center; min-width: 0; }
 .ms-ladder__row.is-ahead .ms-pixel { filter: grayscale(1) brightness(.6); }
-.ms-ladder__name { margin: 0; font-family: var(--ms-font-pixel); font-size: 11px; line-height: 1.5; }
-.ms-ladder__need { margin: 4px 0 0; font-size: 16px; color: var(--ms-muted); }
-.ms-ladder__tag { font-family: var(--ms-font-pixel); font-size: 9px; line-height: 1.5; color: var(--ms-muted); }
+.ms-ladder__name { margin: 0; font-family: var(--ms-font-pixel); font-size: 0.6875rem; line-height: 1.5; }
+.ms-ladder__need { margin: 0.25rem 0 0; font-size: 1rem; color: var(--ms-muted); }
+.ms-ladder__tag { font-family: var(--ms-font-pixel); font-size: 0.5625rem; line-height: 1.5; color: var(--ms-muted); }
 .ms-ladder__row.is-yours .ms-ladder__tag { color: var(--ms-green); }
 .ms-ladder__row.is-earned .ms-ladder__tag { color: var(--ms-accent); }
 
@@ -240,10 +241,10 @@ a.ms-btn { display: inline-block; text-align: center; text-decoration: none; }
 
 /* Phones and narrow screens: missions stacked vertically */
 @media (min-width: 640px) {
-  .ms-trip__head { grid-template-columns: 56px minmax(0, 1fr) auto; }
-  .ms-trip__head > .ms-planet { width: 56px; height: 56px; }
+  .ms-trip__head { grid-template-columns: 3.5rem minmax(0, 1fr) auto; }
+  .ms-trip__head > .ms-planet { width: 3.5rem; height: 3.5rem; }
   .ms-trip__score { grid-column: auto; display: block; text-align: right; }
-  .ms-trip__score p { margin: 6px 0 0; }
+  .ms-trip__score p { margin: 0.375rem 0 0; }
 }
 @media (max-width: 720px) {
   .ms-card { padding: 1rem 0.875rem; }
@@ -264,23 +265,39 @@ a.ms-btn { display: inline-block; text-align: center; text-decoration: none; }
 }
 @media (prefers-reduced-motion: reduce) { .ms-select *, .ms-modal *, .ms-bg__layer { animation: none !important; transition: none !important; } }
 
-/* Big screens: the whole menu grows with the window (--ui-zoom from lib/uiZoom.js).
-   Heights tied to the window are divided back so they still fit exactly. */
-.ms-select { zoom: var(--ui-zoom, 1); min-height: calc(100svh / var(--ui-zoom, 1)); max-width: min(1320px, calc(100vw / var(--ui-zoom, 1))); }
-.ms-path { gap: 20px clamp(20px, 6vw, 120px); }
-.ms-modal { height: calc(100dvh / var(--ui-zoom, 1)); max-height: calc(100dvh / var(--ui-zoom, 1)); }
-.ms-card--wide { max-height: calc(100dvh / var(--ui-zoom, 1) - 24px); }
+/* The menu uses the whole window. Text already follows --ui, so a fixed 1320px
+   cap squeezed large monitors into a laptop column: names overlapped and the
+   toolbar wrapped onto a second row. */
+.ms-select { width: 100%; max-width: none; min-height: 100svh; }
+.ms-modal { height: 100dvh; max-height: 100dvh; }
+.ms-card--wide { max-height: calc(100dvh - 1.5rem); }
 
 /* Start screen: NASA-style black hole (event horizon, hot disk, jets) drawn small and scaled up as pixel art (BlackHoleBackground.jsx). */
 .ms-bg__layer.bh-canvas { width: 100%; height: 100%; object-fit: cover; object-position: center; pointer-events: none; background: #04030e; }
+/* Narrow menu only: the missions stack, and the first planet was sitting on the shadow.
+   Drop the picture so the black center shows under that planet.
+   Scoped to the menu so the project page, the intro and the loading screen stay centered. */
+@media (max-width: 720px) {
+  .ms-bg:has(.ms-select) .ms-bg__layer.bh-canvas { top: 14vh; bottom: auto; height: 100%; }
+}
 
 /* Start screen: everything sits near the top so the black hole below can be seen. */
 .ms-bg:has(.bh-canvas) .ms-select { padding-top: 0.75rem; }
 .ms-bg:has(.bh-canvas) .ms-stage { justify-content: flex-start; padding-top: 0.5rem; }
 .ms-bg:has(.bh-canvas) .ms-head { gap: 0.5rem; margin-bottom: 1rem; }
 
-/* Text and stars under each planet: a dark pixel outline plus a hard drop shadow, like the title,
-   so they read clearly over the black hole. */
+/* Text under each planet sits on a dark plate. A shadow alone disappears on the
+   bright part of the black hole, especially on short and very large screens. */
+.ms-stop .ms-stop__num,
+.ms-stop .ms-stop__title,
+.ms-stop .ms-stop__hint {
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 0.15rem 0.4rem;
+  background: #05061a;
+  box-shadow: 0 0 0 0.2rem #05061a;
+}
 .ms-stop .ms-stop__num,
 .ms-stop .ms-stop__title,
 .ms-stop .ms-stop__hint,
@@ -293,10 +310,34 @@ a.ms-btn { display: inline-block; text-align: center; text-decoration: none; }
     0.1875rem 0.1875rem 0 #05061a;
 }
 
-/* Five missions in a row: the 3 playable ones plus missions 4 and 5 ("Coming soon"). */
-.ms-stage { max-width: min(84rem, 100%); }
-.ms-path { grid-template-columns: repeat(5, 1fr); gap: 1.25rem clamp(0.75rem, 2.5vw, 3rem); }
+/* Five missions in a row. minmax(0, 1fr) lets a long name wrap inside its column
+   instead of spilling over the next planet. 108rem is wide enough for one line
+   on a large monitor and still centers the row on an ultrawide. */
+.ms-stage { max-width: min(108rem, 100%); }
+.ms-path { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1.25rem clamp(0.75rem, 2vw, 2.75rem); }
 .ms-path::before { left: 10%; right: 10%; }
+
+/* 16:9 and wider: the black hole sits in the middle. A slightly shorter header and
+   planets keep the "locked" line above the brightest part of the disk. */
+@media (min-aspect-ratio: 16 / 9) and (min-width: 721px) {
+  .ms-bg:has(.bh-canvas) .ms-head { gap: 0.3rem; margin-bottom: 0.45rem; }
+  .ms-bg:has(.bh-canvas) .ms-stage { padding-top: 0; }
+  .ms-stop { padding-top: 0.5rem; }
+  .ms-stop .ms-planet,
+  .ms-stop .ms-sprite { width: 6.75rem !important; height: 6.75rem !important; }
+  .ms-path::before { top: 3.875rem; }
+  .ms-stop__hint { margin-top: 0.15rem; }
+}
+
+/* Very short laptops (720p): the Spanish names wrap to two lines and the
+   locked hint would land on the bright disk. Drop the ages line and shrink
+   the planets a step so that line stays in the dark gap. */
+@media (max-height: 760px) and (min-width: 721px) {
+  .ms-ages { display: none; }
+  .ms-stop .ms-planet,
+  .ms-stop .ms-sprite { width: 6rem !important; height: 6rem !important; }
+  .ms-path::before { top: 3.5rem; }
+}
 /* Missions 4 and 5 can be tapped (only to say "Coming soon!"), so they show a pointer. */
 .ms-stop--soon .ms-stop__btn { cursor: pointer; }
 .ms-bubble--soon { white-space: nowrap; }

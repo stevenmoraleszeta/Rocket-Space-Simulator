@@ -38,9 +38,9 @@
 }
 .st-input::placeholder { color: #5a6399; }
 .st-input:focus { outline: none; border-color: var(--ms-accent); }
-.st-note, .st-hint { margin: 8px 0 0; font-size: 16px; line-height: 1.35; color: var(--ms-muted); }
-.st-note { margin: 0 0 14px; color: #ffd0d0; }
-.st-error { margin: 8px 0 0; font-size: 16px; line-height: 1.35; color: #ff8a8a; }
+.st-note, .st-hint { margin: 0.5rem 0 0; font-size: 1rem; line-height: 1.35; color: var(--ms-muted); }
+.st-note { margin: 0 0 0.875rem; color: #ffd0d0; }
+.st-error { margin: 0.5rem 0 0; font-size: 1rem; line-height: 1.35; color: #ff8a8a; }
 
 .st-google {
   width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
@@ -63,7 +63,7 @@
 .st-label .st-google__mark { width: 22px; height: 22px; }
 .st-signed {
   display: flex; align-items: center; gap: 12px; margin-top: 8px;
-  font-family: var(--ms-font); font-size: 16px; line-height: 1.35; color: var(--ms-green);
+  font-family: var(--ms-font); font-size: 1rem; line-height: 1.35; color: var(--ms-green);
 }
 
 /* Chunky slider that matches the pixel style */

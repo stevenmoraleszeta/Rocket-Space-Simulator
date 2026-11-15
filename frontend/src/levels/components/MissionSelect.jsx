@@ -21,6 +21,7 @@ import { useSettings } from '../../settings/SettingsContext.jsx';
 import { t } from '../../i18n/index.js';
 import { engineerName, sayTo } from '../../settings/settingsStore.js';
 import adminIcon from '../../assets/images/icons/admin.svg';
+import projectIcon from '../../assets/images/icons/flag.svg';
 import trailerIcon from '../../assets/images/icons/camera.svg';
 import { PixelIcon } from '../../game/PixelIcon.jsx';
 
@@ -37,7 +38,8 @@ export function MissionSelect({ onStartMission, onWatchTrailer, googleSignedIn =
   };
   useEffect(() => () => clearTimeout(soonTimer.current), []);
   const [board, setBoard] = useState(null);
-  const playerName = engineerName(useSettings().playerName);
+  const { playerName: savedName, language } = useSettings();
+  const playerName = engineerName(savedName);
 
   if (loading) {
     return (
@@ -56,7 +58,8 @@ export function MissionSelect({ onStartMission, onWatchTrailer, googleSignedIn =
       <div className="ms-bar">
         <RankBadge stars={totalStars} />
         <nav className="ms-tools" aria-label={t('Menu')}>
-          <a className="ms-btn ms-btn--ghost" href="/project">
+          <a className="ms-btn ms-btn--ghost ms-btn--icon" href={language === 'es' ? '/project?lang=es' : '/project'}>
+            <img className="ms-pixel" src={projectIcon} alt="" width={28} height={28} draggable="false" />
             {t('Project')}
           </a>
           <button
