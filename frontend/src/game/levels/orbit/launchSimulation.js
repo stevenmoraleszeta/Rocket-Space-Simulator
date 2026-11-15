@@ -47,6 +47,9 @@ export const OUTCOMES = Object.freeze({
   NO_LIFTOFF: 'noLiftoff',
 })
 
+/** Outcomes that end with the rocket blowing up on screen. Flying off into space counts too, so the loss is clear. */
+export const EXPLODING_OUTCOMES = Object.freeze([OUTCOMES.EARTH_IMPACT, OUTCOMES.SATELLITE_COLLISION, OUTCOMES.LOST_IN_SPACE])
+
 export const degreesToRadians = (degrees) => (degrees * Math.PI) / 180
 
 /** Position of a real satellite (circular orbit) at time t (meters). */

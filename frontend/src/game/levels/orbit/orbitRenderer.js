@@ -14,7 +14,7 @@
  */
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { circularOrbitAngularSpeed, pointOnCircle } from '../../physics/orbitalMechanics.js'
-import { OUTCOMES, degreesToRadians, satellitePositionAt } from './launchSimulation.js'
+import { EXPLODING_OUTCOMES, OUTCOMES, degreesToRadians, satellitePositionAt } from './launchSimulation.js'
 
 /** Altitude where the display curve starts to squeeze heights (km). */
 export const ALTITUDE_DISPLAY_SCALE_KM = 1200
@@ -253,7 +253,7 @@ function drawArrivalMarker(ctx, view, arrival) {
 
 function pathColor(outcomeType) {
   if (outcomeType === OUTCOMES.ORBIT_REACHED) return COLORS.pathOrbit
-  if (outcomeType === OUTCOMES.EARTH_IMPACT || outcomeType === OUTCOMES.SATELLITE_COLLISION) return COLORS.pathCrash
+  if (EXPLODING_OUTCOMES.includes(outcomeType)) return COLORS.pathCrash
   return COLORS.pathOther
 }
 
@@ -282,25 +282,14 @@ function drawDottedPath(ctx, view, samples, color, untilTime = Infinity) {
   }
 }
 
-/** The predicted trajectory: only dots, ending with an X when it crashes. */
+/** The predicted trajectory: only dots (no end mark, so a crash is not given away). */
 function drawPrediction(ctx, view, prediction, alpha = 1) {
   if (!prediction) return
   const { outcome } = prediction
   const color = pathColor(outcome.type)
   ctx.globalAlpha = alpha
   drawDottedPath(ctx, view, prediction.samples, color)
-  const end = worldToScreen(view, outcome.x, outcome.y)
-  if (color === COLORS.pathCrash) {
-    ctx.strokeStyle = color
-    ctx.lineWidth = 4
-    ctx.beginPath()
-    ctx.moveTo(end.x - 9, end.y - 9)
-    ctx.lineTo(end.x + 9, end.y + 9)
-    ctx.moveTo(end.x + 9, end.y - 9)
-    ctx.lineTo(end.x - 9, end.y + 9)
-    ctx.stroke()
-    ctx.lineWidth = 1
-  } else if (outcome.type === OUTCOMES.ORBIT_REACHED) {
+  if (outcome.type === OUTCOMES.ORBIT_REACHED) {
     drawDottedRing(ctx, view, orbitRingRadius(view, (outcome.orbitRadius - EARTH_RADIUS_METERS) / 1000), color, 3, 14)
   }
   ctx.globalAlpha = 1
@@ -390,7 +379,7 @@ export function drawOrbitScene(ctx, view, scene) {
     } else if (outcome.type === OUTCOMES.ORBIT_REACHED) {
       const secondsAfter = simTime - outcome.t
       drawRocket(ctx, view, { ...orbitingPoint(outcome, secondsAfter), burning: false }, orbitingPoint(outcome, secondsAfter + 30), scene.images)
-    } else if (outcome.type === OUTCOMES.EARTH_IMPACT || outcome.type === OUTCOMES.SATELLITE_COLLISION) {
+    } else if (EXPLODING_OUTCOMES.includes(outcome.type)) {
       drawExplosion(ctx, view, outcome, scene.flight.realSecondsSinceEnd, scene.images)
     } else if (outcome.type === OUTCOMES.NO_LIFTOFF) {
       const up = pointOnCircle(EARTH_RADIUS_METERS * 2, Math.atan2(outcome.y, outcome.x))

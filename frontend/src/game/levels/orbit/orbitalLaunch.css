@@ -141,3 +141,129 @@ button.orbit-site:focus-visible .orbit-site__name { outline: 3px solid var(--ms-
 
 /* Pad liftoff and climb (LaunchSequence) cover the whole level until the orbit flight starts. */
 .orbit-level__liftoff { position: fixed; inset: 0; z-index: 50; }
+
+/* MISSION COMPLETE: full-screen "Congratulations!" over the orbit view (MissionCompleteScreen.jsx). */
+.mission-complete {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgba(5, 6, 26, 0.78);
+  color: var(--ms-text);
+  font-family: var(--ms-font);
+  animation: mission-complete-fade 0.3s steps(4) both;
+}
+
+.mission-complete__card {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 24px 24px 20px;
+  border-radius: 18px;
+  border: 3px solid var(--ms-yellow);
+  background: rgba(11, 16, 48, 0.96);
+  box-shadow: 0 0 0 6px rgba(255, 210, 63, 0.18), 6px 6px 0 rgba(0, 0, 0, 0.45);
+  text-align: center;
+  animation: mission-complete-pop 0.45s steps(6) both;
+}
+
+.mission-complete__kicker {
+  margin: 0;
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--ms-muted);
+}
+
+.mission-complete__title {
+  margin: 8px 0 6px;
+  font-family: var(--ms-font-pixel);
+  font-weight: 400;
+  font-size: clamp(20px, 4.6vw, 30px);
+  line-height: 1.3;
+  color: var(--ms-yellow);
+  text-shadow: 3px 3px 0 #8a5a00;
+}
+
+.mission-complete__lead { margin: 0; font-size: 19px; }
+.mission-complete__stars { margin: 14px 0; }
+.mission-complete__stats { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); text-align: left; }
+
+/* "Did you know?" box (LaunchFact.jsx): green after a win, pink after a failure. */
+.launch-fact {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 143, 166, 0.6);
+  background: rgba(255, 143, 166, 0.08);
+  text-align: left;
+}
+.launch-fact.is-good { border-color: rgba(79, 195, 255, 0.6); background: rgba(79, 195, 255, 0.08); }
+.launch-fact p { margin: 0; }
+.launch-fact__label { font-family: var(--ms-font-pixel); font-size: 10px; line-height: 1.6; color: #ff8fa6; }
+.launch-fact.is-good .launch-fact__label { color: var(--ms-accent); }
+.launch-fact__title { margin-top: 6px !important; font-weight: 700; font-size: 18px; }
+.launch-fact__text { margin-top: 4px !important; font-size: 17px; line-height: 1.4; color: var(--ms-muted); }
+
+.mission-complete__fact { margin: 4px 0 14px; }
+
+.mission-complete__unlock {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(61, 220, 151, 0.6);
+  background: rgba(61, 220, 151, 0.08);
+  text-align: left;
+}
+
+.mission-complete__unlock p { margin: 0; }
+.mission-complete__unlock-label { font-family: var(--ms-font-pixel); font-size: 11px; line-height: 1.6; color: var(--ms-green); }
+.mission-complete__unlock-name { margin-top: 4px !important; font-size: 18px; font-weight: 700; }
+
+.mission-complete__actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; }
+.mission-complete__actions .ms-btn { white-space: nowrap; }
+
+/* Pixel confetti falling behind the card */
+.mission-complete__confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.mission-complete__confetti span {
+  position: absolute;
+  top: -16px;
+  left: calc(var(--i) * 5.5% + 2%);
+  width: 10px;
+  height: 10px;
+  background: var(--ms-yellow);
+  animation: mission-complete-confetti calc(2.4s + var(--i) * 0.13s) steps(24) calc(var(--i) * -0.37s) infinite;
+}
+.mission-complete__confetti span:nth-child(3n) { background: var(--ms-accent); }
+.mission-complete__confetti span:nth-child(3n + 1) { background: var(--ms-green); width: 8px; height: 14px; }
+.mission-complete__confetti span:nth-child(4n) { background: #ff8fa6; }
+
+@keyframes mission-complete-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mission-complete-pop {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes mission-complete-confetti {
+  from { transform: translateY(0) rotate(0deg); }
+  to { transform: translateY(110vh) rotate(360deg); }
+}
+
+@media (max-width: 760px) {
+  .mission-complete__card { padding: 18px 16px 16px; }
+  .mission-complete__actions { flex-wrap: wrap; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mission-complete,
+  .mission-complete__card { animation: none; }
+  .mission-complete__confetti { display: none; }
+}

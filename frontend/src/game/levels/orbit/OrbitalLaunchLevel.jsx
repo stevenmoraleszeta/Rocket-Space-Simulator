@@ -20,7 +20,9 @@ import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { LAUNCH_SITES } from './launchSites.js'
-import { OUTCOMES, arrivalPosition, degreesToRadians, simulateLaunch } from './launchSimulation.js'
+import { LaunchFact } from './LaunchFact.jsx'
+import { MissionCompleteScreen } from './MissionCompleteScreen.jsx'
+import { EXPLODING_OUTCOMES, OUTCOMES, arrivalPosition, degreesToRadians, simulateLaunch } from './launchSimulation.js'
 import { buildLaunchVehicle } from './launchVehicle.js'
 import { aimFromPointer, initialAim, siteAngleOf } from './orbitAiming.js'
 import {
@@ -49,7 +51,7 @@ const ORBIT_PLAYBACK_WARP = 150
 const OUTCOME_MESSAGES = {
   [OUTCOMES.ORBIT_REACHED]: 'Satellite in orbit!',
   [OUTCOMES.EARTH_IMPACT]: 'The rocket fell back and crashed into the Earth.',
-  [OUTCOMES.LOST_IN_SPACE]: 'Too much power: the rocket flew far above the orbit and got lost in space.',
+  [OUTCOMES.LOST_IN_SPACE]: 'Too much power: the rocket flew far above the orbit, went out of control and exploded.',
   [OUTCOMES.MISSED_TARGET]: 'The rocket did not reach the arrival point.',
   [OUTCOMES.NO_LIFTOFF]: 'The rocket is too heavy for its engines and cannot lift off.',
 }
@@ -91,7 +93,7 @@ function describePrediction(prediction) {
     case OUTCOMES.NO_LIFTOFF:
       return { tone: 'bad', text: 'Too heavy: the engines cannot lift the rocket.' }
     case OUTCOMES.LOST_IN_SPACE:
-      return { tone: 'warn', text: 'Too much power: it flies far above the orbit.' }
+      return { tone: 'bad', text: 'Too much power: it flies far above the orbit and explodes.' }
     default:
       if (bestInsertion) {
         return { tone: 'warn', text: 'It passes the arrival point too fast or too slow to stay there. Change the power.' }
@@ -169,9 +171,18 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     } catch {
       /* mission locked or unknown: show the result anyway */
     }
-    const crashed = outcome.type === OUTCOMES.EARTH_IMPACT || outcome.type === OUTCOMES.SATELLITE_COLLISION
+    const crashed = EXPLODING_OUTCOMES.includes(outcome.type)
     playSfx(success ? SFX.missionComplete : crashed ? SFX.explosion : SFX.lose)
-    setResult({ outcome, success, pct, stars: progressOutcome?.stars ?? 0, unlockedMissionId: progressOutcome?.unlockedMissionId ?? null })
+    setResult({
+      outcome,
+      success,
+      pct,
+      stars: progressOutcome?.stars ?? 0,
+      unlockedMissionId: progressOutcome?.unlockedMissionId ?? null,
+      directionDeg: aim ? radiansToDegrees(aim.tiltRadians) : null,
+      // It got close to the arrival point, but too fast or too slow to stay in orbit there.
+      reachedArrival: Boolean(prediction.bestInsertion),
+    })
     setStep('result')
   }
 
@@ -347,6 +358,15 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           <LaunchSequence equipped={equipped} hud={hud} onDone={startOrbitFlight} />
         </div>
       )}
+      {step === 'result' && result?.success && (
+        <MissionCompleteScreen
+          mission={mission}
+          result={result}
+          directionDeg={result.directionDeg}
+          onContinue={onExit}
+          onFlyAgain={retry}
+        />
+      )}
 
       <div className="orbit-level__body">
         <div className="orbit-stage">
@@ -470,6 +490,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
               {result.outcome.type === OUTCOMES.NO_LIFTOFF && (
                 <p className="orbit-panel__hint">Go back to the hangar: add boosters or carry less.</p>
               )}
+              {!result.success && <LaunchFact result={result} />}
               <div className="orbit-panel__actions">
                 {result.success ? (
                   <button type="button" className="ms-btn" onClick={onExit}>Missions</button>
