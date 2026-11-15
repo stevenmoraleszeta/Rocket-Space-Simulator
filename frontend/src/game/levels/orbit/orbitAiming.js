@@ -40,15 +40,22 @@ export function initialAim(site, arrival) {
   }
 }
 
-/** Aim from the pointer position (screen pixels) while the click is held. */
-export function aimFromPointer(site, siteScreen, pointerX, pointerY, aimMaxPixels) {
+/**
+ * Aim from the pointer position (screen pixels) while the click is held.
+ * mapRotation: how much the map is turned on screen (see mapRotationAt in orbitRenderer.js).
+ */
+export function aimFromPointer(site, siteScreen, pointerX, pointerY, aimMaxPixels, mapRotation = 0) {
   const screenDx = pointerX - siteScreen.x
   const screenDy = pointerY - siteScreen.y
   const distance = Math.hypot(screenDx, screenDy)
   if (distance < 4) return null
-  // Screen y grows downward; world y grows upward.
+  // Screen y grows downward; world y grows upward. Undo the map turn to get the world direction.
+  const dx = screenDx / distance
+  const dy = -screenDy / distance
+  const cos = Math.cos(-mapRotation)
+  const sin = Math.sin(-mapRotation)
   return {
-    tiltRadians: tiltFromVertical(siteAngleOf(site), screenDx / distance, -screenDy / distance),
+    tiltRadians: tiltFromVertical(siteAngleOf(site), dx * cos - dy * sin, dx * sin + dy * cos),
     power: clampPower(distance / aimMaxPixels),
   }
 }
