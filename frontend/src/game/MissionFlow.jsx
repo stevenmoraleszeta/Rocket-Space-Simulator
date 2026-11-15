@@ -4,7 +4,7 @@
  *   Level 2  GameScreen          hangar: fit the rocket parts
  *   Level 2  OrbitalLaunchLevel  choose a site, aim at the hardest orbit, launch (mission 1)
  *   Level 3  MoonTransitLevel   choose a window, aim at the Moon, coast (mission 2)
- *   Level 4  MarsTransitLevel   choose a window, aim at Mars, cruise (mission 3)
+ *   Level 4  MarsLaunchLevel    aim at exactly 135.55°, launch, cruise past debris to Mars (mission 3)
  *
  * Launch in the hangar hands the rocket to the next implemented stage of the mission (stages.js).
  * That stage plays the liftoff animation (LaunchSequence.jsx) when the rocket really leaves.
@@ -13,7 +13,7 @@ import { useState } from 'react'
 import { GameScreen } from './GameScreen.jsx'
 import { OrbitalLaunchLevel } from './levels/orbit/OrbitalLaunchLevel.jsx'
 import { MoonTransitLevel } from './levels/moon/MoonTransitLevel.jsx'
-import { MarsTransitLevel } from './levels/mars/MarsTransitLevel.jsx'
+import { MarsLaunchLevel } from './levels/marsLaunch/MarsLaunchLevel.jsx'
 import { STAGE_IDS, STAGE_INFO, getFirstStage, getNextStage } from './stages.js'
 
 export function MissionFlow({ mission, onExit }) {
@@ -47,7 +47,7 @@ export function MissionFlow({ mission, onExit }) {
 
   if (stageId === STAGE_IDS.MARS_TRANSIT && equipped) {
     return (
-      <MarsTransitLevel
+      <MarsLaunchLevel
         mission={mission}
         stageInfo={STAGE_INFO[stageId]}
         equipped={equipped}

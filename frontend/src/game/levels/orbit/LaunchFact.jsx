@@ -35,6 +35,23 @@ export const LAUNCH_FACTS = {
     title: 'One degree matters',
     text: 'Rockets go so fast that being off by one degree can miss by hundreds of kilometers. Real rockets use computers that steer many times every second.',
   },
+  // Mission 3, launch to Mars (marsLaunch/marsLaunchRoute.js)
+  marsReached: {
+    title: 'The Hohmann road',
+    text: 'The cheapest way to Mars is half of an oval around the Sun, from Earth\u2019s orbit to Mars\u2019s. Rockets can only use it about every 26 months, when Mars is the right distance ahead of Earth.',
+  },
+  marsMissed: {
+    title: 'Aim where Mars will be',
+    text: 'Mars moves about half a degree around the Sun every day. Mission teams aim at the spot where Mars will be months later, not where it is on launch day.',
+  },
+  marsShort: {
+    title: 'Faster than Earth',
+    text: 'To reach Mars, a rocket has to go even faster around the Sun than Earth does, about 3 km every second faster. Too slow, and it never climbs out to Mars\u2019s orbit.',
+  },
+  marsHazard: {
+    title: 'Junk around the Sun',
+    text: 'Old rocket stages from the Moon missions still circle the Sun. Space is mostly empty, but navigators keep track of every known object near a spacecraft\u2019s path.',
+  },
   satelliteCollision: {
     title: 'A crowded sky',
     text: 'Thousands of satellites and bits of space junk fly around Earth. The space station even moves out of the way a few times a year.',
@@ -119,6 +136,11 @@ export function factForResult(result) {
       return LAUNCH_FACTS.water
     case 'spaceSick':
       return LAUNCH_FACTS.spaceSick
+    case 'marsReached':
+    case 'marsMissed':
+    case 'marsShort':
+    case 'marsHazard':
+      return LAUNCH_FACTS[outcome.type]
     default:
       return result.reachedArrival ? LAUNCH_FACTS.missedTooFastOrSlow : LAUNCH_FACTS.missedTarget
   }
