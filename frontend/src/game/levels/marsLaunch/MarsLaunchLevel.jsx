@@ -139,7 +139,7 @@ function failureHint(result) {
   }
   switch (result.outcome.type) {
     case MARS_OUTCOMES.HAZARD:
-      return `Watch the red danger zones. Aimed ${WINDOW_TEXT} with the right power, the path slips between them.`
+      return `Watch the blinking lights. Aimed ${WINDOW_TEXT} with the right power, the path slips between them.`
     case MARS_OUTCOMES.SHORT:
       return 'Drag farther from Earth to give the rocket more power.'
     default:

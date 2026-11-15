@@ -33,7 +33,6 @@ const COLORS = {
   marsOrbit: 'rgba(255, 120, 80, 0.4)',
   debris: '#c9d1dc',
   satellite: '#ffe81f',
-  danger: 'rgba(255, 93, 115, 0.32)',
   pathGood: '#3ddc97',
   pathMiss: '#ffd23f',
   pathCrash: '#ff5d73',
@@ -197,7 +196,6 @@ function drawHazards(ctx, view, images, day, launched, clockSeconds) {
 function drawHazard(ctx, view, images, day, launched, clockSeconds, hazard, index) {
   const world = hazardPosition(hazard, day)
   const spot = toScreen(view, world.x, world.y)
-  circle(ctx, spot.x, spot.y, hazard.dangerAu * view.pixelsPerAu, COLORS.danger)
   const color = hazard.kind === 'debris' ? COLORS.debris : COLORS.satellite
   if (!launched) {
     drawBlinkingPixel(ctx, spot, index, clockSeconds)
