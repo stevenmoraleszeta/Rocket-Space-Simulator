@@ -154,6 +154,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     rocketLit: loadImage(ASSETS.rocketLit.src),
     rocketOff: loadImage(ASSETS.rocketIdle.src),
     explosion: loadImage(ASSETS.explosion.src),
+    asteroid: loadImage(ASSETS.asteroid.src),
   }))
 
   const finishFlight = () => {
@@ -238,6 +239,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           aimPoint: current.aimPoint,
           flight,
           images: current.images,
+          clockSeconds: now / 1000,
         })
       }
       frameId = requestAnimationFrame(draw)

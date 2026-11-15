@@ -19,6 +19,7 @@ import launchBaseUrl from '../../assets/images/rockets/launch_base.png'
 import explosionSheetUrl from '../../assets/images/rockets/animations/explosion_sheet.png'
 import earthPlanetUrl from '../../assets/images/planets/earth.svg'
 import spaceBackgroundUrl from '../../assets/images/backgrounds/space.svg'
+import asteroidSheetUrl from '../../assets/images/asteroids/asteroid_sheet.png'
 
 export const ASSETS = Object.freeze({
   // Rocket waiting on the pad: engine off (cold nozzle), like in the hangar before liftoff.
@@ -30,4 +31,6 @@ export const ASSETS = Object.freeze({
   explosion: { src: explosionSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
   earthPlanet: { src: earthPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
   spaceBackground: { src: spaceBackgroundUrl, frameWidth: 320, frameHeight: 180, frames: 1 },
+  // Objects circling Earth on the orbit map, drawn as spinning asteroids. 8 frames of 32 x 32 in one row.
+  asteroid: { src: asteroidSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
 })
