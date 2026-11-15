@@ -31,7 +31,7 @@ const DOT_SPACING_PIXELS = 11
 const DOT_SIZE_PIXELS = 5
 const SATELLITE_SIZE_PIXELS = 10
 /** Before the launch satellites are only small dots of their type's color. */
-const SATELLITE_DOT_RADIUS_PIXELS = 4
+const SATELLITE_DOT_RADIUS_PIXELS = 5
 /** Body of the planet inside one 32 x 32 spin frame (same area as EARTH_SPRITE_BODY, in blocks). */
 const EARTH_SPIN_BODY = { x: 2, y: 2, size: 28 }
 /**
@@ -240,7 +240,14 @@ function drawSatelliteDots(ctx, view, satellites, timeSeconds) {
   for (const satellite of satellites) {
     const world = satellitePositionAt(satellite, timeSeconds)
     const screen = worldToScreen(view, world.x, world.y)
-    drawCircle(ctx, screen.x, screen.y, SATELLITE_DOT_RADIUS_PIXELS, SATELLITE_KIND_COLORS[satellite.kind] ?? COLORS.satellite)
+    const color = SATELLITE_KIND_COLORS[satellite.kind] ?? COLORS.satellite
+    // Bright dot with a soft glow of its own color and a white sparkle in the middle.
+    ctx.save()
+    ctx.shadowColor = color
+    ctx.shadowBlur = 10
+    drawCircle(ctx, screen.x, screen.y, SATELLITE_DOT_RADIUS_PIXELS, color)
+    ctx.restore()
+    drawCircle(ctx, screen.x, screen.y, SATELLITE_DOT_RADIUS_PIXELS / 2.5, 'rgba(255, 255, 255, 0.85)')
   }
 }
 

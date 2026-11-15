@@ -12,14 +12,14 @@ export const HAZARD_RADIUS_KILOMETERS = 120
 
 /** Color of each satellite type: before the launch every satellite is only a dot of its type's color. */
 export const SATELLITE_KIND_COLORS = {
-  'Space station': '#ff8fd8',
-  'Space telescope': '#b48bff',
-  'Internet satellite': '#4fc3ff',
-  'Earth photo satellite': '#3ddc97',
-  'Ice measuring satellite': '#e8f6ff',
-  'Phone satellite': '#ff9f43',
-  'Weather satellite': '#ffd23f',
-  'Earth science satellite': '#5ee6e6',
+  'Space station': '#ff4fd8',
+  'Space telescope': '#a66bff',
+  'Internet satellite': '#1fb6ff',
+  'Earth photo satellite': '#14f08c',
+  'Ice measuring satellite': '#ffffff',
+  'Phone satellite': '#ff8a1f',
+  'Weather satellite': '#ffe81f',
+  'Earth science satellite': '#1ff2f2',
 }
 
 /**
