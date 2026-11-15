@@ -26,10 +26,8 @@ import { aimFromPointer, initialAim, siteAngleOf } from './orbitAiming.js'
 import {
   createView,
   drawOrbitScene,
-  earthSpinFrame,
   flightPoseAt,
   siteScreenPosition,
-  siteSurfacePosition,
   worldToScreen,
 } from './orbitRenderer.js'
 import {
@@ -122,13 +120,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600, pixelRatio: 1 })
 
   const view = useMemo(() => createView(canvasSize.width, canvasSize.height), [canvasSize])
-  // Frame of the turning Earth sprite: while choosing, the bases slide with the continents.
-  const [earthFrame, setEarthFrame] = useState(() => earthSpinFrame(performance.now() / 1000))
-  useEffect(() => {
-    if (step !== 'site') return undefined
-    const timer = setInterval(() => setEarthFrame(earthSpinFrame(performance.now() / 1000)), 100)
-    return () => clearInterval(timer)
-  }, [step])
   const site = LAUNCH_SITES.find((candidate) => candidate.id === siteId) ?? null
   // First level: no orbit choice. The satellite always aims for the hardest arrival orbit.
   const orbit = useMemo(() => hardestOrbit(), [])
@@ -167,7 +158,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const [satelliteInfo, setSatelliteInfo] = useState(null) // { satellite, x, y }
   const [images] = useState(() => ({
     earth: loadImage(ASSETS.earthPlanet.src),
-    earthSpin: loadImage(ASSETS.earthSpin.src),
     rocketLit: loadImage(ASSETS.rocketLit.src),
     rocketOff: loadImage(ASSETS.rocketIdle.src),
     rocketUpperStage: loadImage(ASSETS.rocketUpperStage.src),
@@ -431,8 +421,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           {/* Launch bases: real buttons on top of the planet, big enough to tap and read. */}
           <div className="orbit-sites">
             {visibleSites.map((candidate) => {
-              // Choosing: on the face of the turning Earth. Chosen: on the rim, where the rocket leaves.
-              const position = step === 'site' ? siteSurfacePosition(view, candidate, earthFrame) : siteScreenPosition(view, candidate)
+              const position = siteScreenPosition(view, candidate)
               const side = position.x >= view.centerX ? 'right' : 'left'
               const selected = candidate.id === siteId
               const className = `orbit-site orbit-site--${side}${selected ? ' is-selected' : ''}`
