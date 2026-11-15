@@ -145,3 +145,30 @@
   image-rendering: pixelated;
   filter: drop-shadow(0 0 0.5rem rgba(159, 227, 255, 0.55));
 }
+
+/* Landing on Mars: the recon dome comes down (MarsLanding.jsx), full screen, pixel art. */
+.mars-landing {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #3b2230;
+}
+.mars-landing__scene {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+.mars-landing__caption {
+  position: absolute;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  color: #fff3e6;
+  text-shadow: 0.1875rem 0.1875rem 0 #2a1018;
+  pointer-events: none;
+}
+.mars-landing__title { margin: 0 0 0.375rem; font-family: var(--ms-font-pixel); font-size: 1.25rem; }
+.mars-landing__text { margin: 0; font-size: 1.125rem; }
+.mars-landing__skip { position: absolute; right: 1.25rem; bottom: 1.25rem; }

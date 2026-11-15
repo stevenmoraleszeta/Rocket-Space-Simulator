@@ -60,6 +60,7 @@ import './marsLaunch.css'
 import iceAsteroid from '../../../assets/images/asteroids/ice_asteroid.svg'
 import animatedSun from '../../../assets/images/planets/sun_animated.svg'
 import { PixelSky } from './PixelSky.jsx'
+import { MarsLanding } from './MarsLanding.jsx'
 import { SitePin } from '../orbit/SitePin.jsx'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
@@ -310,7 +311,8 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
       mildMistakes: mild,
       grazes: grazed,
     })
-    setStep('result')
+    // Reaching Mars first plays the landing of the recon dome (MarsLanding.jsx), then the result.
+    setStep(success ? 'landing' : 'result')
   }, [aim, trip, completeMission, mission.id, equipped, site, setStep])
 
   const failLaunch = useCallback(() => {
@@ -627,6 +629,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
           />
         </div>
       )}
+      {step === 'landing' && <MarsLanding onDone={() => setStep('result')} />}
       {step === 'result' && result?.success && (
         <MissionCompleteScreen
           mission={mission}

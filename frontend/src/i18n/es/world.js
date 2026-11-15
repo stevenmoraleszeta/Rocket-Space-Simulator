@@ -333,6 +333,11 @@ export const world = {
   'On the way to Mars': 'De camino a Marte',
   'Trip over': 'Viaje terminado',
   'Risky choices': 'Elecciones arriesgadas',
+  // Mars: landing of the recon dome (MarsLanding.jsx)
+  'Landing on Mars': 'Aterrizando en Marte',
+  'Touchdown!': '¡Aterrizaje!',
+  'The recon dome is on Mars.': 'La cúpula de reconocimiento ya está en Marte.',
+  'The recon dome is coming down slowly…': 'La cúpula de reconocimiento baja lentamente…',
   // Mars: grazes and the runaway asteroids (marsLaunch)
   'You meet Mars, but the rocket grazes {{name}}: −{{points}} points.': 'Llegas a Marte, pero el cohete roza {{name}}: −{{points}} puntos.',
   'Grazed {{name}}! −{{points}} points': '¡Rozaste {{name}}! −{{points}} puntos',
