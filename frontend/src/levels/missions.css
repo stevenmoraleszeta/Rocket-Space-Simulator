@@ -269,3 +269,36 @@ img.ms-planet { object-fit: contain; user-select: none; }
 .ms-path { gap: 20px clamp(20px, 6vw, 120px); }
 .ms-modal { height: calc(100dvh / var(--ui-zoom, 1)); max-height: calc(100dvh / var(--ui-zoom, 1)); }
 .ms-card--wide { max-height: calc(100dvh / var(--ui-zoom, 1) - 24px); }
+
+/* Start screen: TON 618-style black hole drawn small and scaled up as pixel art (BlackHoleBackground.jsx). */
+.ms-bg__layer.bh-canvas { width: 100%; height: 100%; object-fit: cover; object-position: center; pointer-events: none; background: #04030e; }
+
+/* Start screen: everything sits near the top so the black hole below can be seen. */
+.ms-bg:has(.bh-canvas) .ms-select { padding-top: 0.75rem; }
+.ms-bg:has(.bh-canvas) .ms-stage { justify-content: flex-start; padding-top: 0.5rem; }
+.ms-bg:has(.bh-canvas) .ms-head { gap: 0.5rem; margin-bottom: 1rem; }
+
+/* Text and stars under each planet: a dark pixel outline plus a hard drop shadow, like the title,
+   so they read clearly over the black hole. */
+.ms-stop .ms-stop__num,
+.ms-stop .ms-stop__title,
+.ms-stop .ms-stop__hint,
+.ms-stop .ms-stars {
+  text-shadow:
+    -0.0625rem 0 0 #05061a,
+    0.0625rem 0 0 #05061a,
+    0 -0.0625rem 0 #05061a,
+    0 0.0625rem 0 #05061a,
+    0.1875rem 0.1875rem 0 #05061a;
+}
+
+/* Five missions in a row: the 3 playable ones plus missions 4 and 5 ("Coming soon"). */
+.ms-stage { max-width: min(84rem, 100%); }
+.ms-path { grid-template-columns: repeat(5, 1fr); gap: 1.25rem clamp(0.75rem, 2.5vw, 3rem); }
+.ms-path::before { left: 10%; right: 10%; }
+/* Missions 4 and 5 can be tapped (only to say "Coming soon!"), so they show a pointer. */
+.ms-stop--soon .ms-stop__btn { cursor: pointer; }
+.ms-bubble--soon { white-space: nowrap; }
+@media (max-width: 720px) {
+  .ms-path { grid-template-columns: 1fr; }
+}

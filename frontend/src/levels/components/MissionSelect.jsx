@@ -12,8 +12,9 @@ import { statSheet } from '../record.js';
 import { Planet } from './Planet.jsx';
 import { HistoryBoard, RankBadge, RecordButtons, StatsBoard } from './PlayerBoards.jsx';
 import { StarRating } from './StarRating.jsx';
-import { SpaceBackground } from './SpaceBackground.jsx';
+import { BlackHoleBackground } from './BlackHoleBackground.jsx';
 import { SPRITES } from '../assets/sprites.js';
+import { UPCOMING_MISSIONS } from '../data/upcomingMissions.js';
 import { SettingsMenu } from '../../settings/SettingsMenu.jsx';
 import { AppLogo } from '../../brand/AppLogo.jsx';
 import { useSettings } from '../../settings/SettingsContext.jsx';
@@ -25,22 +26,31 @@ import { PixelIcon } from '../../game/PixelIcon.jsx';
 export function MissionSelect({ onStartMission, googleSignedIn = false, authError = '' }) {
   const { missions, progress, getState, getStars, totalStars, maxStars, loading, adminMode, setAdminMode, playerUnlocked } = useProgress();
   const [open, setOpen] = useState(null);
+  // Mission 4 or 5 that was just tapped: its "Coming soon!" bubble shows for a moment.
+  const [soonId, setSoonId] = useState(null);
+  const soonTimer = useRef(null);
+  const showSoon = (id) => {
+    setSoonId(id);
+    clearTimeout(soonTimer.current);
+    soonTimer.current = setTimeout(() => setSoonId(null), 2200);
+  };
+  useEffect(() => () => clearTimeout(soonTimer.current), []);
   const [board, setBoard] = useState(null);
   const playerName = engineerName(useSettings().playerName);
 
   if (loading) {
     return (
-      <SpaceBackground>
+      <BlackHoleBackground>
         <div className="brand-splash">
           <AppLogo size={96} wordmark bare />
           <p className="brand-splash__status">{t('Loading…')}</p>
         </div>
-      </SpaceBackground>
+      </BlackHoleBackground>
     );
   }
 
   return (
-    <SpaceBackground>
+    <BlackHoleBackground>
     <div className="ms-select">
       <div className="ms-bar">
         <RankBadge stars={totalStars} />
@@ -125,6 +135,28 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
             </li>
           );
         })}
+        {/* Missions 4 and 5: on the path and locked. Tapping one says "Coming soon!" for a moment. */}
+        {UPCOMING_MISSIONS.map((m) => (
+          <li key={m.id} className="ms-stop ms-stop--locked ms-stop--soon">
+            {soonId === m.id && <div className="ms-bubble ms-bubble--soon" role="status">Coming soon!</div>}
+            <button
+              type="button"
+              className="ms-stop__btn"
+              aria-disabled="true"
+              aria-label={`Mission ${m.number}, ${m.title}. Locked. Coming soon.`}
+              onClick={() => showSoon(m.id)}
+            >
+              <Planet planet={m.planet} size={130} locked />
+              {SPRITES.lock?.src && (
+                <span className="ms-lock" aria-hidden="true">
+                  <img className={`ms-lock__img${SPRITES.lock.pixelArt ? ' is-pixel' : ''}`} src={SPRITES.lock.src} alt="" draggable="false" />
+                </span>
+              )}
+            </button>
+            <div className="ms-stop__num">Mission {m.number}</div>
+            <div className="ms-stop__title">{m.title}</div>
+          </li>
+        ))}
       </ol>
       </div>
 
@@ -145,7 +177,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
         />
       )}
     </div>
-    </SpaceBackground>
+    </BlackHoleBackground>
   );
 }
 
