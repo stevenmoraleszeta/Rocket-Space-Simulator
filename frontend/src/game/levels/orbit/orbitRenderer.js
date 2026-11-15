@@ -32,8 +32,10 @@ const DOT_SIZE_PIXELS = 5
 const SATELLITE_SIZE_PIXELS = 10
 /** Before the launch satellites are only small dots of their type's color. */
 const SATELLITE_DOT_RADIUS_PIXELS = 4
-/** The Earth picture turns slowly, one full turn in this many real seconds (only a visual effect). */
-const EARTH_SPIN_SECONDS_PER_TURN = 90
+/** The Earth turns by changing sprite frames (ASSETS.earthSpin): seconds each frame is shown. */
+const EARTH_SPIN_SECONDS_PER_FRAME = 0.4
+/** Body of the planet inside one 32 x 32 spin frame (same area as EARTH_SPRITE_BODY, in blocks). */
+const EARTH_SPIN_BODY = { x: 2, y: 2, size: 28 }
 /**
  * The three satellite looks. `image` is the key in scene.images, sizes are in art pixels,
  * `scale` turns them into screen pixels. Animated sheets have more than one frame.
@@ -150,33 +152,32 @@ function drawEarth(ctx, view, images, clockSeconds = 0) {
   // Thin atmosphere glow just above the surface, breathing a little.
   const glow = 6 + Math.sin(clockSeconds * 1.2) * 1.5
   drawCircle(ctx, view.centerX, view.centerY, view.earthRadiusPixels + glow, COLORS.atmosphere)
-  if (images.earth?.complete && images.earth.naturalWidth > 0) {
+  const size = view.earthRadiusPixels * 2
+  const spin = images.earthSpin
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(view.centerX, view.centerY, view.earthRadiusPixels, 0, Math.PI * 2)
+  ctx.clip()
+  if (spin?.complete && spin.naturalWidth > 0) {
+    // Turning planet: step through the frames of the spin sheet, like any pixel-art animation.
+    const sheet = ASSETS.earthSpin
+    const frame = Math.floor(clockSeconds / EARTH_SPIN_SECONDS_PER_FRAME) % sheet.frames
+    ctx.drawImage(
+      spin,
+      frame * sheet.frameWidth + EARTH_SPIN_BODY.x, EARTH_SPIN_BODY.y, EARTH_SPIN_BODY.size, EARTH_SPIN_BODY.size,
+      view.centerX - size / 2, view.centerY - size / 2, size, size,
+    )
+  } else if (images.earth?.complete && images.earth.naturalWidth > 0) {
     const scale = images.earth.naturalWidth / 256
-    const size = view.earthRadiusPixels * 2
-    // Seen from above the North Pole the Earth turns counterclockwise.
-    const spin = -((clockSeconds / EARTH_SPIN_SECONDS_PER_TURN) % 1) * Math.PI * 2
-    ctx.save()
-    ctx.beginPath()
-    ctx.arc(view.centerX, view.centerY, view.earthRadiusPixels, 0, Math.PI * 2)
-    ctx.clip()
-    ctx.translate(view.centerX, view.centerY)
-    ctx.rotate(spin)
     ctx.drawImage(
       images.earth,
       EARTH_SPRITE_BODY.x * scale, EARTH_SPRITE_BODY.y * scale, EARTH_SPRITE_BODY.size * scale, EARTH_SPRITE_BODY.size * scale,
-      -size / 2, -size / 2, size, size,
+      view.centerX - size / 2, view.centerY - size / 2, size, size,
     )
-    ctx.restore()
   } else {
     drawCircle(ctx, view.centerX, view.centerY, view.earthRadiusPixels, '#2f7be0')
   }
-  // Night side: a fixed shadow, so the turning surface reads as a round, moving planet.
-  const r = view.earthRadiusPixels
-  const shade = ctx.createLinearGradient(view.centerX - r, view.centerY - r, view.centerX + r, view.centerY + r)
-  shade.addColorStop(0, 'rgba(0, 0, 0, 0)')
-  shade.addColorStop(0.55, 'rgba(0, 0, 0, 0.05)')
-  shade.addColorStop(1, 'rgba(0, 0, 20, 0.5)')
-  drawCircle(ctx, view.centerX, view.centerY, r, shade)
+  ctx.restore()
 }
 
 /**

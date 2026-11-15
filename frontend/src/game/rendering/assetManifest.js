@@ -19,6 +19,7 @@ import rocketSheetUrl from '../../assets/images/rockets/animations/rocket_sheet.
 import launchBaseUrl from '../../assets/images/rockets/launch_base.png'
 import explosionSheetUrl from '../../assets/images/rockets/animations/explosion_sheet.png'
 import earthPlanetUrl from '../../assets/images/planets/earth.svg'
+import earthSpinSheetUrl from '../../assets/images/planets/earth_spin_sheet.png'
 import spaceBackgroundUrl from '../../assets/images/backgrounds/space.svg'
 import goldSatelliteSheetUrl from '../../assets/images/satellites/gold_satellite_sheet.png'
 import commsSatelliteUrl from '../../assets/images/satellites/comms_satellite.png'
@@ -35,6 +36,9 @@ export const ASSETS = Object.freeze({
   // 8 frames of 32 x 32 in the first row.
   explosion: { src: explosionSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
   earthPlanet: { src: earthPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
+  // earth.svg turning: 28 frames of 32 x 32 (1 px per block of earth.svg). The surface and clouds
+  // shift one block per frame; outline, polar caps, atmosphere and night shadow stay still.
+  earthSpin: { src: earthSpinSheetUrl, frameWidth: 32, frameHeight: 32, frames: 28 },
   spaceBackground: { src: spaceBackgroundUrl, frameWidth: 320, frameHeight: 180, frames: 1 },
   // Satellites circling Earth on the orbit map. Three looks, mixed so neighbors never match.
   // Gold box with solar panels: sun glint and blinking light, 4 frames of 24 x 16 in one row.

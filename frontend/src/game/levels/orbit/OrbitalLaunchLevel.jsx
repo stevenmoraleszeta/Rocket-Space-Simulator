@@ -158,6 +158,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const [satelliteInfo, setSatelliteInfo] = useState(null) // { satellite, x, y }
   const [images] = useState(() => ({
     earth: loadImage(ASSETS.earthPlanet.src),
+    earthSpin: loadImage(ASSETS.earthSpin.src),
     rocketLit: loadImage(ASSETS.rocketLit.src),
     rocketOff: loadImage(ASSETS.rocketIdle.src),
     rocketUpperStage: loadImage(ASSETS.rocketUpperStage.src),
