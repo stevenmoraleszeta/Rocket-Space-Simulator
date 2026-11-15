@@ -11,6 +11,7 @@
     "test:moon": "node --test src/game/levels/moon/moonLaunchPlanning.test.js src/game/levels/moon/moonTransfer.test.js src/game/levels/moon/moonOrbitEvents.test.js",
     "test:plan": "node --test src/game/design/missionPlan.test.js",
     "test:route": "node --test src/lib/appRoute.test.js",
+    "test:mars": "node --test src/game/levels/marsLaunch/marsLaunchRoute.test.js",
     "test:i18n": "node --test src/i18n/coverage.test.js",
     "preview": "vite preview"
   },

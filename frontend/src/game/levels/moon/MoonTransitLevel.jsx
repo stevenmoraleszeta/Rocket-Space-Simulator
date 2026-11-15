@@ -548,35 +548,35 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
                     ? t(result.failure.message)
                     : result.success
                       ? t('The crew landed and the rover can look for ice.')
-                      : summaryText,
+                      : describeTransit({ outcome: result.outcome }).text,
                 )}
               </p>
               {result.success && (
                 <>
                   <div className="orbit-result__stars"><StarRating stars={result.stars} size={36} /></div>
                   <dl className="orbit-stats">
-                    <div><dt>Score</dt><dd>{result.pct}%</dd></div>
-                    <div><dt>Days</dt><dd>{cruise?.durationDays}</dd></div>
+                    <div><dt>{t('Score')}</dt><dd>{result.pct}%</dd></div>
+                    <div><dt>{t('Days')}</dt><dd>{cruise?.durationDays}</dd></div>
                   </dl>
                 </>
               )}
               {!result.success && (
                 <p className="orbit-panel__hint">
-                  {sayTo(playerName, result.failure?.hint ?? FIX_HINT[result.outcome.type] ?? 'Try another path.')}
+                  {sayTo(playerName, t(result.failure?.hint ?? FIX_HINT[result.outcome.type] ?? 'Try another path.'))}
                 </p>
               )}
               {result.unlockedMissionId && (
                 <p className="orbit-panel__hint">
-                  {sayTo(playerName, `New mission unlocked: ${getMission(result.unlockedMissionId)?.title}!`)}
+                  {sayTo(playerName, t('New mission unlocked: {{title}}!', { title: t(getMission(result.unlockedMissionId)?.title || '') }))}
                 </p>
               )}
               <div className="orbit-panel__actions">
                 {result.success ? (
-                  <button type="button" className="ms-btn" onClick={onExit}>Missions</button>
+                  <button type="button" className="ms-btn" onClick={onExit}>{t('Missions')}</button>
                 ) : (
                   <>
-                    <button type="button" className="game__back" onClick={onBackToHangar}>Hangar</button>
-                    <button type="button" className="ms-btn" onClick={retry}>Try again</button>
+                    <button type="button" className="game__back" onClick={onBackToHangar}>{t('Hangar')}</button>
+                    <button type="button" className="ms-btn" onClick={retry}>{t('Try again')}</button>
                   </>
                 )}
               </div>

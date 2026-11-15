@@ -244,7 +244,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
       </button>
       <div className="game__mission">
         <div className="game__num">{t('Mission {{number}}', { number: mission.number })}</div>
-        <h1>{mission.title}</h1>
+        <h1>{t(mission.title)}</h1>
         {playerName && <p className="game__engineer">{t('Engineer {{name}}', { name: playerName })}</p>}
       </div>
       <div className="game__place">{t(mission.place)}</div>
@@ -369,7 +369,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
                     ].filter(Boolean).join(' ')}
                     aria-expanded={open}
                     aria-controls={open ? 'part-dialog' : undefined}
-                    aria-label={`${part.name}. ${count} packed.`}
+                    aria-label={t('{{name}}. {{count}} packed.', { name: t(part.name), count })}
                     onClick={(event) => {
                       setOpenPart(open ? null : part.id);
                       setPartAnchor(open ? null : event.currentTarget);

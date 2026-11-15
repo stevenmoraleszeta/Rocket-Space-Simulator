@@ -289,6 +289,7 @@ const EVENT_SOUNDS = {
   misfire: SYNTH.cough,
 }
 
+/** Mission 2: pick a base, a day, and a path to the Moon. */
 export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPlace, onLaunchPlace, onBackToHangar, onExit, onNextMission }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)

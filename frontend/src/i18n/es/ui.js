@@ -62,6 +62,7 @@ export const ui = {
   'Every trip stays here, even when you fly it again.': 'Cada viaje se queda aquí, aunque lo vueles otra vez.',
   '1 earlier trip was saved before this log. New trips show what you packed.': '1 viaje anterior se guardó antes de este registro. Los viajes nuevos muestran lo que empacaste.',
   '{{count}} earlier trips were saved before this log. New trips show what you packed.': '{{count}} viajes anteriores se guardaron antes de este registro. Los viajes nuevos muestran lo que empacaste.',
+  '{{name}}. {{count}} packed.': '{{name}}. {{count}} empacados.',
   'Mission {{number}} · {{place}}': 'Misión {{number}} · {{place}}',
   'Score {{pct}}': 'Puntos {{pct}}',
   'Stopped': 'Se detuvo',

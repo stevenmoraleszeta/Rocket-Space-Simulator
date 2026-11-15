@@ -49,14 +49,23 @@ export function formatDate(date, options) {
   return new Intl.DateTimeFormat(numberLocale(), options).format(date)
 }
 
+function fillPlaceholders(text, options) {
+  if (!options || typeof text !== 'string' || !text.includes('{{')) return text
+  return text.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (match, name) => (
+    options[name] == null ? match : String(options[name])
+  ))
+}
+
 /**
  * Translate one player-facing string. `key` is the English sentence.
  * `{{name}}` placeholders are filled from `options`.
+ * English has no dictionary, so a missing key comes back as the sentence
+ * itself and the placeholders are filled here.
  */
 export function t(key, options) {
   if (key == null || key === '') return ''
   if (typeof key !== 'string') return String(key)
-  return i18n.t(key, options)
+  return fillPlaceholders(i18n.t(key, options), options)
 }
 
 /** Switch language now, before the next React render. */
