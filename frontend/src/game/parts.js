@@ -17,6 +17,7 @@ import shelter from '../assets/images/items/shelter.svg';
 import parachute from '../assets/images/items/parachute.svg';
 import rover from '../assets/images/items/rover.svg';
 import antenna from '../assets/images/items/antenna.svg';
+import lander from '../assets/images/items/lander.svg';
 
 /**
  * What the empty rocket already brings to the pad.
@@ -97,7 +98,7 @@ export const PARTS = [
     id: 'fuel',
     name: 'Fuel tank',
     blurb: 'Side tanks with more fuel.',
-    missions: ['earth', 'mars'],
+    missions: ['earth', 'moon', 'mars'],
     cost: 26,
     mass: 12,
     // Extra propellant only. The engines are still the boosters.
@@ -130,7 +131,7 @@ export const PARTS = [
     id: 'water',
     name: 'Water',
     blurb: 'Drinking water for the crew. You can pack more than one.',
-    missions: ['earth', 'mars'],
+    missions: ['earth', 'moon', 'mars'],
     stack: true,
     max: 4,
     cost: 14,
@@ -144,7 +145,7 @@ export const PARTS = [
     id: 'medicine',
     name: 'Medicine',
     blurb: 'A kit for when someone feels sick.',
-    missions: ['earth', 'mars'],
+    missions: ['earth', 'moon', 'mars'],
     cost: 18,
     mass: 5,
     // One kit for the crew, the way NASA flies a medical kit.
@@ -156,7 +157,7 @@ export const PARTS = [
     id: 'veggie',
     name: 'Plant locker',
     blurb: 'A small plant locker. The lights use power, and the plants drink water.',
-    missions: ['earth'],
+    missions: ['earth', 'moon'],
     cost: 32,
     mass: 11,
     // NASA Veggie uses about 70 W. One energy point is 40 W, so this is 80 W.
@@ -183,8 +184,46 @@ export const PARTS = [
     src: astronaut,
     inside: true,
   },
-  // Mission 3 only. Fuel, water, medicine, and the Earth plant locker stay on the missions
-  // their own `missions` list names.
+  // Mission 2. The Moon has no air to land in, and a cabin fills with exhaled gas
+  // in a couple of days. Apollo cleaned that gas with lithium hydroxide canisters.
+  {
+    id: 'filter',
+    name: 'Air filter',
+    blurb: 'Cleans the gas the crew breathes out. A trip of many days needs this.',
+    missions: ['moon'],
+    cost: 20,
+    mass: 7,
+    energy: 3,
+    co2Filter: true,
+    src: scrubber,
+    inside: true,
+  },
+  {
+    id: 'lander',
+    name: 'Lunar lander',
+    blurb: 'Legs and an engine. The Moon has almost no air, so this is what slows the ship.',
+    missions: ['moon'],
+    cost: 30,
+    mass: 16,
+    energy: 2,
+    descent: true,
+    src: lander,
+    inside: true,
+  },
+  {
+    id: 'prospector',
+    name: 'Ice rover',
+    blurb: 'Rolls into a crater that never sees the Sun and looks for ice.',
+    missions: ['moon'],
+    cost: 18,
+    mass: 10,
+    energy: 2,
+    prospects: true,
+    src: rover,
+    inside: true,
+  },
+  // Mission 3. The Moon reuses the storm shelter and the radio. The meal locker,
+  // the water recycler, the closed-loop scrubber, the parachute, and the Mars rover stay here.
   {
     id: 'pantry',
     name: 'Meal locker',
@@ -229,7 +268,7 @@ export const PARTS = [
     id: 'shelter',
     name: 'Storm shelter',
     blurb: 'A thick little room. The crew hides here when the Sun throws a particle storm.',
-    missions: ['mars'],
+    missions: ['moon', 'mars'],
     cost: 26,
     mass: 11,
     energy: 2,
@@ -263,8 +302,8 @@ export const PARTS = [
   {
     id: 'antenna',
     name: 'Radio dish',
-    blurb: 'Calls home. Needed when the Sun sits between Earth and Mars.',
-    missions: ['mars'],
+    blurb: 'Calls home when Earth is hard to hear.',
+    missions: ['moon', 'mars'],
     cost: 18,
     mass: 5,
     energy: 2,

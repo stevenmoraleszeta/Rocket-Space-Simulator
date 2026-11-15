@@ -16,6 +16,9 @@ export function partTags(part) {
   if (part.propellantHangarKg && !part.thrust) tags.push({ kind: 'good', text: '+fuel' });
   if (part.o2Kg) tags.push({ kind: 'good', text: `+${formatKg(part.o2Kg)} oxygen${each}` });
   if (part.o2Recycle) tags.push({ kind: 'good', text: 'Cleans used air' });
+  if (part.co2Filter) tags.push({ kind: 'good', text: 'Cleans breathed-out air' });
+  if (part.descent) tags.push({ kind: 'good', text: 'Slows onto the Moon' });
+  if (part.prospects) tags.push({ kind: 'good', text: 'Looks for ice' });
   if (part.waterRecycle) tags.push({ kind: 'good', text: 'Cleans used water' });
   if (part.stormShelter) tags.push({ kind: 'good', text: 'Safe in a Sun storm' });
   if (part.lands) tags.push({ kind: 'good', text: 'Slows the landing' });
@@ -68,6 +71,9 @@ export function rocketStatus(equipped, mission) {
     report.tracksMedicine && report.durationSeconds > 86400
       ? goalMeter('medicine', 'Medicine', report.medicineCount, 1)
       : null,
+    report.tracksCo2 && report.durationSeconds > 2 * 86400
+      ? goalMeter('filter', 'Air filter', report.co2Filters, 1)
+      : null,
   ].filter(Boolean);
 
   const problems = [];
@@ -82,6 +88,9 @@ export function rocketStatus(equipped, mission) {
   if (report.tracksWater && report.waterKg + 1e-6 < report.waterNeedKg) problems.push('The crew will run out of water');
   if (report.tracksMedicine && report.durationSeconds > 86400 && report.medicineCount < 1) {
     problems.push('No medicine for a long flight');
+  }
+  if (report.tracksCo2 && report.durationSeconds > 2 * 86400 && report.co2Filters < 1) {
+    problems.push('The breathed-out air will turn bad');
   }
 
   return { meters, problems };

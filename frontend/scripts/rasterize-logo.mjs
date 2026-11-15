@@ -49,7 +49,7 @@ function hex(color) {
   return [parseInt(n.slice(0, 2), 16), parseInt(n.slice(2, 4), 16), parseInt(n.slice(4, 6), 16), 255]
 }
 
-const size = 32
+const size = Number(svg.match(/viewBox="0 0 (\d+)/)[1])
 const buf = Buffer.alloc(size * size * 4, 0)
 for (const match of svg.matchAll(/<rect\s+([^>/]+)\/>/g)) {
   const source = match[1]
@@ -92,7 +92,7 @@ function scale(srcW, src, dstW) {
 }
 
 const pub = path.join(root, 'public')
-fs.writeFileSync(path.join(pub, 'favicon-32.png'), png(32, 32, buf))
-fs.writeFileSync(path.join(pub, 'apple-touch-icon.png'), png(180, 180, scale(32, buf, 180)))
-fs.writeFileSync(path.join(pub, 'icon-512.png'), png(512, 512, scale(32, buf, 512)))
+fs.writeFileSync(path.join(pub, 'favicon-32.png'), png(32, 32, scale(size, buf, 32)))
+fs.writeFileSync(path.join(pub, 'apple-touch-icon.png'), png(180, 180, scale(size, buf, 180)))
+fs.writeFileSync(path.join(pub, 'icon-512.png'), png(512, 512, scale(size, buf, 512)))
 console.log('wrote favicon pngs')

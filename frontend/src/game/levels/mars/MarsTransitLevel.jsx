@@ -16,7 +16,6 @@ import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../../../audio'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
-import { HudMission } from '../../HudMission.jsx'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { FlightReadout } from '../../FlightReadout.jsx'
 import { earliestSupplyEnd, flightReadout, supplyReport } from '../../lifeSupport.js'
@@ -391,7 +390,10 @@ export function MarsTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
       <button type="button" className="game__back" onClick={onExit}>
         Missions
       </button>
-      <HudMission kicker={`Level ${stageInfo.levelNumber} · ${stageInfo.title}`} title={mission.title} />
+      <div className="game__mission">
+        <div className="game__num">Level {stageInfo.levelNumber} · {stageInfo.title}</div>
+        <h1>{mission.title}</h1>
+      </div>
       <div className="game__place">{mission.place}</div>
     </header>
   )

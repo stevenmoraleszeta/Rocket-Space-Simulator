@@ -93,8 +93,8 @@ function flightWhen(at) {
 function PackChip({ id, count }) {
   const part = PARTS.find((item) => item.id === id);
   if (!part) return null;
-  const x = part.offX ?? part.frameX ?? 0;
-  const y = part.offY ?? part.frameY ?? 0;
+  const x = part.frameX ?? 0;
+  const y = part.frameY ?? 0;
   return (
     <li className="ms-pack">
       {part.src ? (
@@ -109,7 +109,8 @@ function PackChip({ id, count }) {
           }}
         />
       )}
-      <span>{count > 1 ? `${part.name} ×${count}` : part.name}</span>
+      <span>{part.name}</span>
+      <b className="ms-pack__count">×{count}</b>
     </li>
   );
 }

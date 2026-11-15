@@ -20,7 +20,6 @@ import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
-import { HudMission } from '../../HudMission.jsx'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { FlightReadout } from '../../FlightReadout.jsx'
 import { flightReadout } from '../../lifeSupport.js'
@@ -32,7 +31,6 @@ import { MissionCompleteScreen } from './MissionCompleteScreen.jsx'
 import { EXPLODING_OUTCOMES, OUTCOMES, arrivalPosition, degreesToRadians, satellitePositionAt, simulateLaunch } from './launchSimulation.js'
 import { buildLaunchVehicle } from './launchVehicle.js'
 import { aimFromPointer, initialAim, siteAngleOf } from './orbitAiming.js'
-import { launchGroundTrack, planeToScreen } from './groundTrack.js'
 import {
   createView,
   drawOrbitScene,
@@ -144,10 +142,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const orbit = useMemo(() => hardestOrbit(), [])
   const siteCheck = site ? checkTargetFromSite(site, orbit) : null
   const rotationBoost = rotationBoostForInclination(orbit.inclinationDeg)
-  const track = useMemo(
-    () => (site ? launchGroundTrack(site, orbit.inclinationDeg) : null),
-    [site, orbit],
-  )
   const arrival = useMemo(
     () => (orbit && arrivalAngle !== null ? arrivalPosition(orbit.altitudeKm, arrivalAngle) : null),
     [orbit, arrivalAngle],
@@ -268,7 +262,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       orbitId: orbit.id,
       orbitsForSite,
       arrival,
-      track,
       aimPoint,
       prediction,
       images,
@@ -344,7 +337,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           orbits: current.orbitsForSite,
           selectedOrbitId: current.orbitId,
           arrival: current.arrival,
-          track: current.track,
           satellites: REAL_SATELLITES,
           // A rocket that blew up at launch never flew: no path or rocket on the map.
           prediction: current.blewUp ? null : current.prediction,
@@ -387,9 +379,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     let closest = null
     for (const satellite of REAL_SATELLITES) {
       const world = satellitePositionAt(satellite, simTimeRef.current)
-      const screen = track
-        ? planeToScreen(view, track, world.x, world.y)
-        : worldToScreen(view, world.x, world.y)
+      const screen = worldToScreen(view, world.x, world.y)
       const gap = Math.hypot(point.x - screen.x, point.y - screen.y)
       if (gap < SATELLITE_TAP_PIXELS && (!closest || gap < closest.gap)) closest = { satellite, gap, screen }
     }
@@ -467,7 +457,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       <button type="button" className="game__back" onClick={onExit}>
         Missions
       </button>
-      <HudMission kicker={`Level ${stageInfo.levelNumber} · ${stageInfo.title}`} title={mission.title} />
+      <div className="game__mission">
+        <div className="game__num">Level {stageInfo.levelNumber} · {stageInfo.title}</div>
+        <h1>{mission.title}</h1>
+      </div>
       <div className="game__place">{mission.place}</div>
     </header>
   )
@@ -501,6 +494,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
           />
+          <p className="orbit-note">This is a simulation, not a real flight.</p>
           {satelliteInfo && (
             <div
               className={`satellite-card${satelliteInfo.y < 150 ? ' is-below' : ''}`}

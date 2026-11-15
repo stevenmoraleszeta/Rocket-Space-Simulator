@@ -173,16 +173,6 @@
 }
 
 .game__mission {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  text-align: center;
-  min-width: 0;
-}
-
-.game__mission-copy {
-  min-width: 0;
   text-align: center;
 }
 
@@ -1339,6 +1329,29 @@
   box-shadow: inset 0 0 0 var(--px) #454d72;
 }
 
+/* A refused buy: the plus turns red and shakes once. */
+.step-btn.is-denied {
+  color: #fff;
+  animation: step-deny 0.42s steps(3);
+}
+
+.step-btn.is-denied::before {
+  background: #5a1024;
+}
+
+.step-btn.is-denied::after {
+  background: #c4284a;
+  box-shadow:
+    inset var(--px) var(--px) 0 #ff8aa0,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #6e1028;
+}
+
+@keyframes step-deny {
+  0%, 100% { transform: translateX(0); }
+  33% { transform: translateX(-3px); }
+  66% { transform: translateX(3px); }
+}
+
 .part-dialog__count {
   min-width: 3.2em;
   font-family: var(--ms-font-pixel);
@@ -1536,11 +1549,6 @@
   .game__back,
   .game__place {
     justify-self: center;
-  }
-
-  .game__mission {
-    flex-direction: column;
-    gap: 6px;
   }
 
   .stage__frame {

@@ -34,6 +34,6 @@ export const SPRITES = {
     mars: { src: mars, frames: 1, pixelArt: true },
   },
   background: { src: space, mode: 'cover', pixelArt: true },
-  // Lock shown over locked planets. null = falls back to the 🔒 emoji.
+  // Lock shown over locked planets. No image means the planet stays unmarked.
   lock: { src: lock, pixelArt: true },
 };

@@ -159,7 +159,8 @@ img.ms-planet { object-fit: contain; user-select: none; }
 .ms-pick::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #1c2458; clip-path: var(--px-clip); }
 .ms-pick b { display: block; margin-bottom: 2px; font-family: var(--ms-font-pixel); font-size: 8px; font-weight: 400; letter-spacing: .04em; text-transform: uppercase; color: var(--ms-accent); }
 .ms-pack { display: flex; align-items: center; gap: 6px; font-size: 16px; line-height: 1.2; }
-.ms-pack__sheet { width: 32px; height: 32px; display: block; flex: none; image-rendering: pixelated; background-repeat: no-repeat; }
+.ms-pack__count { font-family: var(--ms-font-pixel); font-size: 11px; font-weight: 400; color: var(--ms-yellow); }
+.ms-pack__sheet { width: 32px; height: 32px; display: block; flex: none; image-rendering: pixelated; background-repeat: no-repeat; transform: scale(1.7); transform-origin: center top; }
 
 .ms-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ms-stat { position: relative; isolation: isolate; text-align: center; padding: 12px 10px; }

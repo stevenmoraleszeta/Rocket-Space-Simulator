@@ -13,14 +13,13 @@ function GoogleMark() {
   return <img className="st-google__mark" src={googleMark} alt="" />;
 }
 
-function VolumeSlider({ label, icon, value, onChange }) {
+function VolumeSlider({ label, value, onChange }) {
   const id = useId();
   const pct = Math.round(value * 100);
-  const muted = pct === 0;
   return (
     <div className="st-field">
       <label className="st-label" htmlFor={id}>
-        <span aria-hidden="true">{muted ? '🔇' : icon}</span> {label}
+        {label}
         <span className="st-value">{pct}%</span>
       </label>
       <input
@@ -113,7 +112,7 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
 
           <div className="st-field">
             <label className="st-label" htmlFor={nameId}>
-              <span aria-hidden="true">🧑‍🚀</span> Your name
+              Your name
               {needsName && <span className="st-dot" aria-hidden="true" />}
             </label>
             <input
@@ -134,10 +133,6 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
           </div>
 
           <div className="st-field">
-            <p className="st-label">
-              <GoogleMark /> Save your stars
-              {needsGoogle && <span className="st-dot" aria-hidden="true" />}
-            </p>
             {googleSignedIn ? (
               <p className="st-signed" role="status">
                 <GoogleMark />
@@ -145,6 +140,10 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
               </p>
             ) : (
               <>
+                <p className="st-label">
+                  <GoogleMark /> Save your stars
+                  <span className="st-dot" aria-hidden="true" />
+                </p>
                 <p className="st-hint">Sign in so your name and stars are still here next time.</p>
                 <button
                   type="button"
@@ -162,8 +161,8 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
             )}
           </div>
 
-          <VolumeSlider label="Music" icon="🎵" value={musicVolume} onChange={(v) => update({ musicVolume: v })} />
-          <VolumeSlider label="Sounds" icon="🔊" value={ambientVolume} onChange={(v) => update({ ambientVolume: v })} />
+          <VolumeSlider label="Music" value={musicVolume} onChange={(v) => update({ musicVolume: v })} />
+          <VolumeSlider label="Sounds" value={ambientVolume} onChange={(v) => update({ ambientVolume: v })} />
 
           <button className="ms-btn st-done" onClick={() => setOpen(false)}>Done</button>
         </div>
