@@ -48,3 +48,21 @@ test('a missed Mars says how many days away it was, at its real speed', () => {
 test('too little power never reaches Mars orbit', () => {
   assert.equal(simulateMarsTrip(TARGET_ANGLE_DEG, 0.68).outcome.type, MARS_OUTCOMES.SHORT)
 })
+
+test('the right path stops for 1 to 3 crew choices, each with one good, one mild and one bad answer', async () => {
+  const { CHOICE, MAX_ENCOUNTERS, SPACE_FACTS, tripEncounters } = await import('./marsEncounters.js')
+  for (const angle of [ANGLE_WINDOW.min, TARGET_ANGLE_DEG, ANGLE_WINDOW.max]) {
+    const trip = simulateMarsTrip(angle, IDEAL_POWER)
+    const passes = tripEncounters(trip)
+    assert.ok(passes.length >= 1 && passes.length <= MAX_ENCOUNTERS, `${angle}°: ${passes.length} passes`)
+    let lastDay = 0
+    for (const pass of passes) {
+      assert.ok(pass.day >= lastDay && pass.day < trip.outcome.day)
+      lastDay = pass.day
+      const kinds = pass.situation.choices.map((choice) => choice.kind).sort()
+      assert.deepEqual(kinds, [CHOICE.BAD, CHOICE.GOOD, CHOICE.MILD].sort())
+      assert.ok(!pass.situation.question.includes('{name}'))
+    }
+  }
+  assert.ok(SPACE_FACTS.length >= 10)
+})

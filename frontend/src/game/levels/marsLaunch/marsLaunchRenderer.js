@@ -275,7 +275,7 @@ function drawBases(ctx, view, sites, chosenId, day, choosing) {
 }
 
 /**
- * scene: { step, trip, aim, site, sites, flight: { day, secondsSinceEnd } | null, images, clockSeconds }
+ * scene: { step, trip, aim, site, sites, flight: { day, secondsSinceEnd, crash } | null, images, clockSeconds }
  *   step 'site': planets on launch day and every launch base on Earth; the chosen one is yellow
  *   step 'aim': planets on launch day, hazards as dots, the dotted prediction and the protractor
  *   step 'flight' / 'result': everything moves with the trip day; the rocket follows the path
@@ -304,7 +304,11 @@ export function drawMarsScene(ctx, view, scene) {
   drawPath(ctx, view, trip.samples, site, color, Infinity, 0.25)
   drawPath(ctx, view, trip.samples, site, color, day)
   const { outcome } = trip
-  if (day < outcome.day) {
+  const crash = scene.flight?.crash
+  if (crash) {
+    // A crew choice blew up the ship at a close pass.
+    drawExplosion(ctx, view, scene.images, crash, scene.flight.secondsSinceEnd, site)
+  } else if (day < outcome.day) {
     const here = tripPointAt(trip.samples, day)
     drawRocket(ctx, view, scene.images, here, tripPointAt(trip.samples, day + 3), site)
   } else if (outcome.type === MARS_OUTCOMES.HAZARD) {
