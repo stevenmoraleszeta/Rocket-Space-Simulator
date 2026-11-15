@@ -66,3 +66,22 @@ test('the right path stops for 1 to 3 crew choices, each with one good, one mild
   }
   assert.ok(SPACE_FACTS.length >= 10)
 })
+
+test('every path leaves from Earth, even with a bad angle', async () => {
+  const { earthPosition } = await import('./marsLaunchRoute.js')
+  const earth = earthPosition(0)
+  for (const angle of [120, 125, 134, 135.55, 138, 145, 150]) {
+    const first = simulateMarsTrip(angle, IDEAL_POWER).samples[0]
+    assert.ok(Math.hypot(first.x - earth.x, first.y - earth.y) < 1e-9, `${angle}°`)
+  }
+})
+
+test('on launch day no hazard light sits on top of Earth or Mars', async () => {
+  const { earthPosition, marsPosition } = await import('./marsLaunchRoute.js')
+  for (const hazard of MARS_HAZARDS) {
+    const spot = hazardPosition(hazard, 0)
+    for (const planet of [earthPosition(0), marsPosition(0)]) {
+      assert.ok(Math.hypot(spot.x - planet.x, spot.y - planet.y) > 0.15, hazard.id)
+    }
+  }
+})

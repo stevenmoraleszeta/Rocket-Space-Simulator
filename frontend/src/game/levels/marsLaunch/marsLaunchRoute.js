@@ -11,7 +11,8 @@
  *   - On this launch day the best direction from Earth is TARGET_ANGLE_DEG (135.55°): Earth sits
  *     at 45.55° around the Sun and the rocket leaves along Earth's own path.
  *   - Any direction from ANGLE_WINDOW.min to ANGLE_WINDOW.max (134°–138°) still meets Mars. Outside
- *     it, the map EXAGGERATES the mistake: it turns the whole path so Mars is not there on arrival
+ *     it, the map EXAGGERATES the mistake: the path bends away little by little (it always leaves
+ *     from Earth) until, at Mars's orbit, it is turned far enough that Mars is not there
  *     (in the real sky a few degrees barely move the arrival point).
  *   - Power (how far the player drags) sets how far out the ellipse reaches, and with Kepler's law
  *     how long the trip takes. Too little never reaches Mars's orbit; too much arrives early.
@@ -127,31 +128,32 @@ export function marsPosition(day) {
  * kind 'debris' = an old rocket stage, kind 'satellite' = a spacecraft or a test payload.
  * dangerAu: passing closer than this is a crash (much bigger than the real thing, so it shows).
  * Each one is placed so every aim inside the 134°–138° window (with the right power) passes it
- * by more than its danger zone, while other aims and powers can run into one.
+ * by more than its danger zone, while other aims and powers can run into one. On launch day none
+ * of them sits on top of Earth, Mars or another hazard.
  */
 export const MARS_HAZARDS = [
   {
-    id: 'soho', kind: 'satellite', name: 'SOHO', radiusAu: 1.101, startDeg: 61, dangerAu: 0.035,
+    id: 'soho', kind: 'satellite', name: 'SOHO', radiusAu: 1.101, startDeg: 59.4, dangerAu: 0.035,
     summary: 'A NASA and ESA telescope that watches the Sun all day, every day.',
   },
   {
-    id: 'j002e3', kind: 'debris', name: 'Apollo 12 rocket stage', radiusAu: 1.198, startDeg: 69, dangerAu: 0.035,
+    id: 'j002e3', kind: 'debris', name: 'Apollo 12 rocket stage', radiusAu: 1.198, startDeg: 67.8, dangerAu: 0.035,
     summary: 'The top stage of the Saturn V that took Apollo 12 to the Moon in 1969. It still circles the Sun.',
   },
   {
-    id: 'jwst', kind: 'satellite', name: 'James Webb telescope', radiusAu: 1.282, startDeg: 65.8, dangerAu: 0.035,
+    id: 'jwst', kind: 'satellite', name: 'James Webb telescope', radiusAu: 1.282, startDeg: 75, dangerAu: 0.035,
     summary: 'The biggest space telescope. It looks at the first stars and galaxies with infrared light.',
   },
   {
-    id: 'surveyor-centaur', kind: 'debris', name: 'Surveyor 2 rocket stage', radiusAu: 1.36, startDeg: 82.6, dangerAu: 0.035,
+    id: 'surveyor-centaur', kind: 'debris', name: 'Surveyor 2 rocket stage', radiusAu: 1.36, startDeg: 81.8, dangerAu: 0.035,
     summary: 'The Centaur stage that launched Surveyor 2 in 1966. It was found again in 2020.',
   },
   {
-    id: 'roadster', kind: 'satellite', name: "Starman's Tesla Roadster", radiusAu: 1.428, startDeg: 78, dangerAu: 0.035,
+    id: 'roadster', kind: 'satellite', name: "Starman's Tesla Roadster", radiusAu: 1.428, startDeg: 78.4, dangerAu: 0.035,
     summary: 'A red sports car with a dummy driver, launched as a test payload in 2018. Its orbit crosses Mars’s.',
   },
   {
-    id: 'dscovr-stage', kind: 'debris', name: 'Falcon 9 rocket stage', radiusAu: 1.483, startDeg: 92.8, dangerAu: 0.035,
+    id: 'dscovr-stage', kind: 'debris', name: 'Falcon 9 rocket stage', radiusAu: 1.483, startDeg: 81.8, dangerAu: 0.035,
     summary: 'The upper stage that launched the DSCOVR weather satellite in 2015, now drifting around the Sun.',
   },
 ]
@@ -180,15 +182,23 @@ const SAMPLE_EVERY_DAYS = 2
  */
 export function simulateMarsTrip(aimDeg, power) {
   const angleErrorDeg = wrapDeg(aimDeg - TARGET_ANGLE_DEG)
-  const perihelionDeg = EARTH_START_DEG + pathTurnDeg(angleErrorDeg)
+  const turnDeg = pathTurnDeg(angleErrorDeg)
   const ellipse = transferEllipse(power)
   const crossDay = daysToRadius(ellipse, MARS_ORBIT_AU)
   // Too little power: it turns back at the far end of its ellipse, short of Mars's orbit.
   const endDay = crossDay ?? Math.PI / ellipse.meanMotion
+  // The path leaves from Earth and bends by the aiming mistake bit by bit, all of it at the end.
+  const pointAt = (day) => {
+    const raw = ellipsePoint(ellipse, EARTH_START_DEG, day)
+    const bend = degToRad(turnDeg * Math.min(1, day / endDay))
+    const cos = Math.cos(bend)
+    const sin = Math.sin(bend)
+    return { x: raw.x * cos - raw.y * sin, y: raw.x * sin + raw.y * cos }
+  }
 
   const samples = []
   for (let day = 0; ; day = Math.min(endDay, day + SAMPLE_EVERY_DAYS)) {
-    const point = ellipsePoint(ellipse, perihelionDeg, day)
+    const point = pointAt(day)
     samples.push({ day, x: point.x, y: point.y })
     for (const hazard of MARS_HAZARDS) {
       const spot = hazardPosition(hazard, day)
