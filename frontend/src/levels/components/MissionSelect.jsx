@@ -18,9 +18,10 @@ import { SettingsMenu } from '../../settings/SettingsMenu.jsx';
 import { AppLogo } from '../../brand/AppLogo.jsx';
 import { useSettings } from '../../settings/SettingsContext.jsx';
 import { engineerName, sayTo } from '../../settings/settingsStore.js';
+import adminIcon from '../../assets/images/icons/admin.svg';
 
 export function MissionSelect({ onStartMission, googleSignedIn = false, authError = '' }) {
-  const { missions, progress, getState, getStars, totalStars, maxStars, loading } = useProgress();
+  const { missions, progress, getState, getStars, totalStars, maxStars, loading, adminMode, setAdminMode, playerUnlocked } = useProgress();
   const [open, setOpen] = useState(null);
   const [board, setBoard] = useState(null);
   const playerName = engineerName(useSettings().playerName);
@@ -42,6 +43,18 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
       <div className="ms-bar">
         <RankBadge stars={totalStars} />
         <nav className="ms-tools" aria-label="Menu">
+          <button
+            type="button"
+            className={`ms-btn ms-btn--ghost ms-btn--icon${adminMode ? ' ms-btn--admin' : ''}`}
+            aria-pressed={adminMode}
+            aria-label={adminMode
+              ? 'Play as a normal player. Locked missions close again.'
+              : 'Become admin. Opens every mission so a judge can try them.'}
+            onClick={() => setAdminMode(!adminMode)}
+          >
+            <img className="ms-pixel" src={adminIcon} alt="" width={28} height={28} draggable="false" />
+            {adminMode ? 'Play as player' : 'Become admin'}
+          </button>
           <RecordButtons onHistory={() => setBoard('history')} onStats={() => setBoard('stats')} />
           <SettingsMenu googleSignedIn={googleSignedIn} authError={authError} />
         </nav>
@@ -57,6 +70,11 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
             ? <>Engineer <b>{playerName}</b>, the rockets are waiting for you.</>
             : 'You are the engineer. Add your name in settings.'}
         </p>
+        {adminMode && (
+          <p className="ms-admin-note" role="status">
+            Admin is on. Every mission is open for review. Stars you earn stay saved.
+          </p>
+        )}
         <div className="ms-total" aria-label={`${totalStars} of ${maxStars} stars collected`}>
           <span aria-hidden="true">★</span> {totalStars} / {maxStars}
         </div>
@@ -66,6 +84,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
         {missions.map((m, i) => {
           const state = getState(m.id);
           const prev = missions[i - 1];
+          const reviewOpen = adminMode && !playerUnlocked(m.id);
           return (
             <li key={m.id} className={`ms-stop ms-stop--${state}`}>
               {state === 'current' && <div className="ms-bubble" aria-hidden="true">Play!</div>}
@@ -76,7 +95,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
                 aria-label={
                   state === 'locked'
                     ? `Mission ${m.number}, ${m.title}. Locked. Finish mission ${prev.number} to unlock it.`
-                    : `Mission ${m.number}, ${m.title}${state === 'completed' ? `, done, ${getStars(m.id)} out of 3 stars` : ''}`
+                    : `Mission ${m.number}, ${m.title}${state === 'completed' ? `, done, ${getStars(m.id)} out of 3 stars` : ''}${reviewOpen && state !== 'completed' ? '. Open for review.' : ''}`
                 }
               >
                 <Planet planet={m.planet} size={130} locked={state === 'locked'} />
@@ -91,6 +110,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
               <div className="ms-stop__title">{m.title}</div>
               <StarRating stars={getStars(m.id)} />
               {state === 'locked' && <div className="ms-stop__hint">Finish Mission {prev.number} to unlock</div>}
+              {reviewOpen && state !== 'completed' && <div className="ms-stop__hint">Open for review</div>}
             </li>
           );
         })}

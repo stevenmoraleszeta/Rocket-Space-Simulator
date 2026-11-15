@@ -47,6 +47,13 @@ describe('unlocking', () => {
   it('refuses to play a locked mission', () => {
     expect(() => P.applyResult(P.createEmptyProgress(), 'mars', win())).toThrow(/locked/);
   });
+  it('lets a judge record a locked mission without opening it for a normal player', () => {
+    const { progress, outcome } = P.applyResult(P.createEmptyProgress(), 'mars', win(), undefined, { allowLocked: true });
+    expect(outcome.completed).toBe(true);
+    expect(progress.missions.mars.completed).toBe(true);
+    expect(P.getMissionState(progress, 'mars')).toBe('locked');
+    expect(P.isUnlocked(progress, 'mars')).toBe(false);
+  });
   it('finishing all 3 completes the game', () => {
     let p = P.createEmptyProgress();
     for (const m of MISSIONS) p = play(p, m.id, win());

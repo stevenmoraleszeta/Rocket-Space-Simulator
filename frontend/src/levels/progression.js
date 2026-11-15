@@ -90,12 +90,14 @@ export function calcStars(mission, result) {
 
 /**
  * Records the result of an attempt.
+ * `options.allowLocked` lets a judge record a flight that a normal player cannot start yet.
+ * The saved unlock rule stays the same: the next mission opens only after this one is really earned.
  * @returns {{ progress: Progress, outcome: { missionId, completed, stars, pct, newBest, unlockedMissionId } }}
  */
-export function applyResult(progress, missionId, result, missions = MISSIONS) {
+export function applyResult(progress, missionId, result, missions = MISSIONS, options = {}) {
   const mission = getMission(missionId, missions);
   if (!mission) throw new Error(`Unknown mission: ${missionId}`);
-  if (!isUnlocked(progress, missionId, missions)) throw new Error(`Mission ${missionId} is locked`);
+  if (!options.allowLocked && !isUnlocked(progress, missionId, missions)) throw new Error(`Mission ${missionId} is locked`);
 
   const pct = clampInt(result.pct, 0, 100);
   const stars = calcStars(mission, { ...result, pct });
@@ -134,7 +136,9 @@ export function applyResult(progress, missionId, result, missions = MISSIONS) {
       stars,
       pct,
       newBest: stars > prev.stars,
-      unlockedMissionId: completed && !prev.completed && next && !isUnlocked(progress, next.id, missions)
+      unlockedMissionId: completed && !prev.completed && next
+        && !mp(progress, next.id)?.completed
+        && !isUnlocked(progress, next.id, missions)
         ? next.id
         : null,
     },
