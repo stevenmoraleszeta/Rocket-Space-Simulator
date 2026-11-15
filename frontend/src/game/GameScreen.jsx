@@ -12,11 +12,15 @@ import { PadClouds } from './PadClouds.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
 import { LaunchSequence } from './LaunchSequence.jsx';
-import { launchFailure } from './launchFailure.js';
+import { flightSupplyFailure, launchFailure } from './launchFailure.js';
+import { FlightReadout } from './FlightReadout.jsx';
+import { flightReadout } from './lifeSupport.js';
 import { ASCENT_MS, AscentScene } from './AscentScene.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../audio';
+import { useSettings } from '../settings/SettingsContext.jsx';
+import { engineerName, sayTo } from '../settings/settingsStore.js';
 import './game.css';
 
 /**
@@ -35,10 +39,13 @@ const TIMED_PHASES = {
  *   initialEquipped     loadout to start with (keeps the parts when coming back to the hangar)
  */
 export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
+  const playerName = engineerName(useSettings().playerName);
   const [phase, setPhase] = useState('assemble');
   const [storyOpen, setStoryOpen] = useState(true);
   const [openPart, setOpenPart] = useState(null);
   const [equipped, setEquipped] = useState(initialEquipped ?? EMPTY_LOADOUT);
+  const [flightSeconds, setFlightSeconds] = useState(0);
+  const [flightHeld, setFlightHeld] = useState(false);
 
   useEffect(() => {
     if (phase !== 'assemble' || (!storyOpen && !openPart)) return undefined;
@@ -60,7 +67,8 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
     return () => clearTimeout(timer);
   }, [phase]);
 
-  // Without boosters or heat shield the rocket blows up (launchFailure.js).
+  // A bad loadout blows up on the pad or in the air (launchFailure.js).
+  // Food and oxygen that run out later fail on the flight clock.
   const [failure, setFailure] = useState(null);
 
   function startLaunch() {
@@ -71,10 +79,40 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
     playSfx(SFX.liftoff);
     setStoryOpen(false);
     setOpenPart(null);
-    const willFail = launchFailure(equipped);
+    setFlightSeconds(0);
+    setFlightHeld(false);
+    const willFail = launchFailure(equipped, mission);
     setFailure(willFail);
     setPhase(willFail ? 'failing' : 'launching');
   }
+
+  // Moon and Mars play the whole trip here. The clock covers the real mission length
+  // in a few seconds, and food and oxygen drop at NASA rates.
+  useEffect(() => {
+    if (phase !== 'flight') return undefined;
+    const duration = mission?.loadout?.durationSeconds ?? 0;
+    const supplyFailure = flightSupplyFailure(equipped, mission);
+    const watchMs = 20000;
+    const started = performance.now();
+    let frame = 0;
+    const tick = (now) => {
+      const elapsed = Math.min(duration, ((now - started) / watchMs) * duration);
+      setFlightSeconds(elapsed);
+      if (supplyFailure && elapsed >= supplyFailure.atSeconds) {
+        playSfx(SFX.lose);
+        setFailure(supplyFailure);
+        setPhase('failed');
+        return;
+      }
+      if (elapsed >= duration) {
+        setFlightHeld(true);
+        return;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [phase, equipped, mission]);
 
   const showFailure = useCallback(() => {
     playSfx(SFX.lose);
@@ -112,9 +150,10 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       <button type="button" className="game__back" onClick={onExit}>
         Missions
       </button>
-      <div className="game__mission">
+        <div className="game__mission">
         <div className="game__num">Mission {mission.number}</div>
         <h1>{mission.title}</h1>
+        {playerName && <p className="game__engineer">Engineer {playerName}</p>}
       </div>
       <div className="game__place">{mission.place}</div>
     </header>
@@ -130,7 +169,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
         <div className="game">
           {hud}
           <div className="flight launch-failed" role="alert">
-            <h2 className="launch-failed__title">Mission failed</h2>
+            <h2 className="launch-failed__title">{playerName ? sayTo(playerName, 'Try again') : 'Try again'}</h2>
             <p className="flight__status">{failure?.message}</p>
             <p className="launch-failed__hint">{failure?.hint}</p>
             <button type="button" className="ms-btn" onClick={() => setPhase('assemble')}>
@@ -152,10 +191,24 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
         <div className="game">
           {hud}
           <div className="flight">
-            <p className="flight__status">Liftoff! Heading to {mission.place}.</p>
+            <p className="flight__status">
+              {flightHeld
+                ? sayTo(playerName, 'The crew made it. Food, air, and power held for the whole trip.')
+                : sayTo(playerName, `Liftoff! Heading to ${mission.place}.`)}
+            </p>
             <Rocket equipped={equipped} flying stage="upper" />
-            <Meters meters={meters} />
-            <button type="button" className="game__back" onClick={() => setPhase('assemble')}>
+            <FlightReadout
+              rows={flightReadout(equipped, mission, flightSeconds, { altitudeMeters: 400000, speedMetersPerSecond: 0 })}
+            />
+            <button
+              type="button"
+              className="game__back"
+              onClick={() => {
+                setFlightHeld(false);
+                setFlightSeconds(0);
+                setPhase('assemble');
+              }}
+            >
               Hangar
             </button>
           </div>
@@ -191,6 +244,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
             onClick={() => setStoryOpen((open) => !open)}
           >
             <BulbIcon />
+            <span className="bulb__label">Story</span>
           </button>
         </div>
         <Meters meters={meters} />
@@ -231,10 +285,10 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           <button
             type="button"
             className="bay__launch"
-            aria-label="Launch"
+            aria-label={onLaunch ? 'Aim the rocket' : 'Launch'}
             onClick={startLaunch}
           >
-            Launch
+            {onLaunch ? 'Aim' : 'Launch'}
           </button>
         </div>
       </div>
@@ -248,6 +302,8 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
 /** Story and clues. Opens from the light bulb and stays inside the screen. */
 function Briefing({ mission, onClose }) {
   const hints = mission.hints ?? [];
+  const playerName = engineerName(useSettings().playerName);
+  const story = mission.story ?? [];
 
   return (
     <div
@@ -265,7 +321,9 @@ function Briefing({ mission, onClose }) {
         >
           <header className="brief__head">
             <div className="brief__heading">
-              <p className="brief__kicker">Mission {mission.number} · {mission.place}</p>
+              <p className="brief__kicker">
+                {playerName ? `Engineer ${playerName}` : `Mission ${mission.number}`} · {mission.place}
+              </p>
               <h2 id="brief-title" className="brief__title">Story</h2>
             </div>
             <button type="button" className="brief__close" onClick={onClose}>
@@ -275,8 +333,8 @@ function Briefing({ mission, onClose }) {
           {mission.intro && <p className="brief__intro">{mission.intro}</p>}
           <div className="brief__body">
             <div className="brief__story">
-              {(mission.story ?? []).map((line) => (
-                <p key={line}>{line}</p>
+              {story.map((line, index) => (
+                <p key={line}>{index === 0 ? sayTo(playerName, line) : line}</p>
               ))}
             </div>
             {hints.length > 0 && (
@@ -363,9 +421,7 @@ function Meters({ meters }) {
       <h2 className="meters__title">Supplies</h2>
       <div className="meters__grid">
         {meters.map((meter) => (
-          // Only the budget colors its bar (ok / low / over). The other bars all share one color
-          // and show just the number, so kids find the right amounts by trying
-          <div key={meter.id} className={meter.bar ? `meter is-${meter.tone}` : 'meter is-plain'}>
+          <div key={meter.id} className={`meter is-${meter.tone}`}>
             {METER_ICONS[meter.id] && (
               <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />
             )}

@@ -1,22 +1,4 @@
-import { PARTS, partCount } from './parts.js';
-
-/** What the empty rocket already brings to the pad. */
-export const HULL = {
-  mass: 36,
-  thrust: 22,
-  air: 12,
-};
-
-/** Fallback when a mission has no loadout block. */
-const DEFAULT_LIMITS = {
-  budget: 140,
-  mass: 110,
-  energy: 50,
-  heat: 20,
-  thrust: 40,
-  food: 20,
-  air: 24,
-};
+import { FOOD_KG_PER_PERSON_DAY, WATTS_PER_ENERGY_POINT, formatKg, supplyReport } from './lifeSupport.js';
 
 /** Short chips shown on a part button. Only the stats that part actually changes. */
 export function partTags(part) {
@@ -25,71 +7,66 @@ export function partTags(part) {
     { kind: 'cost', text: `${part.cost} cr${each}` },
     { kind: 'mass', text: `${part.mass} kg${each}` },
   ];
-  if (part.energy) tags.push({ kind: 'draw', text: `-${part.energy} pwr${each}` });
+  if (part.energy) tags.push({ kind: 'draw', text: `-${part.energy * WATTS_PER_ENERGY_POINT} W${each}` });
   if (part.heat) tags.push({ kind: 'good', text: `+${part.heat} heat` });
   if (part.thrust) tags.push({ kind: 'good', text: `+${part.thrust} thrust` });
-  if (part.food) tags.push({ kind: 'good', text: `+${part.food} food${each}` });
-  if (part.air) tags.push({ kind: 'good', text: `+${part.air} air${each}` });
+  if (part.foodDays) tags.push({ kind: 'good', text: `+${formatKg(part.foodDays * FOOD_KG_PER_PERSON_DAY)} food${each}` });
+  if (part.o2Kg) tags.push({ kind: 'good', text: `+${formatKg(part.o2Kg)} oxygen${each}` });
   return tags;
 }
 
 /**
  * Bars for the hangar. Budget, mass, and energy start full and shrink as parts
- * are added. Heat, thrust, food, and air fill toward what the mission needs.
+ * are added. Heat, thrust, food, air, and crew fill toward what the mission needs.
+ * Food and oxygen needs follow NASA rates for this trip and this crew.
  * @returns {{ meters: object[], problems: string[] }}
  */
 export function rocketStatus(equipped, mission) {
-  const limits = { ...DEFAULT_LIMITS, ...(mission?.loadout ?? {}) };
-  const totals = {
-    cost: 0,
-    mass: HULL.mass,
-    energy: 0,
-    heat: 0,
-    thrust: HULL.thrust,
-    food: 0,
-    air: HULL.air,
-  };
-
-  for (const part of PARTS) {
-    const count = partCount(equipped, part.id);
-    if (count <= 0) continue;
-    totals.cost += (part.cost || 0) * count;
-    totals.mass += (part.mass || 0) * count;
-    totals.energy += (part.energy || 0) * count;
-    totals.heat += (part.heat || 0) * count;
-    totals.thrust += (part.thrust || 0) * count;
-    totals.food += (part.food || 0) * count;
-    totals.air += (part.air || 0) * count;
-  }
-
-  const budgetLeft = limits.budget - totals.cost;
-  const massLeft = limits.mass - totals.mass;
-  const energyLeft = limits.energy - totals.energy;
+  const report = supplyReport(equipped, mission);
+  const limits = report.limits;
+  const budgetLeft = limits.budget - report.cost;
+  const massLeft = limits.mass - report.massKg;
+  const powerLeft = report.supplyWatts - report.drawWatts;
 
   const meters = [
-    // Budget is a hard limit, so it keeps its bar and the money left
     {
       ...roomMeter('budget', 'Budget', budgetLeft, limits.budget, 'cr'),
       text: budgetLeft < 0 ? `${-budgetLeft} cr over` : `${budgetLeft} cr left`,
       bar: true,
     },
-    // Mass shows how much the rocket weighs, not the room left
-    { ...roomMeter('mass', 'Mass', massLeft, limits.mass, 'kg'), text: `${totals.mass} kg` },
-    roomMeter('energy', 'Energy', energyLeft, limits.energy, ''),
-    goalMeter('heat', 'Heat', totals.heat, limits.heat),
-    goalMeter('thrust', 'Thrust', totals.thrust, limits.thrust),
-    goalMeter('food', 'Food', totals.food, limits.food),
-    goalMeter('air', 'Air', totals.air, limits.air),
+    {
+      // The number is the weight. Yellow is only for budget that is running out.
+      // Mass stays green until the rocket is actually too heavy.
+      ...roomMeter('mass', 'Mass', massLeft, limits.mass, 'kg'),
+      text: `${report.massKg} kg`,
+      tone: massLeft < 0 ? 'over' : 'ok',
+    },
+    {
+      ...roomMeter('energy', 'Energy', powerLeft, report.supplyWatts, 'W'),
+      text: powerLeft < 0 ? `${Math.round(-powerLeft)} W over` : `${Math.round(powerLeft)} W left`,
+    },
+    goalMeter('heat', 'Heat', report.heat, limits.heat),
+    goalMeter('thrust', 'Thrust', report.thrust, limits.thrust),
+    goalMeter('crew', 'Crew', report.crew, report.minCrew),
+    {
+      ...goalMeter('food', 'Food', report.foodKg, report.foodNeedKg),
+      text: formatKg(report.foodKg),
+    },
+    {
+      ...goalMeter('air', 'Oxygen', report.o2Kg, report.o2NeedKg),
+      text: formatKg(report.o2Kg),
+    },
   ].filter(Boolean);
 
   const problems = [];
   if (budgetLeft < 0) problems.push(`Over budget by ${-budgetLeft} cr`);
   if (massLeft < 0) problems.push(`Too heavy by ${-massLeft} kg`);
-  if (energyLeft < 0) problems.push(`Need ${-energyLeft} more power`);
-  if (limits.food > 0 && totals.food < limits.food) problems.push('The astronaut will go hungry');
-  if (limits.heat > 0 && totals.heat < limits.heat) problems.push('Too hot. The rocket could break');
-  if (limits.thrust > 0 && totals.thrust < limits.thrust) problems.push('Not enough push to get there');
-  if (limits.air > 0 && totals.air < limits.air) problems.push('The crew cannot breathe');
+  if (powerLeft < 0) problems.push(`Need ${Math.round(-powerLeft)} W more power`);
+  if (report.crew < report.minCrew) problems.push('No one is flying the rocket');
+  if (report.foodKg + 1e-6 < report.foodNeedKg) problems.push('The crew will run out of food');
+  if (limits.heat > 0 && report.heat < limits.heat) problems.push('Too hot. The rocket could break');
+  if (limits.thrust > 0 && report.thrust < limits.thrust) problems.push('Not enough push to get there');
+  if (report.o2Kg + 1e-6 < report.o2NeedKg) problems.push('The crew will run out of air');
 
   return { meters, problems };
 }
@@ -98,8 +75,7 @@ function roomMeter(id, label, left, max, unit) {
   const over = left < 0;
   const ratio = max > 0 ? left / max : 0;
   const tone = over ? 'over' : ratio <= 0.2 ? 'warn' : 'ok';
-  // Just the number: no "left" and no limit, so kids find the right amounts by trying
-  const amount = `${left}${unit ? ` ${unit}` : ''}`;
+  const amount = `${Math.round(left)}${unit ? ` ${unit}` : ''}`;
   return {
     id,
     label,
@@ -113,13 +89,13 @@ function roomMeter(id, label, left, max, unit) {
 
 function goalMeter(id, label, current, max) {
   if (!(max > 0)) return null;
-  const met = current >= max;
+  const met = current + 1e-6 >= max;
   return {
     id,
     label,
     current: Math.min(current, max),
     max,
-    text: `${current}`, // no target shown: kids find it by trying
+    text: `${Math.round(current)}`,
     tone: met ? 'ok' : current > 0 ? 'warn' : 'short',
     fill: fillOf(current, max),
   };

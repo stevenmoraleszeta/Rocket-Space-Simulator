@@ -13,11 +13,12 @@ import { StarRating } from './StarRating.jsx';
 import { SpaceBackground } from './SpaceBackground.jsx';
 import { SPRITES } from '../assets/sprites.js';
 import { useSettings } from '../../settings/SettingsContext.jsx';
+import { engineerName, sayTo } from '../../settings/settingsStore.js';
 
 export function MissionSelect({ onStartMission }) {
   const { missions, getState, getStars, totalStars, maxStars, loading } = useProgress();
   const [open, setOpen] = useState(null);
-  const playerName = useSettings().playerName.trim();
+  const playerName = engineerName(useSettings().playerName);
 
   if (loading) return <SpaceBackground><div className="ms-loading">Loading…</div></SpaceBackground>;
 
@@ -25,8 +26,13 @@ export function MissionSelect({ onStartMission }) {
     <SpaceBackground>
     <div className="ms-select">
       <header className="ms-head">
+        <p className="ms-ages">A space game for kids ages 7 to 12</p>
         <h1>Choose your mission!</h1>
-        {playerName && <p className="ms-greet">Ready for launch, <b>{playerName}</b>?</p>}
+        <p className="ms-greet">
+          {playerName
+            ? <>Engineer <b>{playerName}</b>, the rockets are waiting for you.</>
+            : 'You are the engineer. Add your name in settings.'}
+        </p>
         <div className="ms-total" aria-label={`${totalStars} of ${maxStars} stars collected`}>
           <span aria-hidden="true">★</span> {totalStars} / {maxStars}
         </div>
@@ -85,6 +91,7 @@ export function MissionSelect({ onStartMission }) {
 /** Dialog with the mission's goal and a fun fact. */
 export function MissionCard({ mission, stars, completed, onClose, onLaunch }) {
   const launchRef = useRef(null);
+  const playerName = engineerName(useSettings().playerName);
 
   useEffect(() => {
     launchRef.current?.focus();
@@ -99,13 +106,14 @@ export function MissionCard({ mission, stars, completed, onClose, onLaunch }) {
         <Planet planet={mission.planet} size={110} />
         <div className="ms-card__num">Mission {mission.number} · {mission.place}</div>
         <h2 id="ms-card-title">{mission.title}</h2>
+        {playerName && <p className="ms-card__hello">{sayTo(playerName, 'This job is yours.')}</p>}
         {mission.intro && <p className="ms-card__intro">{mission.intro}</p>}
         <p className="ms-card__goal">{mission.goal}</p>
         <div className="ms-card__fact">
           <b>Did you know?</b> {mission.funFact}
         </div>
         {completed && (
-          <div className="ms-card__best">Your best: <StarRating stars={stars} size={20} /></div>
+          <div className="ms-card__best">{playerName ? `${playerName}, your best:` : 'Your best:'} <StarRating stars={stars} size={20} /></div>
         )}
         <div className="ms-card__actions">
           <button className="ms-btn ms-btn--ghost" onClick={onClose}>Back</button>

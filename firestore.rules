@@ -1,7 +1,70 @@
 rules_version = '2';
 
+// Player data. Mission ids must stay in sync with frontend/src/levels/data/missions.js.
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedInAs(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function validSettings(data) {
+      return data.keys().hasOnly(['musicVolume', 'ambientVolume', 'playerName', 'updatedAt'])
+        && data.musicVolume is number
+        && data.musicVolume >= 0
+        && data.musicVolume <= 1
+        && data.ambientVolume is number
+        && data.ambientVolume >= 0
+        && data.ambientVolume <= 1
+        && data.playerName is string
+        && data.playerName.size() <= 16
+        && data.updatedAt is string
+        && data.updatedAt.size() > 0
+        && data.updatedAt.size() <= 40;
+    }
+
+    function validMission(mission) {
+      return mission.keys().hasOnly(['completed', 'stars', 'bestPct', 'attempts'])
+        && mission.completed is bool
+        && mission.stars is number
+        && mission.stars >= 0
+        && mission.stars <= 3
+        && mission.bestPct is number
+        && mission.bestPct >= 0
+        && mission.bestPct <= 100
+        && mission.attempts is number
+        && mission.attempts >= 0
+        && mission.attempts <= 1000000;
+    }
+
+    function missionOk(missions, id) {
+      return !(id in missions) || validMission(missions[id]);
+    }
+
+    function validProgress(data) {
+      return data.keys().hasOnly(['version', 'missions', 'updatedAt'])
+        && data.version == 1
+        && data.updatedAt is string
+        && data.updatedAt.size() > 0
+        && data.updatedAt.size() <= 40
+        && data.missions is map
+        && data.missions.keys().hasOnly(['earth', 'moon', 'mars'])
+        && missionOk(data.missions, 'earth')
+        && missionOk(data.missions, 'moon')
+        && missionOk(data.missions, 'mars');
+    }
+
+    match /progress/{userId} {
+      allow read: if signedInAs(userId);
+      allow create, update: if signedInAs(userId) && validProgress(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /settings/{userId} {
+      allow read: if signedInAs(userId);
+      allow create, update: if signedInAs(userId) && validSettings(request.resource.data);
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

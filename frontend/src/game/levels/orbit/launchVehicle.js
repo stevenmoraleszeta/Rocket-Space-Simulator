@@ -13,8 +13,7 @@
  */
 import { STANDARD_GRAVITY } from '../../physics/constants.js'
 import { rocketEquationDeltaV } from '../../physics/orbitalMechanics.js'
-import { PARTS, partCount } from '../../parts.js'
-import { HULL } from '../../stats.js'
+import { HULL, PARTS, partCount } from '../../parts.js'
 
 export const REAL_KG_PER_HANGAR_KG = 1000
 export const THRUST_POINT_LIFT_HANGAR_KG = 22

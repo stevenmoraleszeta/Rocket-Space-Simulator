@@ -1,8 +1,10 @@
 /**
  * "Did you know?" box shown after a launch. The fact depends on what happened in the flight,
  * so a crash explains why it crashed and a win explains why it worked.
- * Written for players aged 8–15.
+ * Written for players aged 7–12.
  */
+import { useSettings } from '../../../settings/SettingsContext.jsx'
+import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { OUTCOMES } from './launchSimulation.js'
 
 /** Off target (km) at or under which a win counts as a bullseye. */
@@ -11,35 +13,35 @@ const BULLSEYE_KM = 30
 export const LAUNCH_FACTS = {
   bullseye: {
     title: 'The gravity turn',
-    text: 'You nailed it! Real rockets go straight up for only a few seconds, then slowly tilt over until they fly almost flat. Engineers call it a "gravity turn": gravity helps bend the path.',
+    text: 'Nice aim! Real rockets go straight up for only a few seconds. Then they lean over until they fly almost flat. That lean is called a gravity turn. Gravity helps bend the path.',
   },
   orbitReached: {
     title: 'Not too steep, not too flat',
-    text: 'Tilt too early and the rocket pushes through thick air and slows down. Tilt too late and it wastes fuel climbing straight up. The right angle saves a lot of fuel!',
+    text: 'Lean too soon and thick air slows the rocket down. Lean too late and it wastes fuel going straight up. The right lean saves a lot of fuel.',
   },
   earthImpact: {
     title: 'Up is not enough',
-    text: 'Going high is not the same as staying up. A satellite must fly sideways very fast, about 7.8 km every second, so the ground curves away below it while it falls. That is what an orbit is!',
+    text: 'Going high is not the same as staying up. A satellite has to fly sideways very fast, about 8 km every second. Then Earth curves away while it falls. That is an orbit.',
   },
   lostInSpace: {
     title: 'Escape speed',
-    text: 'At about 11.2 km per second, a rocket escapes Earth\'s gravity for good and never comes back. Probes going to the Moon or Mars need that much speed, but a satellite does not.',
+    text: 'At about 11 km every second, a rocket leaves Earth and does not come back. A trip to the Moon or Mars needs that speed. A satellite around Earth does not.',
   },
   missedTooFastOrSlow: {
     title: 'Every height has its speed',
-    text: 'The lower an orbit, the faster you must go to stay in it. At 700 km a satellite needs about 7.5 km/s. Arrive faster or slower, and it will not stay on that circle.',
+    text: 'Lower paths around Earth are faster. At 700 km up, a satellite needs about 7.5 km every second. Too fast or too slow, and it will not stay on that circle.',
   },
   missedTarget: {
     title: 'One degree matters',
-    text: 'At rocket speeds, a tilt that is off by just one degree can miss the target by hundreds of kilometers. That is why computers steer real rockets many times every second.',
+    text: 'Rockets go so fast that being off by one degree can miss by hundreds of kilometers. Real rockets use computers that steer many times every second.',
   },
   satelliteCollision: {
     title: 'A crowded sky',
-    text: 'Tens of thousands of satellites and pieces of space junk are tracked around Earth. Even the International Space Station moves out of the way of debris a few times a year.',
+    text: 'Thousands of satellites and bits of space junk fly around Earth. The space station even moves out of the way a few times a year.',
   },
   noLiftoff: {
     title: 'Push more than you weigh',
-    text: 'A rocket only lifts off when its engines push harder than its own weight. The giant Saturn V that flew to the Moon weighed almost 3,000 tonnes, and most of it was fuel!',
+    text: 'A rocket lifts off only when the engines push harder than the rocket weighs. The big rocket that went to the Moon was almost all fuel.',
   },
 }
 
@@ -64,9 +66,15 @@ export function factForResult(result) {
 
 export function LaunchFact({ result, className = '' }) {
   const fact = factForResult(result)
+  const playerName = engineerName(useSettings().playerName)
   return (
     <section className={`launch-fact ${result.success ? 'is-good' : 'is-bad'} ${className}`}>
       <p className="launch-fact__label">Did you know?</p>
+      {playerName && (
+        <p className="launch-fact__hi">
+          {sayTo(playerName, result.success ? 'Nice flying.' : 'Here is what happened.')}
+        </p>
+      )}
       <p className="launch-fact__title">{fact.title}</p>
       <p className="launch-fact__text">{fact.text}</p>
     </section>

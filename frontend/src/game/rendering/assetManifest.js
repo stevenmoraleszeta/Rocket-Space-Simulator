@@ -23,6 +23,7 @@ import spaceBackgroundUrl from '../../assets/images/backgrounds/space.svg'
 import goldSatelliteSheetUrl from '../../assets/images/satellites/gold_satellite_sheet.png'
 import commsSatelliteUrl from '../../assets/images/satellites/comms_satellite.png'
 import spaceTelescopeUrl from '../../assets/images/satellites/space_telescope.png'
+import arrivalTargetUrl from '../../assets/images/icons/arrival_target.svg'
 
 export const ASSETS = Object.freeze({
   // Rocket waiting on the pad: engine off (cold nozzle), like in the hangar before liftoff.
@@ -43,4 +44,6 @@ export const ASSETS = Object.freeze({
   commsSatellite: { src: commsSatelliteUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
   // Space telescope: silver tube with the lid open.
   spaceTelescope: { src: spaceTelescopeUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
+  // Where the rocket has to arrive on the chosen orbit.
+  arrivalTarget: { src: arrivalTargetUrl, frameWidth: 16, frameHeight: 16, frames: 1 },
 })

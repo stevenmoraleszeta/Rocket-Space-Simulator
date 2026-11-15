@@ -7,6 +7,17 @@ import boosterSheet from '../assets/images/rockets/animations/side_boosters_smal
 import food from '../assets/images/items/food.svg';
 import astronaut from '../assets/images/items/astronaut.svg';
 
+/**
+ * What the empty rocket already brings to the pad.
+ * `o2Kg` is cabin oxygen: 2.4 kg lasts one person about 2.9 days
+ * at NASA's 0.84 kg/person/day, enough for a short orbit and not for the Moon.
+ */
+export const HULL = {
+  mass: 36,
+  thrust: 22,
+  o2Kg: 2.4,
+};
+
 /** Still rocket the player builds on. 32×32, transparent background. `off` has a cold nozzle. */
 export const ROCKET = {
   src: rocket,
@@ -70,25 +81,28 @@ export const PARTS = [
   {
     id: 'food',
     name: 'Food',
-    blurb: 'Meals. You can pack more than one.',
+    blurb: 'Meals for the crew. You can pack more than one.',
     stack: true,
     max: 4,
     cost: 16,
     mass: 9,
-    food: 40,
+    // 8 person-days. NASA packs about 1.83 kg of food per person per day.
+    foodDays: 8,
     src: food,
     inside: true,
   },
   {
     id: 'astronaut',
     name: 'Astronaut',
-    blurb: 'Flies the ship. The suit holds air. You can pack more than one.',
+    blurb: 'Flies the ship and brings oxygen tanks. Uses power. You can pack more than one.',
     stack: true,
     max: 3,
     cost: 22,
     mass: 7,
     energy: 12,
-    air: 36,
+    // Suit tanks. With the cabin, one astronaut can breathe on the Moon and on Mars.
+    // Two astronauts on Mars use the oxygen up before the trip ends.
+    o2Kg: 8.5,
     src: astronaut,
     inside: true,
   },

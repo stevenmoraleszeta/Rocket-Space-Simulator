@@ -1,7 +1,7 @@
 /**
  * React context for mission progress.
  *
- *   <ProgressProvider userId={uid} storage={localStorageAdapter}>
+ *   <ProgressProvider userId={uid} storage={firestoreProgressStorage}>
  *     <App />
  *   </ProgressProvider>
  *
@@ -19,21 +19,34 @@ export function ProgressProvider({ userId = 'guest', storage = localStorageAdapt
   const [loading, setLoading] = useState(true);
   const progressRef = useRef(progress);
   progressRef.current = progress;
+  // A result saved while a load is in flight must win over that load.
+  const saveCount = useRef(0);
 
   // Load whenever the user changes
   useEffect(() => {
     let cancelled = false;
+    const stamp = saveCount.current;
     setLoading(true);
     storage.load(userId)
-      .then((raw) => { if (!cancelled) setProgress(P.normalizeProgress(raw)); })
-      .catch(() => { if (!cancelled) setProgress(P.createEmptyProgress()); })
+      .then((raw) => {
+        if (!cancelled && saveCount.current === stamp) setProgress(P.normalizeProgress(raw));
+      })
+      .catch(() => {
+        if (!cancelled && saveCount.current === stamp) setProgress(P.createEmptyProgress());
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [userId, storage]);
 
   const persist = useCallback((next) => {
+    saveCount.current += 1;
+    const stamp = saveCount.current;
     setProgress(next);
-    storage.save(userId, next).catch(() => { /* keep playing even if saving fails */ });
+    storage.save(userId, next)
+      .then((saved) => {
+        if (saved && saveCount.current === stamp) setProgress(P.normalizeProgress(saved));
+      })
+      .catch(() => { /* keep playing even if saving fails */ });
   }, [storage, userId]);
 
   /** Called by gameplay when a mission ends. Returns the outcome (stars, unlocks…). */
@@ -56,7 +69,11 @@ export function ProgressProvider({ userId = 'guest', storage = localStorageAdapt
     resetProgress: () => persist(P.createEmptyProgress()),
   }), [progress, loading, missions, completeMission, persist]);
 
-  return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>;
+  return (
+    <ProgressContext.Provider value={value}>
+      {loading ? null : children}
+    </ProgressContext.Provider>
+  );
 }
 
 export function useProgress() {

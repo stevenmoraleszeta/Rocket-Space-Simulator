@@ -2,8 +2,9 @@
  * REAL LAUNCH SITES — every one is a real city with a spaceport. Coordinates are the real ones
  * (degrees, north and east positive). `name` is the city, `spaceport` the launch site there.
  *
- * In the 2D orbit view every site is drawn on the rim of the Earth at its LONGITUDE
- * (the view looks down from above the North Pole). The latitude still matters physically:
+ * In the 2D orbit view the Earth is seen from above the North Pole: the pole is the
+ * center, the South Pole is the rim, and each site sits on its country at its real
+ * latitude and longitude. The latitude still matters physically:
  *   - an orbit can never be tilted less than the site's latitude (minimum inclination = |latitude|),
  *   - the Earth's spin pushes the rocket by ω·R·cos(inclination) (see rotationBoostForInclination).
  *

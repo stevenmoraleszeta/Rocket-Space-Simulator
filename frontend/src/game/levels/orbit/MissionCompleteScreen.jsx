@@ -6,6 +6,8 @@
  */
 import { useEffect, useRef } from 'react'
 import { MISSIONS, Planet, StarRating } from '../../../levels'
+import { useSettings } from '../../../settings/SettingsContext.jsx'
+import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { LaunchFact } from './LaunchFact.jsx'
 
 function nextMissionAfter(missionId) {
@@ -14,6 +16,7 @@ function nextMissionAfter(missionId) {
 }
 
 export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain }) {
+  const playerName = engineerName(useSettings().playerName)
   const nextMission = nextMissionAfter(mission.id)
   const continueRef = useRef(null)
 
@@ -31,8 +34,12 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
 
       <div className="mission-complete__card">
         <p className="mission-complete__kicker">Mission {mission.number} · {mission.title}</p>
-        <h2 id="mission-complete-title" className="mission-complete__title">Congratulations!</h2>
-        <p className="mission-complete__lead">Your satellite is in orbit around the Earth.</p>
+        <h2 id="mission-complete-title" className="mission-complete__title">
+          {playerName ? sayTo(playerName, 'You did it!') : 'You did it!'}
+        </h2>
+        <p className="mission-complete__lead">
+          {sayTo(playerName, 'Your satellite is flying around the Earth.')}
+        </p>
 
         <div className="mission-complete__stars">
           <StarRating stars={result.stars} size={40} />
@@ -57,7 +64,9 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
             </div>
           </div>
         ) : (
-          <p className="mission-complete__unlock-label">You finished every mission!</p>
+          <p className="mission-complete__unlock-label">
+            {playerName ? sayTo(playerName, 'You finished every mission!') : 'You finished every mission!'}
+          </p>
         )}
 
         <div className="mission-complete__actions">

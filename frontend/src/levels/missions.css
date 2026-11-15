@@ -1,5 +1,5 @@
 /* Mission selection styles. Everything uses the ms- prefix to avoid clashing with the rest of the app.
-   Built for players aged 8–15: large text, big tap targets (130 px planets, 48 px buttons).
+   Built for players aged 7–12: large text, big tap targets (130 px planets, 48 px buttons).
    Pixel fonts are loaded from main.jsx. */
 
 :root {
@@ -35,8 +35,10 @@
 .ms-loading { font-family: var(--ms-font-pixel); color: var(--ms-muted); text-align: center; padding: 60px; font-size: 14px; }
 
 .ms-head { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; margin-bottom: 48px; }
+.ms-ages { margin: 0; max-width: 18em; font-family: var(--ms-font-pixel); font-size: 10px; line-height: 1.7; color: var(--ms-yellow); }
 .ms-head h1 { font-family: var(--ms-font-pixel); font-weight: 400; font-size: clamp(18px, 3.4vw, 32px); line-height: 1.4; margin: 0; text-shadow: 3px 3px 0 #1a2260; }
 .ms-greet { margin: -6px 0 0; font-size: 20px; color: var(--ms-muted); }
+.ms-card__hello { margin: 0 0 8px; font-size: 18px; color: var(--ms-yellow); }
 .ms-greet b { color: var(--ms-yellow); font-weight: 700; }
 .ms-total { position: relative; isolation: isolate; font-family: var(--ms-font-pixel); background: transparent; border: 0; border-radius: 0; padding: 12px 16px; font-size: 12px; }
 .ms-total::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ms-panel); clip-path: var(--px-clip); box-shadow: inset var(--px) var(--px) 0 var(--px-edge), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim); filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink)); }

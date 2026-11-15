@@ -177,6 +177,14 @@
   text-transform: uppercase;
 }
 
+.game__engineer {
+  margin: 6px 0 0;
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--ms-yellow);
+}
+
 .game__mission h1 {
   margin: 8px 0 0;
   font-family: var(--ms-font-pixel);
@@ -231,12 +239,13 @@
 .bulb {
   position: relative;
   isolation: isolate;
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-height: 52px;
   flex: none;
-  padding: 0;
+  padding: 0 14px var(--px) 10px;
   border: 0;
   background: transparent;
   color: var(--ms-yellow);
@@ -298,7 +307,17 @@
   z-index: 1;
   width: 28px;
   height: 28px;
+  flex: none;
   display: block;
+}
+
+.bulb__label {
+  position: relative;
+  z-index: 1;
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
 }
 
 .brief-modal {
@@ -1440,6 +1459,41 @@
   .flight .rocket {
     --scale: 4;
   }
+}
+
+.flight-readout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: min(460px, 100%);
+  margin: 0;
+}
+
+.flight-readout div {
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 2px solid var(--ms-line);
+  background: rgba(5, 6, 26, 0.6);
+}
+
+.flight-readout dt {
+  font-family: var(--ms-font-pixel);
+  font-size: 9px;
+  color: var(--ms-muted);
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+.flight-readout dd {
+  margin: 6px 0 0;
+  font-family: var(--ms-font-pixel);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ms-green);
+}
+
+.flight-readout dd.is-bad {
+  color: #ff8fa6;
 }
 
 .flight__status {
