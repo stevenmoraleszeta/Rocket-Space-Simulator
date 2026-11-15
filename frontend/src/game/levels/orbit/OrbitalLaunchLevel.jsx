@@ -19,10 +19,11 @@ import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
+import { LAUNCH_FAILURES, launchFailure } from '../../launchFailure.js'
 import { LAUNCH_SITES } from './launchSites.js'
 import { LaunchFact } from './LaunchFact.jsx'
 import { MissionCompleteScreen } from './MissionCompleteScreen.jsx'
-import { EXPLODING_OUTCOMES, OUTCOMES, arrivalPosition, degreesToRadians, simulateLaunch } from './launchSimulation.js'
+import { EXPLODING_OUTCOMES, OUTCOMES, arrivalPosition, degreesToRadians, satellitePositionAt, simulateLaunch } from './launchSimulation.js'
 import { buildLaunchVehicle } from './launchVehicle.js'
 import { aimFromPointer, initialAim, siteAngleOf } from './orbitAiming.js'
 import {
@@ -30,6 +31,7 @@ import {
   drawOrbitScene,
   flightPoseAt,
   siteScreenPosition,
+  worldToScreen,
 } from './orbitRenderer.js'
 import {
   SUGGESTED_ARRIVAL_OFFSET_DEG,
@@ -38,7 +40,7 @@ import {
   rateSiteForMission,
   scoreOrbitInsertion,
 } from './orbitTargets.js'
-import { REAL_SATELLITES } from './realSatellites.js'
+import { REAL_SATELLITES, SATELLITE_KIND_COLORS } from './realSatellites.js'
 import '../../game.css'
 import './orbitalLaunch.css'
 
@@ -54,6 +56,9 @@ const OUTCOME_MESSAGES = {
   [OUTCOMES.LOST_IN_SPACE]: 'Too much power: the rocket flew far above the orbit, went out of control and exploded.',
   [OUTCOMES.MISSED_TARGET]: 'The rocket did not reach the arrival point.',
   [OUTCOMES.NO_LIFTOFF]: 'The rocket is too heavy for its engines and cannot lift off.',
+  // Missing parts: the rocket blew up before reaching space (launchFailure.js)
+  [LAUNCH_FAILURES.noBoosters.id]: LAUNCH_FAILURES.noBoosters.message,
+  [LAUNCH_FAILURES.noShield.id]: LAUNCH_FAILURES.noShield.message,
 }
 
 function loadImage(src) {
@@ -101,6 +106,9 @@ function describePrediction(prediction) {
       return { tone: 'warn', text: `It misses the arrival point by ${Math.round(closestTargetKm).toLocaleString('en-US')} km.` }
   }
 }
+
+/** How close (screen pixels) a tap must land to a satellite to open its card. */
+const SATELLITE_TAP_PIXELS = 18
 
 export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
@@ -151,15 +159,35 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const canvasRef = useRef(null)
   const flightRef = useRef(null) // { startedAt, endedAt }
   const draggingRef = useRef(false)
+  // Simulated time the satellites are drawn at (moves only during the flight), for tapping them.
+  const simTimeRef = useRef(0)
+  const [satelliteInfo, setSatelliteInfo] = useState(null) // { satellite, x, y }
   const [images] = useState(() => ({
     earth: loadImage(ASSETS.earthPlanet.src),
     rocketLit: loadImage(ASSETS.rocketLit.src),
     rocketOff: loadImage(ASSETS.rocketIdle.src),
+    rocketUpperStage: loadImage(ASSETS.rocketUpperStage.src),
     explosion: loadImage(ASSETS.explosion.src),
     goldSatellite: loadImage(ASSETS.goldSatellite.src),
     commsSatellite: loadImage(ASSETS.commsSatellite.src),
     spaceTelescope: loadImage(ASSETS.spaceTelescope.src),
   }))
+
+  // Launch: first the pad liftoff and the climb (LaunchSequence), then the orbit flight.
+  const [liftingOff, setLiftingOff] = useState(false)
+  // A rocket without boosters or heat shield blows up during the launch sequence.
+  const failure = useMemo(() => launchFailure(equipped), [equipped])
+  const failLaunch = useCallback(() => {
+    try {
+      completeMission(mission.id, { pct: 0, success: false })
+    } catch {
+      /* mission locked or unknown: show the result anyway */
+    }
+    playSfx(SFX.lose)
+    setLiftingOff(false)
+    setResult({ outcome: { type: failure.id }, success: false, pct: 0, stars: 0, unlockedMissionId: null, failure })
+    setStep('result')
+  }, [completeMission, mission.id, failure])
 
   const finishFlight = () => {
     const outcome = prediction.outcome
@@ -189,7 +217,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   // The draw loop is created once and reads the latest state through this ref.
   const sceneRef = useRef(null)
   useLayoutEffect(() => {
-    sceneRef.current = { step, view, orbitId: orbit.id, orbitsForSite, arrival, aimPoint, prediction, images, finishFlight, canvasSize }
+    sceneRef.current = { step, view, orbitId: orbit.id, orbitsForSite, arrival, aimPoint, prediction, images, finishFlight, canvasSize, blewUp: Boolean(result?.failure) }
   })
 
   // Resize the canvas to its box (sharp on high-DPI screens).
@@ -242,13 +270,15 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           }
         }
 
+        simTimeRef.current = flight?.simTime ?? 0
         drawOrbitScene(ctx, current.view, {
           step: current.step,
           orbits: current.orbitsForSite,
           selectedOrbitId: current.orbitId,
           arrival: current.arrival,
           satellites: REAL_SATELLITES,
-          prediction: current.prediction,
+          // A rocket that blew up at launch never flew: no path or rocket on the map.
+          prediction: current.blewUp ? null : current.prediction,
           aimPoint: current.aimPoint,
           flight,
           images: current.images,
@@ -283,7 +313,27 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     }
   }
 
+  /** Satellite under a screen point (within a finger's reach), or null. */
+  const satelliteAt = (point) => {
+    let closest = null
+    for (const satellite of REAL_SATELLITES) {
+      const world = satellitePositionAt(satellite, simTimeRef.current)
+      const screen = worldToScreen(view, world.x, world.y)
+      const gap = Math.hypot(point.x - screen.x, point.y - screen.y)
+      if (gap < SATELLITE_TAP_PIXELS && (!closest || gap < closest.gap)) closest = { satellite, gap, screen }
+    }
+    return closest
+  }
+
   const handlePointerDown = (event) => {
+    const point = pointerPosition(event)
+    const tapped = satelliteAt(point)
+    if (tapped) {
+      playSfx(SFX.select)
+      setSatelliteInfo({ satellite: tapped.satellite, x: tapped.screen.x, y: tapped.screen.y })
+      return
+    }
+    setSatelliteInfo(null)
     if (step === 'aim' && site) {
       draggingRef.current = true
       event.currentTarget.setPointerCapture(event.pointerId)
@@ -292,7 +342,12 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   }
 
   const handlePointerMove = (event) => {
-    if (draggingRef.current && step === 'aim' && site) aimAt(pointerPosition(event))
+    if (draggingRef.current && step === 'aim' && site) {
+      aimAt(pointerPosition(event))
+      return
+    }
+    // Hand cursor over a satellite, so players know they can tap it.
+    event.currentTarget.style.cursor = satelliteAt(pointerPosition(event)) ? 'pointer' : ''
   }
 
   const handlePointerUp = () => {
@@ -311,7 +366,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     setStep('aim')
   }
   // Launch: first the pad liftoff and the climb (LaunchSequence), then the orbit flight on the canvas.
-  const [liftingOff, setLiftingOff] = useState(false)
   const launch = () => {
     playSfx(SFX.liftoff)
     setTelemetry(null)
@@ -355,7 +409,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       {hud}
       {liftingOff && (
         <div className="orbit-level__liftoff">
-          <LaunchSequence equipped={equipped} hud={hud} onDone={startOrbitFlight} />
+          <LaunchSequence equipped={equipped} hud={hud} onDone={startOrbitFlight} failure={failure} onFail={failLaunch} />
         </div>
       )}
       {step === 'result' && result?.success && (
@@ -379,6 +433,31 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
           />
+          {satelliteInfo && (
+            <div
+              className={`satellite-card${satelliteInfo.y < 150 ? ' is-below' : ''}`}
+              style={{
+                left: Math.min(Math.max(satelliteInfo.x, 130), canvasSize.width - 130),
+                top: satelliteInfo.y,
+              }}
+              role="dialog"
+              aria-label={satelliteInfo.satellite.shortName}
+            >
+              <button type="button" className="satellite-card__close" aria-label="Close" onClick={() => setSatelliteInfo(null)}>
+                ✕
+              </button>
+              <h3 className="satellite-card__name">{satelliteInfo.satellite.shortName}</h3>
+              <p className="satellite-card__kind">
+                <span
+                  className="satellite-card__dot"
+                  style={{ background: SATELLITE_KIND_COLORS[satelliteInfo.satellite.kind] }}
+                  aria-hidden="true"
+                />
+                {satelliteInfo.satellite.kind} · {satelliteInfo.satellite.altitudeKm} km
+              </p>
+              <p className="satellite-card__summary">{satelliteInfo.satellite.summary}</p>
+            </div>
+          )}
           {/* Launch bases: real buttons on top of the planet, big enough to tap and read. */}
           <div className="orbit-sites">
             {visibleSites.map((candidate) => {
@@ -391,7 +470,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
                 return (
                   <span key={candidate.id} className={className} style={style}>
                     <span className="orbit-site__dot" />
-                    <span className="orbit-site__name">{candidate.name}</span>
+                    <span className="orbit-site__name">
+                    {candidate.name}
+                    <span className="orbit-site__country">{candidate.country}</span>
+                  </span>
                   </span>
                 )
               }
@@ -405,7 +487,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
                   onClick={() => selectSite(candidate.id)}
                 >
                   <span className="orbit-site__dot" />
-                  <span className="orbit-site__name">{candidate.name}</span>
+                  <span className="orbit-site__name">
+                    {candidate.name}
+                    <span className="orbit-site__country">{candidate.country}</span>
+                  </span>
                 </button>
               )
             })}
@@ -422,6 +507,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
               {site ? (
                 <div className="orbit-detail">
                   <p className="orbit-detail__name">{site.name}, {site.country}</p>
+                  <p><b>Spaceport:</b> {site.spaceport}</p>
                   <p className={`orbit-badge orbit-badge--${siteRating.level}`}>{siteRating.label}</p>
                   <p><b>Why here?</b> {site.why}</p>
                   <p><b>What for?</b> {site.whatFor}</p>
@@ -487,6 +573,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
                   {result.unlockedMissionId && <p className="orbit-panel__hint">New mission unlocked: {getMission(result.unlockedMissionId)?.title}!</p>}
                 </>
               )}
+              {result.failure && <p className="orbit-panel__hint">{result.failure.hint}</p>}
               {result.outcome.type === OUTCOMES.NO_LIFTOFF && (
                 <p className="orbit-panel__hint">Go back to the hangar: add boosters or carry less.</p>
               )}

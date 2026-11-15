@@ -1016,14 +1016,92 @@
   transform: translateX(40px);
 }
 
-/* Sprite-sheet loop: steps through --frames cells of one 32px row. */
+/* Sprite-sheet loop: steps through --frames cells of one 32px row, from cell --first. */
 .rocket__layer--anim {
   animation: rocket-frames calc(var(--frames) * 90ms) steps(var(--frames)) infinite;
 }
 
 @keyframes rocket-frames {
+  from { background-position-x: calc(var(--first, 0) * -32px); }
+  to { background-position-x: calc((var(--first, 0) + var(--frames)) * -32px); }
+}
+
+/* Explosion (explosion_sheet.png, first row): 8 cells once, then nothing is left. */
+.rocket__layer--explosion {
+  animation: rocket-explode 0.8s steps(8) forwards;
+}
+
+@keyframes rocket-explode {
+  from { background-position: 0 0; }
+  to { background-position: -256px 0; }
+}
+
+.rocket.is-exploding { filter: none; }
+
+/* No boosters: the engines roar but the rocket only shakes on the pad. */
+.rocket.is-straining {
+  --scale: inherit;
+  animation: pad-shake 0.14s steps(2) infinite;
+}
+
+/* Stage separation (8 cells, ROCKET.separation): plays once and stays on the last cell. */
+.rocket__layer--once {
+  animation: rocket-frames-once var(--separation-time, 800ms) steps(7) forwards;
+}
+
+@keyframes rocket-frames-once {
   from { background-position-x: 0; }
-  to { background-position-x: calc(var(--frames) * -32px); }
+  to { background-position-x: -224px; }
+}
+
+/* Side boosters fall away together with the rear stage. */
+.rocket__layer--dropping {
+  animation: rocket-drop var(--separation-time, 800ms) ease-in forwards;
+}
+
+/* Heat shield out of the atmosphere: the shell cracks in two halves that spin away. */
+.rocket__shell-half {
+  z-index: 2;
+  animation: var(--separation-time, 800ms) ease-out forwards;
+}
+
+.rocket__shell-half--left {
+  clip-path: inset(0 50% 0 0);
+  animation-name: shell-left;
+}
+
+.rocket__shell-half--right {
+  clip-path: inset(0 0 0 50%);
+  animation-name: shell-right;
+}
+
+@keyframes shell-left {
+  0% { transform: scale(var(--scale)); opacity: 1; }
+  15% { transform: scale(var(--scale)) translate(-1px, 0); opacity: 1; }
+  100% { transform: scale(var(--scale)) translate(-14px, 6px) rotate(-35deg); opacity: 0; }
+}
+
+@keyframes shell-right {
+  0% { transform: scale(var(--scale)); opacity: 1; }
+  15% { transform: scale(var(--scale)) translate(1px, 0); opacity: 1; }
+  100% { transform: scale(var(--scale)) translate(14px, 6px) rotate(35deg); opacity: 0; }
+}
+
+/* Short white flash on the nose when the shell cracks. */
+.rocket__shell-flash {
+  z-index: 3;
+  background: radial-gradient(circle at 16px 5px, #fff 0 2px, rgba(255, 210, 63, 0.8) 3px, transparent 7px);
+  animation: shell-flash 300ms ease-out forwards;
+}
+
+@keyframes shell-flash {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes rocket-drop {
+  from { transform: scale(var(--scale)); opacity: 1; }
+  to { transform: scale(var(--scale)) translateY(18px) rotate(8deg); opacity: 0; }
 }
 
 .dock {
@@ -1459,6 +1537,10 @@
   .rocket__layer--anim,
   .rocket__cargo--astronaut,
   .tower__light,
+  .rocket__layer--once,
+  .rocket__layer--dropping,
+  .rocket__shell-half,
+  .rocket__shell-flash,
   .engineer,
   .crew__mover.is-patrol {
     animation: none;
@@ -1472,4 +1554,21 @@
   .meter__fill {
     transition: none;
   }
+}
+
+/* Failure screen after the rocket blows up (no boosters or no heat shield). */
+.launch-failed {
+  max-width: 560px;
+  margin: 0 auto;
+  text-align: center;
+}
+.launch-failed__title {
+  margin: 0 0 12px;
+  font-family: var(--ms-font-pixel);
+  font-size: 20px;
+  color: #ff5d73;
+}
+.launch-failed__hint {
+  margin: 0 0 20px;
+  color: var(--ms-muted, #b9c2ec);
 }
