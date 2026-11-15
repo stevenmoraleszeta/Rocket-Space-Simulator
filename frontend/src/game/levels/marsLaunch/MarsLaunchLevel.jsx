@@ -21,9 +21,10 @@ import { t } from '../../../i18n/index.js'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
-import { flightSupplyFailure, launchFailure } from '../../launchFailure.js'
-import { FOOD_AND_WATER_FAILURES, hasAllFoodAndWater } from './marsSupplies.js'
-import { PARTS, partMax } from '../../parts.js'
+import { LAUNCH_FAILURES, launchFailure } from '../../launchFailure.js'
+import { earliestSupplyEnd, supplyReport } from '../../lifeSupport.js'
+import { forgivenFailures, marsSupplyFacts } from './marsSupplies.js'
+import { PARTS, partCount, partMax } from '../../parts.js'
 import { flightNotes } from '../../flightSummary.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
@@ -34,6 +35,7 @@ import { createView as createEarthView, drawOrbitScene, siteScreenPosition } fro
 import { useUiScale } from '../../../lib/uiScale.js'
 import {
   ANGLE_WINDOW,
+  GRAZE_PENALTY,
   IDEAL_TRIP_DAYS,
   MARS_DEG_PER_DAY,
   MARS_EXPLODING,
@@ -55,6 +57,7 @@ import {
   tripEncounters,
 } from './marsEncounters.js'
 import './marsLaunch.css'
+import iceAsteroid from '../../../assets/images/icons/ice_block.svg'
 import animatedSun from '../../../assets/images/planets/sun_animated.svg'
 import { PixelSky } from './PixelSky.jsx'
 import { SitePin } from '../orbit/SitePin.jsx'
@@ -68,7 +71,7 @@ const PACK_MAXIMA = Object.fromEntries(
 )
 
 /** The whole cruise plays in this many real seconds. */
-const FLIGHT_PLAYBACK_SECONDS = 7
+const FLIGHT_PLAYBACK_SECONDS = 4.5
 /** After a crash, watch the blast this long before the "You lose" screen. */
 const EXPLOSION_WATCH_MS = 1500
 /** Arrow keys move the aim this much (with Shift: ten times more). */
@@ -110,9 +113,10 @@ function describeTrip(trip, aim) {
   const { outcome } = trip
   switch (outcome.type) {
     case MARS_OUTCOMES.REACHED:
+      if (trip.grazes?.length) {
+        return { tone: 'warn', text: t('You meet Mars, but the rocket grazes {{name}}: −{{points}} points.', { name: t(trip.grazes[0].hazard.name), points: GRAZE_PENALTY }) }
+      }
       return { tone: 'good', text: t('Great aim! In {{days}} days you meet Mars.', { days: Math.round(outcome.day) }) }
-    case MARS_OUTCOMES.HAZARD:
-      return { tone: 'bad', text: t('Careful! It crashes into {{name}}.', { name: t(outcome.hazard.name) }) }
     case MARS_OUTCOMES.SHORT:
       return { tone: 'warn', text: t('Not enough power: it never reaches Mars’s orbit.') }
     default:
@@ -196,6 +200,10 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
   const [encounter, setEncounter] = useState(null)
   const [mildMistakes, setMildMistakes] = useState(0)
   const mildRef = useRef(0)
+  // Grazes of satellites or debris on the way: each one warns and costs points.
+  const grazeRef = useRef(0)
+  const [grazeCount, setGrazeCount] = useState(0)
+  const [grazeToast, setGrazeToast] = useState(null) // { name, key }
   // Space fact in a corner, a new one every 20 seconds.
   const [fact, setFact] = useState(() => ({ index: randomFactIndex(-1), corner: 0 }))
   useEffect(() => {
@@ -218,6 +226,8 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
     mars: loadImage(SPRITES.planets.mars.src),
     rocket: loadImage(ASSETS.rocketUpperStage.src),
     explosion: loadImage(ASSETS.explosion.src),
+    asteroid: loadImage(ASSETS.asteroid.src),
+    iceAsteroid: loadImage(iceAsteroid),
     satellite: loadImage(ASSETS.commsSatellite.src),
   }))
 
@@ -231,16 +241,38 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
   const trip = useMemo(() => simulateMarsTrip(aim.angleDeg, aim.power), [aim])
 
   // ------------------------------------------------------------ missing parts and supplies
-  const anyFailure = useMemo(() => launchFailure(equipped, mission), [equipped, mission])
+  // A well packed crew does not fail some troubles on this trip (marsSupplies.js):
+  // air scrubber or filter -> air, boosters -> push, food bar over half -> food, all water -> water.
+  const report = useMemo(() => supplyReport(equipped, mission), [equipped, mission])
+  const forgiven = useMemo(
+    () => forgivenFailures(marsSupplyFacts(equipped, PACK_MAXIMA, report.foodKg, report.foodNeedKg)),
+    [equipped, report],
+  )
+  const anyFailure = useMemo(() => {
+    const failure = launchFailure(equipped, mission)
+    if (!failure || !forgiven.has(failure.id)) return failure
+    // The checks that come after air and boosters in launchFailure.js
+    if (failure.id === 'noAir' && !forgiven.has('noBoosters') && partCount(equipped, 'boosters') <= 0) {
+      return LAUNCH_FAILURES.noBoosters
+    }
+    if (partCount(equipped, 'shield') <= 0 || report.heat < report.limits.heat) return LAUNCH_FAILURES.noShield
+    return null
+  }, [equipped, mission, forgiven, report])
   // No boosters ('climb'): the liftoff plays, but the rocket cannot speed up enough to leave Earth.
   const sequenceFailure = anyFailure?.at === 'climb' ? null : anyFailure
-  // Packing every food pack and every water pack means the crew never starves or runs dry on
-  // this trip: only other troubles (air, sickness, crashes) can end it.
-  const fullyStocked = useMemo(() => hasAllFoodAndWater(equipped, PACK_MAXIMA), [equipped])
   const supplyFailure = useMemo(() => {
-    const failure = flightSupplyFailure(equipped, mission)
-    return failure && fullyStocked && FOOD_AND_WATER_FAILURES.has(failure.id) ? null : failure
-  }, [equipped, mission, fullyStocked])
+    if (anyFailure || report.crew <= 0) return null
+    if (report.foodKg <= 0 && !forgiven.has('noFood')) {
+      return { ...LAUNCH_FAILURES.noFood, atSeconds: report.durationSeconds * 0.3 }
+    }
+    const end = earliestSupplyEnd({
+      ...report,
+      foodSeconds: forgiven.has('outOfFood') ? Infinity : report.foodSeconds,
+      waterSeconds: forgiven.has('outOfWater') ? Infinity : report.waterSeconds,
+      airSeconds: forgiven.has('outOfAir') ? Infinity : report.airSeconds,
+    })
+    return end ? { ...LAUNCH_FAILURES[end.id], atSeconds: end.atSeconds } : null
+  }, [anyFailure, report, forgiven])
   /** Trip day when food, water or air runs out (the mission's supplies are planned for its own length). */
   const supplyFailureDay = supplyFailure
     ? (supplyFailure.returnsHome ? 0.3 : supplyFailure.atSeconds / mission.loadout.durationSeconds) * IDEAL_TRIP_DAYS
@@ -249,7 +281,9 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
   const finish = useCallback((outcome, failure = null) => {
     const success = outcome.type === MARS_OUTCOMES.REACHED && !failure
     const mild = mildRef.current
-    const pct = success ? Math.max(0, scoreMarsArrival(outcome, trip.angleErrorDeg) - mild * MILD_PENALTY) : 0
+    const grazed = grazeRef.current
+    const penalty = mild * MILD_PENALTY + grazed * GRAZE_PENALTY
+    const pct = success ? Math.max(0, scoreMarsArrival(outcome, trip.angleErrorDeg) - penalty) : 0
     let progress = null
     try {
       progress = completeMission(mission.id, {
@@ -274,6 +308,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
       failure,
       exploded,
       mildMistakes: mild,
+      grazes: grazed,
     })
     setStep('result')
   }, [aim, trip, completeMission, mission.id, equipped, site, setStep])
@@ -298,10 +333,15 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
       paused: false,
       crash: null,
       encounters: tripEncounters(trip).filter((pass) => pass.day < endDay),
+      grazes: (trip.grazes ?? []).filter((graze) => graze.day < endDay),
+      nextGraze: 0,
       nextEncounter: 0,
     }
     mildRef.current = 0
+    grazeRef.current = 0
     setMildMistakes(0)
+    setGrazeCount(0)
+    setGrazeToast(null)
     setEncounter(null)
     setTelemetryDay(0)
     setStep('flight')
@@ -311,6 +351,19 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
     const ranOut = supplyFailureDay != null && supplyFailureDay < trip.outcome.day
     finish(ranOut ? { ...trip.outcome, day: supplyFailureDay } : trip.outcome, ranOut ? supplyFailure : null)
   }, [finish, supplyFailure, supplyFailureDay, trip])
+
+  /** The rocket grazed a satellite or debris: warn, and count it for the score. */
+  const onGraze = useCallback((graze) => {
+    grazeRef.current += 1
+    setGrazeCount(grazeRef.current)
+    playSfx(SFX.cancel)
+    setGrazeToast({ name: graze.hazard.name, key: `${graze.hazard.id}-${graze.day}` })
+  }, [])
+  useEffect(() => {
+    if (!grazeToast) return undefined
+    const timer = setTimeout(() => setGrazeToast(null), 2400)
+    return () => clearTimeout(timer)
+  }, [grazeToast])
 
   /** The trip reached a close pass: stop and ask the crew. */
   const openEncounter = useCallback((pass) => {
@@ -351,7 +404,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
 
   // ------------------------------------------------------------ drawing loop
   useLayoutEffect(() => {
-    sceneRef.current = { step, view, earthView, uiScale, trip, aim, site, images, canvasSize, finishCruise, openEncounter }
+    sceneRef.current = { step, view, earthView, uiScale, trip, aim, site, images, canvasSize, finishCruise, openEncounter, onGraze }
   })
 
   useEffect(() => {
@@ -402,6 +455,12 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
           // The trip clock runs unless the crew is deciding; it stops at each close pass.
           if (!clock.paused && !clock.endedAt) {
             clock.day += ((now - clock.last) / 1000) * (clock.endDay / FLIGHT_PLAYBACK_SECONDS)
+            // Grazing a satellite or debris: no crash, a warning and points off.
+            const graze = clock.grazes[clock.nextGraze]
+            if (graze && clock.day >= graze.day) {
+              clock.nextGraze += 1
+              current.onGraze(graze)
+            }
             const pass = clock.encounters[clock.nextEncounter]
             if (pass && clock.day >= pass.day) {
               clock.day = pass.day
@@ -431,6 +490,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
           images: current.images,
           clockSeconds: now / 1000,
           tapHint: tapHintRef.current,
+          asteroids: clock ? clock.encounters.filter((pass) => pass.asteroid) : [],
         })
       }
       frameId = requestAnimationFrame(draw)
@@ -527,7 +587,9 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
   const retry = () => {
     flightRef.current = null
     mildRef.current = 0
+    grazeRef.current = 0
     setMildMistakes(0)
+    setGrazeCount(0)
     setEncounter(null)
     setResult(null)
     setBlastSeen(false)
@@ -631,12 +693,18 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
               })}
             </div>
           )}
+          {grazeToast && (
+            <div className="mars-graze" role="status" key={grazeToast.key}>
+              <PixelIcon name="warning" /> {t('Grazed {{name}}! −{{points}} points', { name: t(grazeToast.name), points: GRAZE_PENALTY })}
+            </div>
+          )}
           {encounter && (
             <div className="mars-encounter" role="dialog" aria-modal="true" aria-labelledby="mars-encounter-question">
               <p className="mars-encounter__kicker"><PixelIcon name="warning" /> {t('Day {{day}} · {{name}}', { day: Math.round(encounter.day), name: t(encounter.hazard.name) })}</p>
               {!encounter.picked ? (
                 <>
                   <h3 id="mars-encounter-question" className="mars-encounter__question">{t(encounter.situation.question)}</h3>
+                  {encounter.situation.story && <p className="mars-encounter__story">{t(encounter.situation.story)}</p>}
                   <div className="mars-encounter__choices">
                     {encounter.situation.choices.map((choice) => (
                       <button key={choice.text} type="button" className="mars-encounter__choice" onClick={() => chooseOption(choice)}>
@@ -653,6 +721,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
                       : <><PixelIcon name="warning" /> {t('Risky! −{{points}} points', { points: MILD_PENALTY })}</>}
                   </h3>
                   <p className="mars-encounter__explain">{t(encounter.picked.explain)}</p>
+                  {encounter.situation.story && <p className="mars-encounter__story">{t(encounter.situation.story)}</p>}
                   <button type="button" className="ms-btn" onClick={continueTrip}>{t('Keep flying')}</button>
                 </>
               )}
@@ -763,6 +832,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
                 <div><dt>{t('Your angle')}</dt><dd>{formatAngle(aim.angleDeg)}</dd></div>
                 <div><dt>{t('Power')}</dt><dd>{Math.round(aim.power * 100)}%</dd></div>
                 <div><dt>{t('Risky choices')}</dt><dd>{mildMistakes} / {MILD_LIMIT}</dd></div>
+                <div><dt>{t('Grazes')}</dt><dd>{grazeCount}</dd></div>
               </dl>
               {mildMistakes > 0 && (
                 <p className="orbit-panel__hint">Each risky choice costs {MILD_PENALTY} points. One more and the ship breaks apart.</p>

@@ -1,16 +1,48 @@
 /**
- * Mission 3 supply rule: a crew that packs every food pack and every water pack does not
- * starve or run dry on the way to Mars. Other troubles (air, sickness, crashes) still count.
+ * Mission 3 supply rules: what a well packed crew does NOT fail on the way to Mars.
  * Pure (no images), so it can be tested with node --test.
+ *
+ *   air          an air scrubber or an air filter on board: they never run out of air
+ *   propulsion   boosters on board: the rocket never fails for lack of push
+ *   food         the food bar more than half full (or every food pack): nobody starves
+ *   water        every water pack on board: nobody runs dry
+ * Sickness without medicine, a bad aim and the crew's choices still count.
  */
 
-/** Supply failures that a fully stocked rocket never has on this trip. */
-export const FOOD_AND_WATER_FAILURES = new Set(['noFood', 'outOfFood', 'noWater', 'outOfWater'])
+/** Supply and launch failures each rule can forgive. */
+const RULES = {
+  air: ['noAir', 'outOfAir'],
+  propulsion: ['noBoosters'],
+  food: ['noFood', 'outOfFood'],
+  water: ['noWater', 'outOfWater'],
+}
+
+/** The food bar has to be at least this full for the crew to make it. */
+export const FOOD_BAR_ENOUGH = 0.5
 
 /**
- * All the food packs and all the water packs the hangar allows are on board.
- * maxima: how many of each the hangar allows, e.g. { food: 4, water: 4 } (from parts.js).
+ * Facts about the packed rocket, from the hangar (parts.js and lifeSupport.js):
+ *   equipped   { partId: count }
+ *   maxima     { food, water }: how many packs the hangar allows
+ *   foodKg, foodNeedKg   the food bar (packed / needed for the trip)
  */
-export function hasAllFoodAndWater(equipped, maxima) {
-  return ['food', 'water'].every((id) => maxima[id] > 0 && (Number(equipped?.[id]) || 0) >= maxima[id])
+export function marsSupplyFacts(equipped, maxima, foodKg, foodNeedKg) {
+  const count = (id) => Number(equipped?.[id]) || 0
+  return {
+    airPacked: count('scrubber') > 0 || count('filter') > 0,
+    boostersPacked: count('boosters') > 0,
+    foodBar: foodNeedKg > 0 ? foodKg / foodNeedKg : 1,
+    allFood: maxima.food > 0 && count('food') >= maxima.food,
+    allWater: maxima.water > 0 && count('water') >= maxima.water,
+  }
+}
+
+/** Failure ids that cannot happen to this rocket on the way to Mars. */
+export function forgivenFailures(facts) {
+  const forgiven = new Set()
+  if (facts.airPacked) RULES.air.forEach((id) => forgiven.add(id))
+  if (facts.boostersPacked) RULES.propulsion.forEach((id) => forgiven.add(id))
+  if (facts.allFood || facts.foodBar >= FOOD_BAR_ENOUGH) RULES.food.forEach((id) => forgiven.add(id))
+  if (facts.allWater) RULES.water.forEach((id) => forgiven.add(id))
+  return forgiven
 }
