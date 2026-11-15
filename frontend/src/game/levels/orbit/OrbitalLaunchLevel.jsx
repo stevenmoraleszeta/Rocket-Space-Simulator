@@ -19,6 +19,7 @@ import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
+import { LAUNCH_FAILURES, launchFailure } from '../../launchFailure.js'
 import { LAUNCH_SITES } from './launchSites.js'
 import { OUTCOMES, arrivalPosition, degreesToRadians, satellitePositionAt, simulateLaunch } from './launchSimulation.js'
 import { buildLaunchVehicle } from './launchVehicle.js'
@@ -53,6 +54,9 @@ const OUTCOME_MESSAGES = {
   [OUTCOMES.LOST_IN_SPACE]: 'Too much power: the rocket flew far above the orbit and got lost in space.',
   [OUTCOMES.MISSED_TARGET]: 'The rocket did not reach the arrival point.',
   [OUTCOMES.NO_LIFTOFF]: 'The rocket is too heavy for its engines and cannot lift off.',
+  // Missing parts: the rocket blew up before reaching space (launchFailure.js)
+  [LAUNCH_FAILURES.noBoosters.id]: LAUNCH_FAILURES.noBoosters.message,
+  [LAUNCH_FAILURES.noShield.id]: LAUNCH_FAILURES.noShield.message,
 }
 
 function loadImage(src) {
@@ -167,6 +171,22 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     spaceTelescope: loadImage(ASSETS.spaceTelescope.src),
   }))
 
+  // Launch: first the pad liftoff and the climb (LaunchSequence), then the orbit flight.
+  const [liftingOff, setLiftingOff] = useState(false)
+  // A rocket without boosters or heat shield blows up during the launch sequence.
+  const failure = useMemo(() => launchFailure(equipped), [equipped])
+  const failLaunch = useCallback(() => {
+    try {
+      completeMission(mission.id, { pct: 0, success: false })
+    } catch {
+      /* mission locked or unknown: show the result anyway */
+    }
+    playSfx(SFX.lose)
+    setLiftingOff(false)
+    setResult({ outcome: { type: failure.id }, success: false, pct: 0, stars: 0, unlockedMissionId: null, failure })
+    setStep('result')
+  }, [completeMission, mission.id, failure])
+
   const finishFlight = () => {
     const outcome = prediction.outcome
     const success = outcome.type === OUTCOMES.ORBIT_REACHED
@@ -186,7 +206,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   // The draw loop is created once and reads the latest state through this ref.
   const sceneRef = useRef(null)
   useLayoutEffect(() => {
-    sceneRef.current = { step, view, orbitId: orbit.id, orbitsForSite, arrival, aimPoint, prediction, images, finishFlight, canvasSize }
+    sceneRef.current = { step, view, orbitId: orbit.id, orbitsForSite, arrival, aimPoint, prediction, images, finishFlight, canvasSize, blewUp: Boolean(result?.failure) }
   })
 
   // Resize the canvas to its box (sharp on high-DPI screens).
@@ -246,7 +266,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           selectedOrbitId: current.orbitId,
           arrival: current.arrival,
           satellites: REAL_SATELLITES,
-          prediction: current.prediction,
+          // A rocket that blew up at launch never flew: no path or rocket on the map.
+          prediction: current.blewUp ? null : current.prediction,
           aimPoint: current.aimPoint,
           flight,
           images: current.images,
@@ -334,7 +355,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     setStep('aim')
   }
   // Launch: first the pad liftoff and the climb (LaunchSequence), then the orbit flight on the canvas.
-  const [liftingOff, setLiftingOff] = useState(false)
   const launch = () => {
     playSfx(SFX.liftoff)
     setTelemetry(null)
@@ -378,7 +398,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       {hud}
       {liftingOff && (
         <div className="orbit-level__liftoff">
-          <LaunchSequence equipped={equipped} hud={hud} onDone={startOrbitFlight} />
+          <LaunchSequence equipped={equipped} hud={hud} onDone={startOrbitFlight} failure={failure} onFail={failLaunch} />
         </div>
       )}
 
@@ -533,6 +553,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
                   {result.unlockedMissionId && <p className="orbit-panel__hint">New mission unlocked: {getMission(result.unlockedMissionId)?.title}!</p>}
                 </>
               )}
+              {result.failure && <p className="orbit-panel__hint">{result.failure.hint}</p>}
               {result.outcome.type === OUTCOMES.NO_LIFTOFF && (
                 <p className="orbit-panel__hint">Go back to the hangar: add boosters or carry less.</p>
               )}

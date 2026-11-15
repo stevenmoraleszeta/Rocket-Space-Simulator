@@ -1,3 +1,4 @@
+import explosionSheet from '../assets/images/rockets/animations/explosion_sheet.png';
 import { PARTS, ROCKET, partCount } from './parts.js';
 
 /** Plays `frames` cells of one sheet row in a loop (see .rocket__layer--anim in game.css). */
@@ -32,12 +33,35 @@ function sheetStyle(part, lit) {
  * stage: 'full' (whole rocket), 'separating' (leaving the atmosphere: the rear stage and the
  * side boosters drop away and the heat shield cracks in two) or 'upper' (in space: only the
  * short upper stage is left).
+ * straining: the engines roar but the rocket cannot lift (no boosters): it only shakes.
+ * exploding: the rocket blows up (8 frames of explosion_sheet.png, played once) and is gone.
  */
-export function Rocket({ equipped, flying = false, launching = false, ascending = false, open = false, stage = 'full' }) {
-  const lit = flying || launching || ascending;
+export function Rocket({
+  equipped,
+  flying = false,
+  launching = false,
+  ascending = false,
+  open = false,
+  stage = 'full',
+  straining = false,
+  exploding = false,
+}) {
+  if (exploding) {
+    return (
+      <div className="rocket is-exploding" role="img" aria-label="The rocket explodes">
+        <span
+          className="rocket__layer rocket__layer--explosion"
+          style={{ backgroundImage: `url(${explosionSheet})`, backgroundSize: '256px 64px' }}
+        />
+      </div>
+    );
+  }
+
+  const lit = flying || launching || ascending || straining;
   const classes = ['rocket'];
   if (flying) classes.push('is-flying');
   if (launching) classes.push('is-launching');
+  if (straining) classes.push('is-straining');
   if (ascending) classes.push('is-ascending');
   if (open) classes.push('rocket--open');
 
