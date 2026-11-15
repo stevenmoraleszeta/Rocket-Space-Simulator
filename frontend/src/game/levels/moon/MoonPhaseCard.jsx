@@ -1,8 +1,13 @@
+import earthUrl from '../../../assets/images/planets/earth.svg'
+import sunUrl from '../../../assets/images/planets/sun.svg'
+import { PixelMoon } from './PixelMoon.jsx'
+
 /**
  * Corner card: the Moon when the ship arrives, from above (why it has phases) and from Earth.
  * The lit part comes from the real angle between the Moon and the Sun (moonTransfer.getMoonLook):
  * new Moon = dark, full Moon = all lit, waxing = lit on the right (seen from the north half of Earth).
  */
+
 const R = 40
 
 /** SVG path of the lit part of the disk, centered at 0,0. */
@@ -38,7 +43,7 @@ function FromAbove({ moonTurnDeg, sunTurnDeg }) {
   return (
     <svg viewBox="-50 -50 100 100" className="moon-above" aria-hidden="true">
       <g className="moon-above__spin" style={{ transform: `rotate(${-sunTurnDeg}deg)` }}>
-        <circle cx="56" cy="0" r="12" fill="#ffd23f" opacity="0.9" />
+        <image href={sunUrl} x="42" y="-14" width="28" height="28" className="moon-above__sprite" />
         {[-26, -9, 9, 26].map((y) => (
           <g key={y} className="moon-above__ray">
             <line x1="44" y1={y * 0.85} x2="20" y2={y * 0.85} stroke="#ffd23f" strokeWidth="1.6" strokeDasharray="3 3" />
@@ -47,7 +52,7 @@ function FromAbove({ moonTurnDeg, sunTurnDeg }) {
         ))}
       </g>
       <circle r="30" fill="none" stroke="rgba(160, 180, 230, 0.45)" strokeDasharray="2 3" />
-      <circle r="7" fill="#2f7be0" />
+      <image href={earthUrl} x="-8" y="-8" width="16" height="16" className="moon-above__sprite" />
       {/* Earth's night half: away from the Sun. */}
       <g className="moon-above__spin" style={{ transform: `rotate(${-sunTurnDeg}deg)` }}>
         <path d="M0 -7 A7 7 0 0 0 0 7 Z" fill="rgba(3, 6, 22, 0.75)" />
@@ -77,27 +82,15 @@ export function MoonPhaseCard({ look, dateLabel, title = 'Moon when you arrive',
         </div>
         <span className="moon-phase-card__arrow" aria-hidden="true">→</span>
         <div>
-          <svg viewBox={`${-R - 6} ${-R - 6} ${2 * R + 12} ${2 * R + 12}`} className="moon-phase-card__disk" aria-hidden="true">
-            <defs>
-              <radialGradient id="moon-phase-lit" cx="40%" cy="38%" r="70%">
-                <stop offset="0" stopColor="#f4f1e6" />
-                <stop offset="1" stopColor="#b9b4a6" />
-              </radialGradient>
-            </defs>
-            <circle r={R + 4} fill="rgba(255, 216, 74, 0.08)" />
-            <circle r={R} fill="#1a1d33" stroke="#2c3157" strokeWidth="1.5" />
-            <path d={litShape(look)} fill="url(#moon-phase-lit)" />
-            {/* A few fixed craters so it reads as the Moon. */}
-            <g fill="rgba(40, 40, 60, 0.18)">
-              <circle cx="-12" cy="-14" r="6" />
-              <circle cx="14" cy="6" r="8" />
-              <circle cx="-6" cy="18" r="4" />
-            </g>
-          </svg>
+          <div className="moon-phase-card__disk">
+            <PixelMoon look={look} className="pixel-moon" />
+          </div>
           <small>From Earth</small>
         </div>
       </div>
-      <p className="moon-phase-card__name">{look.symbol} {look.name}</p>
+      <p className="moon-phase-card__name">
+        <PixelMoon look={look} className="pixel-moon pixel-moon--icon" /> {look.name}
+      </p>
       <p className="moon-phase-card__lit">{percent}% of the side we see is lit</p>
       {rating && (
         <p className={`moon-phase-card__light is-${rating.tone}`}>

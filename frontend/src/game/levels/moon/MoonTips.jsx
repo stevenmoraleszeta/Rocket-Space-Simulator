@@ -7,33 +7,55 @@
 import { useEffect, useRef, useState } from 'react'
 import { SYNTH, playSynth } from '../../../audio'
 import { tipsTurnedOff, turnTipsOff } from './moonTipsStorage.js'
+import { PixelMoon } from './PixelMoon.jsx'
+import sunUrl from '../../../assets/images/planets/sun.svg'
+import earthUrl from '../../../assets/images/planets/earth.svg'
+import moonUrl from '../../../assets/images/planets/moon.svg'
+import satelliteUrl from '../../../assets/images/satellites/comms_satellite.png'
+import rocketUrl from '../../../assets/images/rockets/rocket_32x32.png'
+import handUrl from '../../../assets/images/icons/hand_pointer.svg'
+import junkUrl from '../../../assets/images/icons/space_junk.svg'
+
+/** Pixel sprite sized like the emoji it replaced (1em), so the tip layouts stay the same. */
+function Sprite({ src }) {
+  return <img className="moon-tut-sprite" src={src} alt="" draggable="false" />
+}
+
+// New Moon to full Moon, as pixel sprites for the "Pick a bright Moon" card.
+const PHASES = [0, 0.25, 0.5, 0.75, 1]
 
 const ART = {
   pin: (
     <div className="moon-tut-art moon-tut-art--pin" aria-hidden="true">
-      <span className="moon-tut-globe">🌍</span>
+      <span className="moon-tut-globe"><Sprite src={earthUrl} /></span>
       <span className="moon-tut-pin">📍</span>
     </div>
   ),
   orbit: (
     <div className="moon-tut-art moon-tut-art--orbit" aria-hidden="true">
-      <span className="moon-tut-earth">🌍</span>
-      <span className="moon-tut-orbit"><span className="moon-tut-moon">🌕</span></span>
+      <span className="moon-tut-earth"><Sprite src={earthUrl} /></span>
+      <span className="moon-tut-orbit"><span className="moon-tut-moon"><Sprite src={moonUrl} /></span></span>
     </div>
   ),
   light: (
     <div className="moon-tut-art moon-tut-art--light" aria-hidden="true">
-      <span className="moon-tut-sun">☀️</span>
+      <span className="moon-tut-sun"><Sprite src={sunUrl} /></span>
       <span className="moon-tut-rays" />
-      <span className="moon-tut-cycle"><span>🌑</span><span>🌒</span><span>🌓</span><span>🌔</span><span className="is-best">🌕</span></span>
+      <span className="moon-tut-cycle">
+        {PHASES.map((illumination) => (
+          <span key={illumination} className={illumination === 1 ? 'is-best' : ''}>
+            <PixelMoon look={{ illumination, waxing: true }} />
+          </span>
+        ))}
+      </span>
     </div>
   ),
   swing: (
     <div className="moon-tut-art moon-tut-art--swing" aria-hidden="true">
-      <span className="moon-tut-swing-earth">🌍</span>
+      <span className="moon-tut-swing-earth"><Sprite src={earthUrl} /></span>
       <span className="moon-tut-swing-out" />
       <span className="moon-tut-swing-home" />
-      <span className="moon-tut-swing-moon">🌕</span>
+      <span className="moon-tut-swing-moon"><Sprite src={moonUrl} /></span>
     </div>
   ),
   land: (
@@ -44,28 +66,28 @@ const ART = {
   ),
   home: (
     <div className="moon-tut-art moon-tut-art--home" aria-hidden="true">
-      <span>🌍</span>
+      <Sprite src={earthUrl} />
       <span className="moon-tut-eight">∞</span>
-      <span>🌕</span>
+      <Sprite src={moonUrl} />
     </div>
   ),
   drag: (
     <div className="moon-tut-art moon-tut-art--drag" aria-hidden="true">
       <span className="moon-tut-base" />
       <span className="moon-tut-dots" />
-      <span className="moon-tut-hand">👆</span>
+      <span className="moon-tut-hand"><Sprite src={handUrl} /></span>
     </div>
   ),
   traffic: (
     <div className="moon-tut-art moon-tut-art--traffic" aria-hidden="true">
-      <span className="moon-tut-sat">🛰️</span>
-      <span className="moon-tut-junk">✦ · ✧ · ✦</span>
-      <span className="moon-tut-rocket">🚀</span>
+      <span className="moon-tut-sat"><Sprite src={satelliteUrl} /></span>
+      <span className="moon-tut-junk"><Sprite src={junkUrl} /><Sprite src={junkUrl} /><Sprite src={junkUrl} /></span>
+      <span className="moon-tut-rocket"><Sprite src={rocketUrl} /></span>
     </div>
   ),
   event: (
     <div className="moon-tut-art moon-tut-art--event" aria-hidden="true">
-      <span className="moon-tut-moon-big">🌕</span>
+      <span className="moon-tut-moon-big"><Sprite src={moonUrl} /></span>
       <span className="moon-tut-alert">⚡</span>
     </div>
   ),

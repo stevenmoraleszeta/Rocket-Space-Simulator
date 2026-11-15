@@ -8,6 +8,7 @@
  *   const { missions, getState, completeMission } = useProgress();
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { readAdminMode, writeAdminMode } from './adminMode.js';
 import { MISSIONS } from './data/missions.js';
 import * as P from './progression.js';
 import { localStorageAdapter } from './storage.js';
@@ -17,8 +18,11 @@ const ProgressContext = createContext(null);
 export function ProgressProvider({ userId = 'guest', storage = localStorageAdapter, missions = MISSIONS, children }) {
   const [progress, setProgress] = useState(P.createEmptyProgress);
   const [loading, setLoading] = useState(true);
+  const [adminMode, setAdminModeState] = useState(readAdminMode);
   const progressRef = useRef(progress);
+  const adminRef = useRef(adminMode);
   progressRef.current = progress;
+  adminRef.current = adminMode;
   // A result saved while a load is in flight must win over that load.
   const saveCount = useRef(0);
 
@@ -51,23 +55,36 @@ export function ProgressProvider({ userId = 'guest', storage = localStorageAdapt
 
   /** Called by gameplay when a mission ends. Returns the outcome (stars, unlocks…). */
   const completeMission = useCallback((missionId, result) => {
-    const { progress: next, outcome } = P.applyResult(progressRef.current, missionId, result, missions);
+    const { progress: next, outcome } = P.applyResult(progressRef.current, missionId, result, missions, {
+      allowLocked: adminRef.current,
+    });
     persist(next);
     return outcome;
   }, [missions, persist]);
 
+  const setAdminMode = useCallback((on) => {
+    const next = !!on;
+    writeAdminMode(next);
+    adminRef.current = next;
+    setAdminModeState(next);
+  }, []);
+
   const value = useMemo(() => ({
-    progress, loading, missions,
-    getState: (id) => P.getMissionState(progress, id, missions),
+    progress, loading, missions, adminMode, setAdminMode,
+    getState: (id) => {
+      if (!adminMode) return P.getMissionState(progress, id, missions);
+      return progress.missions[id]?.completed ? 'completed' : 'current';
+    },
     getStars: (id) => P.getStars(progress, id),
-    isUnlocked: (id) => P.isUnlocked(progress, id, missions),
+    isUnlocked: (id) => adminMode || P.isUnlocked(progress, id, missions),
+    playerUnlocked: (id) => P.isUnlocked(progress, id, missions),
     currentMission: P.getCurrentMission(progress, missions),
     totalStars: P.totalStars(progress),
     maxStars: P.maxStars(missions),
     allCompleted: P.allCompleted(progress, missions),
     completeMission,
     resetProgress: () => persist(P.createEmptyProgress()),
-  }), [progress, loading, missions, completeMission, persist]);
+  }), [progress, loading, missions, adminMode, setAdminMode, completeMission, persist]);
 
   return (
     <ProgressContext.Provider value={value}>
