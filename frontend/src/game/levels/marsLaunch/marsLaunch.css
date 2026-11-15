@@ -159,12 +159,16 @@
   object-fit: cover;
   image-rendering: pixelated;
 }
-.mars-landing__caption {
+.mars-landing__panel {
   position: absolute;
-  top: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
+  top: 1.25rem;
+  left: 1.25rem;
+  width: min(26rem, 36vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.mars-landing__caption {
   color: #fff3e6;
   text-shadow: 0.1875rem 0.1875rem 0 #2a1018;
   pointer-events: none;
@@ -175,11 +179,6 @@
 
 /* Why we explore Mars: one short line at a time, in a pixel box near the bottom. */
 .mars-landing__why {
-  position: absolute;
-  left: 50%;
-  bottom: 5rem;
-  transform: translateX(-50%);
-  width: min(40rem, calc(100% - 2rem));
   margin: 0;
   padding: 0.875rem 1.125rem;
   box-sizing: border-box;
@@ -188,10 +187,14 @@
   background: rgba(42, 16, 24, 0.9);
   color: #fff3e6;
   font-family: var(--ms-font);
-  font-size: 1.1875rem;
+  font-size: 1.125rem;
   line-height: 1.4;
-  text-align: center;
   animation: mars-fact-in 0.5s ease-out;
+}
+/* Phones: no room beside the dome, so the panel spans the top. */
+@media (max-width: 720px) {
+  .mars-landing__panel { left: 0.75rem; right: 0.75rem; width: auto; top: 0.75rem; }
+  .mars-landing__why { font-size: 1rem; }
 }
 .mars-landing__why.is-landed { border-color: #3ddc97; color: #e6fff2; }
 .mars-landing__why-text { margin: 0 0 0.75rem; }

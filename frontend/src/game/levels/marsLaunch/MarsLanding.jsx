@@ -66,25 +66,28 @@ export function MarsLanding({ onDone }) {
   return (
     <div className="mars-landing" role="dialog" aria-modal="true" aria-label={t('Landing on Mars')}>
       <canvas ref={canvasRef} className="mars-landing__scene" width={SCENE_W} height={SCENE_H} aria-hidden="true" />
-      <div className="mars-landing__caption" aria-live="polite">
-        <p className="mars-landing__title">{landed ? t('Touchdown!') : t('Landing on Mars')}</p>
-        <p className="mars-landing__text">
-          {landed ? t('The recon dome is on Mars.') : t('The recon dome is coming down slowly…')}
-        </p>
-      </div>
-      <div className={`mars-landing__why${last ? ' is-landed' : ''}`} key={line} aria-live="polite">
-        <p className="mars-landing__why-text">{t(MESSAGES[line])}</p>
-        <div className="mars-landing__why-row">
-          <span className="mars-landing__count">{line + 1} / {MESSAGES.length}</span>
-          {last ? (
-            <button type="button" className="ms-btn" disabled={!landed} onClick={() => doneRef.current()}>
-              {landed ? t('Continue') : t('Landing…')}
-            </button>
-          ) : (
-            <button type="button" className="ms-btn" onClick={() => setLine((current) => current + 1)}>
-              {t('Next')} ▶
-            </button>
-          )}
+      {/* Title and messages in one panel at the top left, away from the dome coming down the middle. */}
+      <div className="mars-landing__panel">
+        <div className="mars-landing__caption" aria-live="polite">
+          <p className="mars-landing__title">{landed ? t('Touchdown!') : t('Landing on Mars')}</p>
+          <p className="mars-landing__text">
+            {landed ? t('The recon dome is on Mars.') : t('The recon dome is coming down slowly…')}
+          </p>
+        </div>
+        <div className={`mars-landing__why${last ? ' is-landed' : ''}`} key={line} aria-live="polite">
+          <p className="mars-landing__why-text">{t(MESSAGES[line])}</p>
+          <div className="mars-landing__why-row">
+            <span className="mars-landing__count">{line + 1} / {MESSAGES.length}</span>
+            {last ? (
+              <button type="button" className="ms-btn" disabled={!landed} onClick={() => doneRef.current()}>
+                {landed ? t('Continue') : t('Landing…')}
+              </button>
+            ) : (
+              <button type="button" className="ms-btn" onClick={() => setLine((current) => current + 1)}>
+                {t('Next')} ▶
+              </button>
+            )}
+          </div>
         </div>
       </div>
       {!last && (
