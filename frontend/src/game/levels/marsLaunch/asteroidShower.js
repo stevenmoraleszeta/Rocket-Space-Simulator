@@ -74,7 +74,7 @@ export function createShower(seed = Date.now()) {
 /** Seconds between rocks and their speed at a moment of the shower: it gets harder. */
 export function difficultyAt(time) {
   const k = Math.min(1, time / SHOWER_SECONDS)
-  return { gap: 0.46 - 0.28 * k, speed: 36 + 40 * k }
+  return { gap: 0.42 - 0.25 * k, speed: 36 + 40 * k }
 }
 
 /** Where the player wants the ship (field x), clamped to the field. */
