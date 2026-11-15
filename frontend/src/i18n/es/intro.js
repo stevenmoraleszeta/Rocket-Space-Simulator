@@ -1,0 +1,42 @@
+/** Intro trailer: the name check, the big words, the short labels, and what the voice says. */
+export const intro = {
+  'Game trailer': 'Tráiler del juego',
+  'Watch the trailer': 'Ver el tráiler',
+  'Trailer': 'Tráiler',
+  // Name and voice check (intro/IntroTrailer.jsx). 'Skip' and 'Yes' are in moon.js and world.js.
+  'Your name, engineer?': '¿Tu nombre, ingeniero?',
+  'Go!': '¡Vamos!',
+  'Engineer {{name}}!': '¡Ingeniero {{name}}!',
+  'Did I say it right?': '¿Lo dije bien?',
+  'No': 'No',
+  'Hear it again': 'Oír otra vez',
+  'Write it the way it sounds': 'Escríbelo como suena',
+  'Write your name the way it sounds.': 'Escribe tu nombre como suena.',
+  'Listen': 'Escucha',
+  // One big word per scene (intro/TrailerReel.jsx)
+  'BUILD': 'CONSTRUYE',
+  'PACK': 'EMPACA',
+  'AIM': 'APUNTA',
+  'LAUNCH': 'LANZA',
+  'ORBIT': 'ORBITA',
+  'MOON': 'LUNA',
+  'DECIDE': 'DECIDE',
+  'MARS': 'MARTE',
+  'RISE': 'ASCIENDE',
+  // Short labels. 'Soft landing!' is in moon.js and 'Did you know?' in ui.js.
+  '1 lap = 90 min': '1 vuelta = 90 min',
+  '203 days': '203 días',
+  // The voice
+  '{{who}}! Space needs you.': '¡{{who}}! El espacio te necesita.',
+  'You design the rocket. Every kilo counts.': 'Tú diseñas el cohete. Cada kilo cuenta.',
+  'Food, water, air. Your crew trusts you.': 'Comida, agua, aire. Tu tripulación confía en ti.',
+  'Pick a real launch base. The spin of the Earth pushes you.': 'Elige una base real. El giro de la Tierra te empuja.',
+  'Liftoff! Nothing stops you.': '¡Despegue! Nada te detiene.',
+  'Orbit! One lap takes ninety minutes.': '¡Órbita! Una vuelta dura noventa minutos.',
+  'The Moon. Land softly. Fuel is short.': 'La Luna. Aterriza suave, con poco combustible.',
+  'Storms, meteors, radio silence. You decide.': 'Tormentas, meteoros, radio en silencio. Tú decides.',
+  'Mars: seven months away. Dodge, brake, explore.': 'Marte: siete meses de viaje. Esquiva, frena, explora.',
+  'Did you know? On Mars, sunsets are blue.': '¿Sabías que en Marte el atardecer es azul?',
+  'Earn stars. Become Star Commander.': 'Gana estrellas. Llega a comandante estelar.',
+  'You are a legend, {{who}}. Your turn!': 'Eres leyenda, {{who}}. ¡Tu turno!',
+}

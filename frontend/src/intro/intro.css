@@ -1,0 +1,997 @@
+/* Intro trailer (src/intro). Everything uses the intro- prefix.
+   Colors, pixel fonts and the ms-btn buttons come from levels/missions.css. */
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  background: #04030e;
+  color: var(--ms-text);
+  font-family: var(--ms-font);
+}
+
+/* The .intro prefix on button and input rules beats ms-btn and st-input, which load later. */
+.intro .intro__skip { position: absolute; top: 1rem; right: 1rem; z-index: 40; }
+.intro__skip .pixel-icon { font-size: 1.125rem; }
+
+/* The rocket follows the size of its .intro-ship box (game.css reads --scale).
+   --intro-unit is set by TrailerReel.jsx: 1 when the shorter side of the window is 900 px. */
+.intro-ship {
+  --scale: calc(8 * var(--intro-unit, 1));
+  position: relative;
+  flex: none;
+  width: calc(32px * var(--scale));
+  height: calc(32px * var(--scale));
+}
+.intro .rocket { --scale: inherit; }
+
+/* ------------------------------------------------------------------ name and voice check */
+
+.intro-gate {
+  min-height: 100svh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 4.5rem 1rem 2rem;
+  text-align: center;
+}
+.intro-gate .brand--wordmark { flex-direction: column; gap: 0.875rem; text-align: center; }
+.intro-gate .brand__name { font-size: 1rem; text-align: center; }
+.intro-gate .brand__name span { font-size: 0.8125rem; }
+.intro-gate__lang { width: min(26rem, 100%); }
+
+.intro-gate__panel {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: min(26rem, 100%);
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: ms-pop 0.2s steps(3, end);
+}
+.intro-gate__panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--ms-panel);
+  clip-path: var(--px-clip);
+  box-shadow: inset var(--px) var(--px) 0 var(--px-edge), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+}
+.intro-gate__ask { margin: 0; font-family: var(--ms-font-pixel); font-size: 0.875rem; line-height: 1.7; color: var(--ms-yellow); }
+.intro .intro-gate__input { min-height: 3.5rem; text-align: center; font-size: 1.625rem; }
+.intro-gate__name { margin: 0; font-family: var(--ms-font-pixel); font-size: 1.25rem; line-height: 1.5; overflow-wrap: anywhere; }
+.intro-gate__row { display: flex; gap: 0.75rem; }
+.intro-gate__row .ms-btn { flex: 1; min-width: 0; justify-content: center; font-size: 0.875rem; }
+.intro-gate__row .pixel-icon { font-size: 1.25rem; }
+.intro .intro-gate__no { color: #fff; }
+.intro .intro-gate__no::before { background: #7a1020; }
+.intro .intro-gate__no::after { background: #e0443a; box-shadow: inset var(--px) var(--px) 0 #ff9d8a, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #a02418; }
+
+/* Sound bars that bounce while the voice says the name. */
+.intro-voice { display: flex; align-items: center; justify-content: center; gap: 0.375rem; height: 2.5rem; }
+.intro-voice span {
+  width: 0.5rem;
+  height: 100%;
+  background: var(--ms-accent);
+  transform: scaleY(0.25);
+  animation: intro-voice 0.5s steps(4, end) calc(var(--i) * -0.13s) infinite alternate;
+}
+@keyframes intro-voice { to { transform: scaleY(1); } }
+
+/* ------------------------------------------------------------------ the reel */
+
+.intro-reel { position: absolute; inset: 0; }
+
+/* One scene. Sizes inside are in em, and 1em follows the shorter side of the window
+   (16 px at 900 px), so every screen shows the same picture, only bigger or smaller.
+   Every delay below counts from the moment its scene opens (SCENE_STARTS in TrailerReel.jsx). */
+.intro-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  font-size: 1.778vmin;
+}
+
+/* Every cut starts with a short white flash. */
+.intro-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: intro-cut 0.28s ease-out;
+}
+@keyframes intro-cut { from { opacity: 0.85; } to { opacity: 0; } }
+
+/* Video look: scanlines, dark corners, black bars, a progress line and the last fade to black. */
+.intro-reel__screen {
+  position: absolute;
+  inset: 0;
+  z-index: 24;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+.intro-reel__bars::before,
+.intro-reel__bars::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 25;
+  height: 7vh;
+  background: #000;
+}
+.intro-reel__bars::before { top: 0; }
+.intro-reel__bars::after { bottom: 0; }
+.intro-reel__progress { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; height: 0.375rem; background: rgba(255, 255, 255, 0.14); }
+.intro-reel__progress span {
+  display: block;
+  height: 100%;
+  background: var(--ms-yellow);
+  transform-origin: left;
+  animation: intro-progress var(--intro-length) linear both;
+}
+@keyframes intro-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.intro-reel__end {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  background: #04030e;
+  opacity: 0;
+  pointer-events: none;
+  animation: intro-fade-in 0.35s ease-in calc(var(--intro-length) - 0.35s) both;
+}
+
+/* Shared pieces */
+.intro-sky { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+
+/* One big word per scene, stamped on. */
+.intro-word {
+  position: absolute;
+  left: 50%;
+  bottom: 12vh;
+  z-index: 12;
+  margin: 0;
+  font-family: var(--ms-font-pixel);
+  font-size: clamp(1.75rem, min(9.5vw, 11vh), 6rem);
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: var(--ms-yellow);
+  text-shadow: 0.06em 0.06em 0 #b0431a, 0.12em 0.12em 0 #05061a;
+  animation: intro-stamp 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) 0.15s both;
+}
+@keyframes intro-stamp {
+  from { opacity: 0; transform: translateX(-50%) scale(3.4) rotate(-7deg); }
+  55% { opacity: 1; }
+  to { opacity: 1; transform: translateX(-50%) scale(1) rotate(-2deg); }
+}
+/* On the launch pad the rocket fills the middle, so the word sits in the sky on the right. */
+.intro-word--side {
+  left: auto;
+  right: 5vw;
+  bottom: auto;
+  top: 21vh;
+  transform-origin: 80% 50%;
+  animation-name: intro-stamp-side;
+}
+@keyframes intro-stamp-side {
+  from { opacity: 0; transform: scale(3.4) rotate(-7deg); }
+  55% { opacity: 1; }
+  to { opacity: 1; transform: scale(1) rotate(-2deg); }
+}
+
+/* A short label with its icon, under the top bar: a number, a place, "Did you know?". */
+.intro-chip {
+  position: absolute;
+  left: 50%;
+  top: 10vh;
+  z-index: 12;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.5em 0.9em;
+  font-family: var(--ms-font-pixel);
+  font-size: max(1.5em, 0.75rem);
+  line-height: 1.2;
+  white-space: nowrap;
+  color: #fff;
+  background: rgba(5, 6, 26, 0.85);
+  box-shadow: 0 0 0 0.15em var(--ms-yellow);
+  animation: intro-chip 0.3s steps(3, end) var(--at, 0s) both;
+}
+.intro-chip img { width: 1.7em; height: 1.7em; image-rendering: pixelated; }
+@keyframes intro-chip {
+  from { opacity: 0; transform: translateX(-50%) scale(0.3); }
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+/* Small bars with an icon each, in a row under the top bar. */
+.intro-meters {
+  position: absolute;
+  top: 10vh;
+  left: 50%;
+  z-index: 4;
+  width: 94vw;
+  margin: 0 0 0 -47vw;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6em 1.1em;
+}
+.intro-meters li { display: flex; align-items: center; gap: 0.5em; animation: intro-pop 0.25s steps(3, end) calc(1.2s + var(--i) * 0.14s) both; }
+.intro-meters img { width: 2.6em; height: 2.6em; image-rendering: pixelated; }
+.intro-meter { width: 4.2em; height: 1em; background: #05061a; box-shadow: 0 0 0 0.18em var(--px-edge); }
+.intro-meter span { display: block; height: 100%; background: var(--ms-green); transform-origin: left; }
+@keyframes intro-fill { from { transform: scaleX(0); } to { transform: scaleX(var(--fill, 0.92)); } }
+
+@keyframes intro-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes intro-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes intro-pop { from { opacity: 0; transform: scale(0.2); } to { opacity: 1; transform: scale(1); } }
+@keyframes intro-slam { from { opacity: 0; transform: scale(3); } to { opacity: 1; transform: scale(1); } }
+@keyframes intro-zoom { from { transform: scale(1.3); } to { transform: scale(1); } }
+@keyframes intro-pulse { from { transform: scale(1); } to { transform: scale(1.18); } }
+@keyframes intro-spin { to { transform: rotate(360deg); } }
+@keyframes intro-hop { 50% { transform: translateY(-1.2em); } }
+@keyframes intro-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-1.2vmin, 0.8vmin); }
+  40% { transform: translate(1.2vmin, -0.8vmin); }
+  60% { transform: translate(-0.8vmin, -0.6vmin); }
+  80% { transform: translate(0.8vmin, 0.6vmin); }
+}
+
+/* ------------------------------------------------------------------ 1. countdown (3.6 s) */
+
+.intro-ship--pad { align-self: end; margin-bottom: 14vh; }
+.intro-digit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  z-index: 5;
+  margin-top: -0.5em;
+  font-family: var(--ms-font-pixel);
+  font-size: min(42vh, 34vw);
+  line-height: 1;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0.05em 0.05em 0 var(--ms-accent-dark), 0.1em 0.1em 0 #05061a;
+  opacity: 0;
+  animation: intro-digit 0.8s ease-out calc(var(--i) * 0.8s) both;
+}
+@keyframes intro-digit {
+  0% { opacity: 0; transform: scale(2.4); }
+  18% { opacity: 1; transform: scale(1); }
+  75% { opacity: 1; transform: scale(0.94); }
+  100% { opacity: 0; transform: scale(0.7); }
+}
+/* Ignition: a ball of fire grows from the nozzle and fills the screen. */
+.intro-blast {
+  position: absolute;
+  left: 50%;
+  bottom: 14vh;
+  z-index: 6;
+  width: 10vmax;
+  height: 10vmax;
+  margin: 0 0 -5vmax -5vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #ffe38a 30%, #ff8a2a 55%, rgba(255, 80, 20, 0) 72%);
+  transform: scale(0);
+  animation: intro-blast 0.5s ease-in 2.5s both;
+}
+@keyframes intro-blast { from { transform: scale(0); } to { transform: scale(34); } }
+
+/* ------------------------------------------------------------------ 2. pad: build, then pack (10.8 s) */
+
+/* The game's launch pad picture, covering the window. TrailerReel.jsx sets its width, where its
+   left edge goes, and the rocket's scale, so the rocket and its tower fit any screen. */
+.intro-pad {
+  position: absolute;
+  left: var(--intro-pad-left, 0);
+  top: 50%;
+  width: var(--intro-pad-w, 100vw);
+  height: calc(var(--intro-pad-w, 100vw) * 9 / 16);
+  margin-top: calc(var(--intro-pad-w, 100vw) * -9 / 32);
+  transform-origin: 34% 72%;
+  transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+/* Packing: the camera pushes in on the rocket. */
+.intro-pad.is-pack { transform: scale(1.22); }
+.intro-pad__mount { position: absolute; left: 34%; top: 86%; transform: translate(-50%, -100%); }
+.intro .intro-pad__prep { --scale: var(--intro-pad-scale, 12); }
+/* The crane lowers the rocket (prep__swap in game.css, 1.25 s). Then the outside parts flash
+   white as they snap on: boosters, fuel tanks, heat shield. */
+.intro-pad .rocket__body > .rocket__layer:nth-child(n + 2) { animation: intro-snap 0.35s steps(4, end) both; }
+.intro-pad .rocket__body > .rocket__layer:nth-child(3) { animation-delay: 1.6s; }
+.intro-pad .rocket__body > .rocket__layer:nth-child(4) { animation-delay: 2.1s; }
+.intro-pad .rocket__body > .rocket__layer:nth-child(2) { animation-delay: 2.6s; }
+@keyframes intro-snap {
+  0% { opacity: 0; filter: brightness(6); }
+  40% { opacity: 1; filter: brightness(6); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+/* Building: money, mass, energy, thrust and heat fill up. */
+.intro-meters--build .intro-meter span { animation: intro-fill 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) calc(1.5s + var(--i) * 0.2s) both; }
+.intro-meters--build li:nth-child(2n) .intro-meter span { --fill: 0.62; background: var(--ms-accent); }
+.intro-meters--build li:nth-child(3n) .intro-meter span { --fill: 0.78; background: var(--ms-yellow); }
+/* Money: green, yellow, then red when too much is packed, and green again once it fits. */
+.intro-meters--build li:first-child .intro-meter span { animation: intro-budget 3.4s linear 1.2s both; }
+@keyframes intro-budget {
+  0% { transform: scaleX(0); background: var(--ms-green); }
+  30% { transform: scaleX(0.55); background: var(--ms-green); }
+  45% { transform: scaleX(0.8); background: var(--ms-yellow); }
+  60%, 85% { transform: scaleX(1); background: #e0443a; }
+  100% { transform: scaleX(0.7); background: var(--ms-green); }
+}
+.intro-meters--build li:first-child { animation: intro-pop 0.25s steps(3, end) 1.2s both, intro-alert 0.2s steps(2, end) 3.25s 4; }
+@keyframes intro-alert { 50% { transform: scale(1.25); } }
+/* Packing: crew, food, water and air fill one after another. */
+.intro-meters--life li { animation-delay: calc(0.2s + var(--i) * 0.14s); }
+.intro-meters--life .intro-meter span { animation: intro-fill 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) calc(0.7s + var(--i) * 0.75s) both; --fill: 1; }
+/* Cargo flies in from all around and shrinks into the hull. */
+.intro-cargo {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  z-index: 5;
+  width: 4.4em;
+  height: 4.4em;
+  margin: -2.2em;
+  image-rendering: pixelated;
+  opacity: 0;
+  animation: intro-cargo 0.55s ease-in calc(0.3s + var(--i) * 0.34s) both;
+}
+@keyframes intro-cargo {
+  0% { opacity: 0; transform: rotate(var(--a)) translateX(46vmin) rotate(calc(var(--a) * -1)) scale(1.6); }
+  20% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateX(0) rotate(calc(var(--a) * -1)) scale(0.3); }
+}
+
+/* ------------------------------------------------------------------ 3. aim (6.2 s) */
+
+/* Real game code scrolling by behind the Earth. A texture, not something to read. */
+.intro-code {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  margin: 0;
+  padding: 0 4vw;
+  column-count: 2;
+  column-gap: 4vw;
+  font: 0.8em/1.5 ui-monospace, Consolas, "Courier New", monospace;
+  white-space: pre;
+  overflow: hidden;
+  color: var(--ms-accent);
+  opacity: 0.2;
+  pointer-events: none;
+  animation: intro-code 6.4s linear both;
+}
+@keyframes intro-code { from { transform: translateY(4%); } to { transform: translateY(-38%); } }
+
+/* A square with the Earth, its launch bases, the dotted path and its target.
+   Positions inside are percentages set by TrailerReel.jsx (--x0/--y0 base, --x1/--y1 target). */
+.intro-aim { position: relative; z-index: 2; width: 40em; height: 40em; }
+.intro-aim > * { position: absolute; }
+.intro-aim__earth {
+  width: 19.2em;
+  height: 19.2em;
+  margin: -9.6em;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 1.6em rgba(79, 195, 255, 0.5));
+}
+/* The Earth spins: a dashed ring turning around it. */
+.intro-aim__spin {
+  width: 23.6em;
+  height: 23.6em;
+  margin: -11.8em;
+  border: 0.22em dashed rgba(138, 160, 232, 0.6);
+  border-radius: 50%;
+  animation: intro-spin 6s linear infinite;
+}
+.intro-aim__pin {
+  width: 2.6em;
+  height: 2.6em;
+  margin: -2.6em 0 0 -1.3em;
+  image-rendering: pixelated;
+  transform-origin: 50% 100%;
+  animation: intro-pop 0.2s steps(3, end) calc(0.3s + var(--i) * 0.22s) both;
+}
+.intro-aim__pin--chosen {
+  left: var(--x0);
+  top: var(--y0);
+  width: 4.4em;
+  height: 4.4em;
+  margin: -4.4em 0 0 -2.2em;
+  animation: intro-pop 0.2s steps(3, end) 2s both, intro-hop 0.5s steps(2, end) 2.2s 4;
+}
+.intro-aim__target {
+  left: var(--x1);
+  top: var(--y1);
+  width: 7em;
+  height: 7em;
+  margin: -3.5em;
+  image-rendering: pixelated;
+  animation: intro-pop 0.25s steps(3, end) 2.2s both, intro-pulse 0.5s ease-in-out 2.45s infinite alternate;
+}
+.intro-aim__dot {
+  width: 0.9em;
+  height: 0.9em;
+  margin: -0.45em;
+  background: var(--ms-yellow);
+  box-shadow: 0 0 0 0.16em #05061a;
+  opacity: 0;
+  animation: intro-pop 0.15s steps(2, end) calc(2.6s + var(--i) * 0.13s) both;
+}
+/* The hand drags the path from the base to the target. */
+.intro-aim__hand {
+  z-index: 3;
+  width: 5.5em;
+  height: 5.5em;
+  margin: -0.4em 0 0 -1.2em;
+  image-rendering: pixelated;
+  opacity: 0;
+  animation: intro-aim-drag 2.1s ease-in-out 2.4s both;
+}
+@keyframes intro-aim-drag {
+  0% { opacity: 0; left: var(--x0); top: var(--y0); transform: scale(1.5); }
+  10% { opacity: 1; left: var(--x0); top: var(--y0); transform: scale(1); }
+  50% { left: var(--xm); top: var(--ym); }
+  90% { opacity: 1; left: var(--x1); top: var(--y1); }
+  100% { opacity: 0; left: var(--x1); top: var(--y1); }
+}
+/* Then the rocket flies the same path. */
+.intro-aim__rocket {
+  z-index: 2;
+  width: 5.5em;
+  height: 5.5em;
+  margin: -2.75em;
+  image-rendering: pixelated;
+  opacity: 0;
+  animation: intro-aim-fly 1s ease-in 4.7s both;
+}
+@keyframes intro-aim-fly {
+  0% { opacity: 0; left: var(--x0); top: var(--y0); transform: rotate(0deg) scale(0.6); }
+  8% { opacity: 1; }
+  50% { left: var(--xm); top: var(--ym); transform: rotate(30deg) scale(1); }
+  92% { opacity: 1; }
+  100% { opacity: 0; left: var(--x1); top: var(--y1); transform: rotate(75deg) scale(0.7); }
+}
+
+/* ------------------------------------------------------------------ 4. launch (5.4 s) */
+
+/* A tall strip of sky, from daylight at the bottom to space at the top, sliding down. */
+.intro-launch__sky {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 400%;
+  background: linear-gradient(to top, #7fd0ff 0%, #2f7be0 24%, #1a2a7a 48%, #0b1030 68%, #04030e 100%);
+  animation: intro-climb 4.6s cubic-bezier(0.5, 0, 0.8, 0.7) both;
+}
+@keyframes intro-climb { from { transform: translateY(0); } to { transform: translateY(75%); } }
+.intro-launch__stars { opacity: 0; animation: intro-fade-in 1.4s linear 2.6s both; }
+.intro-cloud {
+  position: absolute;
+  top: -30vh;
+  z-index: 2;
+  width: 22em;
+  margin-left: -11em;
+  image-rendering: pixelated;
+  opacity: 0.9;
+  animation: intro-fall 0.85s linear calc(var(--i) * 0.19s) 3 both;
+}
+.intro-streak {
+  position: absolute;
+  top: -25vh;
+  z-index: 2;
+  width: 0.25em;
+  height: 22vh;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.75));
+  animation: intro-fall 0.32s linear calc(var(--i) * 0.07s) infinite;
+}
+@keyframes intro-fall { from { transform: translateY(0); } to { transform: translateY(170vh); } }
+.intro-ship--launch {
+  z-index: 3;
+  animation:
+    intro-rise 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) both,
+    intro-drift 1.1s ease-in-out 0.9s infinite alternate;
+}
+@keyframes intro-rise { from { transform: translateY(75vh); } to { transform: translateY(0); } }
+@keyframes intro-drift { from { transform: translateY(0); } to { transform: translateY(-4vh); } }
+/* Exhaust trail under the nozzle; it thins out once only the upper stage is left. */
+.intro-ship--launch::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 94%;
+  z-index: -1;
+  width: 18%;
+  height: 60vh;
+  margin-left: -9%;
+  background: linear-gradient(to bottom, rgba(255, 244, 190, 0.95), rgba(255, 138, 42, 0.7) 30%, rgba(255, 80, 20, 0) 100%);
+  filter: blur(0.3em);
+  transform-origin: top center;
+  animation: intro-flicker 0.1s steps(2, end) infinite;
+}
+.intro-ship--launch.is-upper::after { width: 8%; margin-left: -4%; top: 68%; }
+@keyframes intro-flicker { 50% { opacity: 0.75; transform: scaleX(0.8); } }
+
+/* ------------------------------------------------------------------ 5. orbit (4.6 s) */
+
+.intro-system { position: relative; width: 38em; height: 38em; animation: intro-zoom 4.6s ease-out both; }
+.intro-system__earth {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16em;
+  height: 16em;
+  margin: -8em;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 2em rgba(79, 195, 255, 0.55));
+}
+.intro-ring { position: absolute; left: 50%; top: 50%; border: 0.2em dashed rgba(138, 160, 232, 0.55); border-radius: 50%; }
+.intro-ring--low { width: 25em; height: 25em; margin: -12.5em; }
+.intro-ring--high { width: 34em; height: 34em; margin: -17em; }
+/* Each satellite sits at the end of an arm that spins around the Earth. */
+.intro-sat { position: absolute; left: 50%; top: 50%; width: 0; height: 0; animation: intro-spin var(--lap) linear var(--lead) infinite; }
+.intro-sat > * {
+  position: absolute;
+  left: var(--r);
+  top: 0;
+  width: var(--w, 4em);
+  height: var(--w, 4em);
+  margin: calc(var(--w, 4em) / -2);
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.intro-sat--gold { --r: 12.5em; --lap: 3.2s; --lead: -0.4s; }
+.intro-sat--junk { --r: 12.5em; --lap: 3.2s; --lead: -1.9s; --w: 2.8em; }
+.intro-sat--ship { --r: 12.5em; --lap: 3.2s; --lead: -2.7s; --w: 5em; }
+.intro-sat--ship > * { transform: rotate(180deg); }
+.intro-sat--comms { --r: 17em; --lap: 4.4s; --lead: -1.3s; --w: 4.5em; }
+.intro-sat--scope { --r: 17em; --lap: 4.4s; --lead: -3.5s; --w: 4.5em; }
+/* Gold satellite: 4 frames of 24 x 16 in one row. */
+.intro-sat > .intro-sat__gold {
+  width: 4.5em;
+  height: 3em;
+  margin: -1.5em -2.25em;
+  background-size: 400% 100%;
+  background-repeat: no-repeat;
+  animation: intro-gold 0.5s steps(4, end) infinite;
+}
+@keyframes intro-gold { from { background-position-x: 0%; } to { background-position-x: 133.333%; } }
+
+/* ------------------------------------------------------------------ 6. moon landing (5.4 s) */
+
+.intro-moon__earth { position: absolute; left: 12%; top: 18%; width: 7em; height: 7em; image-rendering: pixelated; }
+/* The Moon is so big that only its top shows, like a horizon. The sprite has an empty rim
+   2.9em tall, so the ground itself starts at 60% of the screen, where everything lands. */
+.intro-moon__ground {
+  position: absolute;
+  left: 50%;
+  top: calc(60% - 2.9em);
+  width: 90em;
+  height: 90em;
+  margin-left: -45em;
+  image-rendering: pixelated;
+  animation: intro-ground 0.8s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes intro-ground { from { transform: translateY(30vh); } to { transform: translateY(0); } }
+/* The lander comes down for 3.2 s, firing its engine three times (--burn keyframes below:
+   on from 10% to 28%, 40% to 62% and 74% to 97% of the way). */
+.intro-moon__lander {
+  position: absolute;
+  left: 50%;
+  top: 60%;
+  z-index: 3;
+  width: 9em;
+  height: 9em;
+  margin: -7.3em 0 0 -4.5em;
+  animation: intro-land 3.2s cubic-bezier(0.3, 0.45, 0.5, 1) both;
+}
+.intro-moon__lander img { position: relative; display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+@keyframes intro-land { from { transform: translateY(-62vh); } to { transform: translateY(0); } }
+.intro-moon__flame {
+  position: absolute;
+  left: 50%;
+  top: 78%;
+  width: 2.6em;
+  height: 5.5em;
+  margin-left: -1.3em;
+  border-radius: 40% 40% 50% 50%;
+  background: linear-gradient(to bottom, #fff4be 0%, #ff8a2a 45%, rgba(255, 80, 20, 0) 100%);
+  opacity: 0;
+  transform-origin: top center;
+  animation: intro-burn 3.2s steps(1, end) both, intro-flame 0.1s steps(2, end) infinite;
+}
+@keyframes intro-burn {
+  0%, 28%, 62%, 97%, 100% { opacity: 0; }
+  10%, 40%, 74% { opacity: 1; }
+}
+@keyframes intro-flame { 50% { transform: scale(0.7, 0.85); } }
+/* Fuel: the bar only goes down while the engine fires, and ends almost empty. */
+.intro-moon__fuel {
+  position: absolute;
+  left: 50%;
+  top: 10vh;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin-left: -8.5em;
+  animation: intro-fade-out 0.2s linear 3.3s both;
+}
+.intro-moon__fuel img { width: 3.2em; height: 3.2em; image-rendering: pixelated; }
+.intro-moon__fuel .intro-meter { width: 13em; height: 1.3em; }
+.intro-moon__fuel .intro-meter span { animation: intro-drain 3.2s linear both; }
+@keyframes intro-drain {
+  0%, 10% { transform: scaleX(1); background: var(--ms-green); }
+  28%, 40% { transform: scaleX(0.72); background: var(--ms-green); }
+  62%, 74% { transform: scaleX(0.38); background: var(--ms-yellow); }
+  97%, 100% { transform: scaleX(0.08); background: #e0443a; }
+}
+/* The player's hand: pressed while the engine fires. */
+.intro-moon__hand {
+  position: absolute;
+  left: calc(50% + 11em);
+  top: 34%;
+  z-index: 4;
+  width: 6.5em;
+  height: 6.5em;
+  image-rendering: pixelated;
+  animation: intro-press 3.2s steps(1, end) both, intro-fade-out 0.2s linear 3.3s both;
+}
+@keyframes intro-press {
+  0%, 28%, 62%, 97%, 100% { transform: scale(1); }
+  10%, 40%, 74% { transform: scale(0.78) translateY(0.6em); }
+}
+.intro-moon__dust {
+  position: absolute;
+  left: 50%;
+  top: 60%;
+  z-index: 2;
+  width: 18em;
+  height: 3.4em;
+  margin: -1.7em 0 0 -9em;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(225, 230, 245, 0.95), rgba(225, 230, 245, 0) 70%);
+  opacity: 0;
+  animation: intro-dust 0.6s ease-out 3.1s forwards;
+}
+@keyframes intro-dust {
+  from { opacity: 0.95; transform: scaleX(0.2); }
+  to { opacity: 0; transform: scaleX(1.7) translateY(-0.6em); }
+}
+/* Flag, footprints and ice stand on the flat top of the Moon, 14em to each side of the middle. */
+.intro-moon__prop { position: absolute; top: 60%; z-index: 3; width: 5em; height: 5em; margin-top: -4.6em; image-rendering: pixelated; }
+.intro-moon__prop--flag { left: calc(50% + 5.5em); animation: intro-pop 0.25s steps(3, end) 3.5s both; }
+.intro-moon__prop--steps { left: calc(50% - 8.5em); width: 3.4em; height: 3.4em; margin-top: -3.1em; animation: intro-pop 0.25s steps(3, end) 3.8s both; }
+.intro-moon__prop--ice { left: calc(50% - 14em); animation: intro-pop 0.25s steps(3, end) 4.1s both; }
+
+/* ------------------------------------------------------------------ 7. events (4.6 s) */
+
+.intro-events__moon {
+  position: absolute;
+  left: -12em;
+  bottom: -16em;
+  width: 42em;
+  height: 42em;
+  image-rendering: pixelated;
+  filter: brightness(0.75);
+  animation: intro-zoom 4.6s ease-out both;
+}
+/* Three cards, one each second: storm, meteor, radio silence. */
+.intro-events { position: relative; z-index: 3; margin: 0 0 8vh; padding: 0; list-style: none; display: flex; gap: 2.4em; }
+.intro-events li {
+  position: relative;
+  width: 13em;
+  height: 15em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.3em;
+  background: rgba(11, 16, 48, 0.94);
+  box-shadow: 0 0 0 0.3em var(--px-edge), 0 0 0 0.6em #05061a;
+  animation: intro-slam 0.3s cubic-bezier(0.2, 1.5, 0.4, 1) calc(0.2s + var(--i) * 1s) both;
+}
+.intro .intro-events__icon { display: block; width: 8em; height: 8em; }
+/* Each card's clock runs from the moment it lands until it is answered. */
+.intro-events__timer { width: 9.5em; height: 0.9em; background: #05061a; box-shadow: 0 0 0 0.18em var(--px-edge); }
+.intro-events__timer span {
+  display: block;
+  height: 100%;
+  background: var(--ms-yellow);
+  transform-origin: left;
+  animation: intro-timer calc(3s - var(--i) * 0.8s) linear calc(0.3s + var(--i) * 1s) both;
+}
+@keyframes intro-timer {
+  from { transform: scaleX(1); background: var(--ms-yellow); }
+  70% { background: var(--ms-yellow); }
+  to { transform: scaleX(0.1); background: #e0443a; }
+}
+.intro-events__ok {
+  position: absolute;
+  right: -1.4em;
+  top: -1.4em;
+  width: 5em;
+  height: 5em;
+  image-rendering: pixelated;
+  animation: intro-slam 0.25s cubic-bezier(0.2, 1.5, 0.4, 1) calc(3.3s + var(--i) * 0.2s) both;
+}
+/* The hand taps fast, just before the answers land. */
+.intro-events__hand {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 2em);
+  z-index: 5;
+  width: 6.5em;
+  height: 6.5em;
+  margin-left: -1em;
+  image-rendering: pixelated;
+  opacity: 0;
+  animation: intro-tap 0.75s steps(1, end) 2.75s forwards;
+}
+@keyframes intro-tap {
+  0%, 40%, 80% { opacity: 1; transform: scale(1); }
+  20%, 60% { opacity: 1; transform: scale(0.78) translateY(0.6em); }
+  100% { opacity: 0; }
+}
+
+/* ------------------------------------------------------------------ 8. mars (5.6 s) */
+
+/* The whole picture jolts when the rock blows up. */
+.intro-scene--mars { animation: intro-shake 0.45s steps(6, end) 1.6s; }
+.intro-mars__sky { filter: sepia(1) hue-rotate(-28deg) saturate(2.4) brightness(0.8); }
+.intro-mars__planet {
+  position: absolute;
+  right: -5em;
+  bottom: -7em;
+  width: 34em;
+  height: 34em;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 2.5em rgba(224, 100, 58, 0.5));
+  animation: intro-zoom 5.6s ease-out both;
+}
+.intro-mars__moon { position: absolute; width: 3.2em; height: 3.2em; image-rendering: pixelated; animation: intro-hop 1.4s ease-in-out infinite; }
+.intro-mars__moon--phobos { right: 30em; bottom: 16em; }
+.intro-mars__moon--deimos { right: 6em; bottom: 30em; animation-delay: -0.6s; }
+/* Asteroid: 8 frames of 32 x 32 in one row, tumbling while it crosses the screen. */
+.intro-rock {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  background-size: 256px 32px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  animation:
+    intro-rock-roll 0.56s steps(8) infinite,
+    intro-rock-fly 1.25s linear calc(var(--i) * 0.22s) 2 both;
+}
+@keyframes intro-rock-roll { to { background-position-x: -256px; } }
+@keyframes intro-rock-fly {
+  from { transform: translate(105vw, var(--y)) scale(calc(var(--size) * var(--intro-unit, 1))); }
+  to { transform: translate(-20vw, calc(var(--y) + var(--drop))) scale(calc(var(--size) * var(--intro-unit, 1))); }
+}
+/* The upper stage weaves between the rocks, nose toward Mars. */
+.intro-ship--mars {
+  --scale: calc(7 * var(--intro-unit, 1));
+  position: absolute;
+  left: 42%;
+  top: 46%;
+  z-index: 3;
+  margin: calc(-16px * var(--scale));
+  animation: intro-weave 3.2s ease-in-out both;
+}
+@keyframes intro-weave {
+  0% { transform: translate(-70vw, 24vh) rotate(62deg); }
+  35% { transform: translate(-12vw, -8vh) rotate(46deg); }
+  60% { transform: translate(-2vw, 9vh) rotate(84deg); }
+  100% { transform: translate(8vw, 0) rotate(62deg); }
+}
+/* Explosion: the first row of explosion_sheet.png, 8 frames of 32 x 32, played once. */
+.intro-boom {
+  position: absolute;
+  left: 60%;
+  top: 30%;
+  z-index: 4;
+  width: 32px;
+  height: 32px;
+  margin: -16px;
+  background-size: 256px 64px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  opacity: 0;
+  transform: scale(calc(8 * var(--intro-unit, 1)));
+  animation: intro-boom 0.6s steps(8) 1.6s forwards;
+}
+@keyframes intro-boom {
+  from { opacity: 1; background-position-x: 0; }
+  to { opacity: 1; background-position-x: -256px; }
+}
+.intro-mars__warn {
+  position: absolute;
+  left: 50%;
+  top: 22vh;
+  z-index: 4;
+  width: 6em;
+  height: 6em;
+  margin-left: -3em;
+  image-rendering: pixelated;
+  animation: intro-blink 0.25s steps(2, end) 6 both, intro-fade-out 0.2s linear 1.6s forwards;
+}
+@keyframes intro-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.1; } }
+/* The parachute opens in the thin air, then the rover is on the red rocks. */
+.intro-mars__gear { position: absolute; z-index: 3; width: 6em; height: 6em; image-rendering: pixelated; }
+.intro-mars__gear--chute { right: 17em; bottom: 23em; animation: intro-chute 0.8s ease-out 3s both; }
+.intro-mars__gear--rover { right: 11em; bottom: 19em; animation: intro-pop 0.25s steps(3, end) 3.8s both; }
+@keyframes intro-chute { from { opacity: 0; transform: translateY(-45vh); } 25% { opacity: 1; } to { opacity: 1; transform: translateY(0); } }
+
+/* ------------------------------------------------------------------ 9. fact: blue sunset on Mars (5 s) */
+
+.intro-fact__dusk { position: absolute; inset: 0; background: linear-gradient(to bottom, #241722 0%, #5e3b33 40%, #b27a55 72%, #c98c5f 100%); }
+/* The sky turns blue around the Sun as it goes down. */
+.intro-fact__blue {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 62% 56% at 50% 64%, rgba(205, 232, 255, 0.95) 0%, rgba(110, 165, 235, 0.85) 22%, rgba(60, 100, 180, 0.5) 48%, rgba(40, 60, 120, 0) 78%);
+  opacity: 0;
+  animation: intro-fade-in 2.6s ease-in 0.5s both;
+}
+.intro-fact__sun {
+  position: absolute;
+  left: 50%;
+  top: 32%;
+  width: 9em;
+  height: 9em;
+  margin: -4.5em;
+  image-rendering: pixelated;
+  animation: intro-sunset 5s linear both;
+}
+@keyframes intro-sunset {
+  from { transform: translateY(0); filter: saturate(1) brightness(1); }
+  to { transform: translateY(27vh); filter: saturate(0.25) brightness(1.5); }
+}
+/* Dark Mars ground against the low Sun: pixel-step dunes, flat at 66% of the screen where the
+   rover drives. */
+.intro-fact__ground {
+  position: absolute;
+  inset: calc(66% - 3em) 0 0;
+  background: linear-gradient(to bottom, #4d2418 0%, #2b130d 55%, #1c0c08 100%);
+  clip-path: polygon(
+    0 1.5em, calc(50% - 26em) 1.5em, calc(50% - 26em) 2.25em, calc(50% - 21em) 2.25em,
+    calc(50% - 21em) 3em, calc(50% + 4em) 3em, calc(50% + 4em) 2.25em, calc(50% + 10em) 2.25em,
+    calc(50% + 10em) 1.5em, calc(50% + 18em) 1.5em, calc(50% + 18em) 0.75em, calc(50% + 27em) 0.75em,
+    calc(50% + 27em) 1.5em, 100% 1.5em, 100% 100%, 0 100%
+  );
+}
+.intro-fact__rover {
+  position: absolute;
+  left: calc(50% - 17em);
+  top: 66%;
+  z-index: 3;
+  width: 8em;
+  height: 8em;
+  margin-top: -7.1em;
+  image-rendering: pixelated;
+  filter: brightness(0.55);
+  animation: intro-drive 5s linear both;
+}
+@keyframes intro-drive { from { transform: translateX(0); } to { transform: translateX(9em); } }
+.intro-scene--fact .intro-chip { top: 15vh; font-size: max(2.2em, 0.875rem); }
+
+/* ------------------------------------------------------------------ 10. ranks (4.2 s) */
+
+.intro-ranks { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 2.4em; margin-bottom: 8vh; }
+/* One star every 0.2 s. A badge lands with the star that earns it (--i = that star). */
+.intro-ranks__stars { display: flex; gap: 0.8em; }
+.intro-ranks__stars img {
+  width: 4.6em;
+  height: 4.6em;
+  image-rendering: pixelated;
+  animation: intro-slam 0.25s cubic-bezier(0.2, 1.5, 0.4, 1) calc(0.2s + var(--i) * 0.2s) both;
+}
+.intro-ranks__badges { display: flex; gap: 2.4em; }
+.intro-ranks__badges img {
+  width: 11em;
+  height: 11em;
+  image-rendering: pixelated;
+  animation: intro-slam 0.35s cubic-bezier(0.2, 1.5, 0.4, 1) calc(0.3s + var(--i) * 0.2s) both;
+}
+.intro-ranks__badges img:last-child {
+  filter: drop-shadow(0 0 1.2em rgba(255, 210, 63, 0.85));
+  animation:
+    intro-slam 0.35s cubic-bezier(0.2, 1.5, 0.4, 1) calc(0.3s + var(--i) * 0.2s) both,
+    intro-pulse 0.45s ease-in-out 1.9s infinite alternate;
+}
+/* What comes next, still locked: Saturn and the black hole. */
+.intro-ranks__next { position: absolute; top: 9vh; z-index: 2; width: 10em; height: 10em; animation: intro-pop 0.3s steps(3, end) both; }
+.intro-ranks__next > img:first-child { display: block; width: 100%; height: 100%; image-rendering: pixelated; filter: brightness(0.4) saturate(0.6); }
+.intro-ranks__lock { position: absolute; left: 50%; top: 50%; width: 4.4em; height: 4.4em; margin: -2.2em; image-rendering: pixelated; }
+.intro-ranks__next--saturn { left: 5vw; animation-delay: 2.3s; }
+.intro-ranks__next--hole { right: 5vw; animation-delay: 2.6s; }
+
+/* ------------------------------------------------------------------ 11. finale (4.6 s) */
+
+.intro-finale__hole { position: absolute; inset: 0; }
+/* Sits a little above the middle, so the black hole glows under the player's name. */
+.intro-finale { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 1.8em; margin-bottom: 14vh; }
+.intro-finale__planets { display: flex; align-items: center; gap: 1.2em; }
+.intro-finale__planets img {
+  width: 5.6em;
+  height: 5.6em;
+  image-rendering: pixelated;
+  animation: intro-slam 0.3s cubic-bezier(0.2, 1.5, 0.4, 1) calc(var(--i) * 0.15s) both;
+}
+.intro-finale__logo { animation: intro-slam 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) 0.8s both; }
+.intro-finale__logo .brand--wordmark { gap: 1.2em; }
+.intro-finale__logo .brand__mark { width: 7em; height: 7em; }
+.intro-finale__logo .brand__name { font-size: 1.9em; text-shadow: 0.16em 0.16em 0 #1a2260; }
+.intro-finale__logo .brand__name span { font-size: 0.8em; }
+/* The player's name, big, as the last thing on screen. */
+.intro-finale__who {
+  max-width: 92vw;
+  margin: 0;
+  font-family: var(--ms-font-pixel);
+  font-size: clamp(1.25rem, min(5vw, 8vh), 3.25rem);
+  line-height: 1.4;
+  text-align: center;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  color: var(--ms-yellow);
+  text-shadow: 0.06em 0.06em 0 #b0431a, 0.12em 0.12em 0 #05061a;
+  animation: intro-slam 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) 2s both, intro-glow 0.5s steps(2, end) 2.4s infinite;
+}
+@keyframes intro-glow { 50% { color: #fff; } }
+/* Stars shoot out from the middle when the name lands. */
+.intro-burst { position: absolute; left: 50%; top: 50%; z-index: 3; width: 0; height: 0; }
+.intro-burst img {
+  position: absolute;
+  width: 2.8em;
+  height: 2.8em;
+  margin: -1.4em;
+  image-rendering: pixelated;
+  opacity: 0;
+  animation: intro-burst 0.9s ease-out 2s forwards;
+}
+@keyframes intro-burst {
+  from { opacity: 1; transform: rotate(var(--a)) translateX(2em) scale(0.4); }
+  to { opacity: 0; transform: rotate(var(--a)) translateX(48vmin) scale(1.5); }
+}
+
+/* Reduced motion: each scene is a still picture. The cuts, the sounds and the voice stay. */
+@media (prefers-reduced-motion: reduce) {
+  .intro-scene,
+  .intro-scene *,
+  .intro-scene::after,
+  .intro-scene *::after,
+  .intro-voice span {
+    animation-duration: 0.01s !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+  }
+  .intro-pad { transition: none; }
+}
