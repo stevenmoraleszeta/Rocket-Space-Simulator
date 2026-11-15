@@ -9,6 +9,7 @@ import launchBase from '../assets/images/rockets/launch_base.png';
 import { EMPTY_LOADOUT, PARTS, partCount, partMax } from './parts.js';
 import { METER_ICONS } from './meterIcons.js';
 import { PadClouds } from './PadClouds.jsx';
+import { PadFlag } from './PadFlag.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
 import { LaunchSequence } from './LaunchSequence.jsx';
@@ -223,6 +224,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
         <div className="stage__frame">
           <img className="stage__bg" src={launchPad} alt="" />
           <PadClouds />
+          <PadFlag />
           <div className="stage__mount">
             <div className="prep">
               <LaunchTower launching={launching} />

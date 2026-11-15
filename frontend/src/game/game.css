@@ -49,6 +49,13 @@
 
 /* Clouds drift across the pad sky. Each lane is as wide as the frame, so
    translateX(100%) carries its cloud from just off the left edge to past the right. */
+/* Waving flag on its pole beside the communications station (see PadFlag.jsx). */
+.pad-flag {
+  position: absolute;
+  height: auto;
+  image-rendering: pixelated;
+}
+
 .clouds {
   position: absolute;
   inset: 0;
