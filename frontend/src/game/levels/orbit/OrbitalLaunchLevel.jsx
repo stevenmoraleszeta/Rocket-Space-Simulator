@@ -154,7 +154,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     rocketLit: loadImage(ASSETS.rocketLit.src),
     rocketOff: loadImage(ASSETS.rocketIdle.src),
     explosion: loadImage(ASSETS.explosion.src),
-    satellite: loadImage(ASSETS.satellite.src),
+    asteroid: loadImage(ASSETS.asteroid.src),
   }))
 
   const finishFlight = () => {

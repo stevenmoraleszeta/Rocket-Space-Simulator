@@ -28,11 +28,10 @@ const EARTH_SPRITE_BODY = { x: 16, y: 16, size: 224 }
 const DOT_SPACING_PIXELS = 11
 const DOT_SIZE_PIXELS = 5
 const SATELLITE_SIZE_PIXELS = 10
-const SATELLITE_FRAME_WIDTH = 24
-const SATELLITE_FRAME_HEIGHT = 16
-const SATELLITE_FRAME_COUNT = 4
-const SATELLITE_FRAMES_PER_SECOND = 6
-const SATELLITE_DRAW_SCALE = 1.25
+const ASTEROID_FRAME_SIZE = 32
+const ASTEROID_FRAME_COUNT = 8
+const ASTEROID_FRAMES_PER_SECOND = 8
+const ASTEROID_DRAW_SIZE = 24
 const ROCKET_DRAW_SIZE = 40
 const EXPLOSION_FRAME_SIZE = 32
 const EXPLOSION_FRAME_COUNT = 8
@@ -151,15 +150,13 @@ function drawEarth(ctx, view, images) {
   }
 }
 
-/** Animated satellite sprite. Each satellite starts on a different frame so they don't blink together. */
-function drawSatelliteSprite(ctx, screen, image, clockSeconds, index) {
-  const frame = (Math.floor(clockSeconds * SATELLITE_FRAMES_PER_SECOND) + index) % SATELLITE_FRAME_COUNT
-  const width = SATELLITE_FRAME_WIDTH * SATELLITE_DRAW_SCALE
-  const height = SATELLITE_FRAME_HEIGHT * SATELLITE_DRAW_SCALE
+/** Spinning asteroid sprite. Each one starts on a different frame so they don't all turn in step. */
+function drawAsteroidSprite(ctx, screen, image, clockSeconds, index) {
+  const frame = (Math.floor(clockSeconds * ASTEROID_FRAMES_PER_SECOND) + index * 3) % ASTEROID_FRAME_COUNT
   ctx.drawImage(
     image,
-    frame * SATELLITE_FRAME_WIDTH, 0, SATELLITE_FRAME_WIDTH, SATELLITE_FRAME_HEIGHT,
-    Math.round(screen.x - width / 2), Math.round(screen.y - height / 2), width, height,
+    frame * ASTEROID_FRAME_SIZE, 0, ASTEROID_FRAME_SIZE, ASTEROID_FRAME_SIZE,
+    Math.round(screen.x - ASTEROID_DRAW_SIZE / 2), Math.round(screen.y - ASTEROID_DRAW_SIZE / 2), ASTEROID_DRAW_SIZE, ASTEROID_DRAW_SIZE,
   )
 }
 
@@ -175,8 +172,8 @@ function drawSatellites(ctx, view, satellites, timeSeconds, images, clockSeconds
     const screen = worldToScreen(view, world.x, world.y)
     // Danger zone around the satellite
     drawCircle(ctx, screen.x, screen.y, SATELLITE_SIZE_PIXELS, COLORS.danger)
-    if (images?.satellite?.complete && images.satellite.naturalWidth > 0) {
-      drawSatelliteSprite(ctx, screen, images.satellite, clockSeconds ?? 0, index)
+    if (images?.asteroid?.complete && images.asteroid.naturalWidth > 0) {
+      drawAsteroidSprite(ctx, screen, images.asteroid, clockSeconds ?? 0, index)
     } else {
       // Fallback while the sprite loads: a plain pixel square.
       ctx.fillStyle = COLORS.satellite
@@ -329,7 +326,7 @@ function orbitingPoint(outcome, secondsAfterInsertion) {
 /**
  * Draws one frame.
  * scene: { step, orbits, selectedOrbitId, arrival, satellites, prediction, aimPoint, flight, images, clockSeconds }
- *   clockSeconds: real time in seconds, drives sprite animations (satellites)
+ *   clockSeconds: real time in seconds, drives sprite animations (spinning asteroids)
  *   flight: { simTime, realSecondsSinceEnd } while flying or after the end
  */
 export function drawOrbitScene(ctx, view, scene) {
