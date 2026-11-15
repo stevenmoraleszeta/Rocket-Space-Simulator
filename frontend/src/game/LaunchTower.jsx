@@ -3,12 +3,12 @@
  * tower (Apollo's launch umbilical tower, kept by the SLS mobile launcher) with a hammerhead
  * crane and a lightning mast on top.
  *
- * It holds the rocket at the same points NASA's tower does. Every coordinate is in pixels of the
- * 32 × 32 rocket sprite, so the arms touch the hull at these rows at any --scale:
- *   crew access arm   rows 4–6   the capsule
- *   stage umbilical   rows 13–15 the joint where the rear stage separates in space
- *   core umbilical    rows 19–21 the lower body (fuel and power lines)
- * Each arm is a plain 3-pixel strip of medium gray steel.
+ * Every coordinate is in pixels of the 32 × 32 rocket sprite, so the arms touch the hull at these
+ * rows at any --scale (arms sit behind the rocket, so where the hull is wider it covers their tip).
+ * All three hold the upper part of the rocket, each a plain 3-pixel strip of medium gray steel:
+ *   crew access arm   rows 3–5   the capsule, just under the nose
+ *   upper arm         rows 7–9   the upper stage
+ *   stage arm         rows 11–13 above the joint where the rear stage separates in space
  * The hold-down posts on the fins are part of launch_base.png.
  *
  * launching: the arms swing back into the tower before liftoff (see .tower__arm in game.css).
@@ -39,9 +39,9 @@ const COLORS = {
 /** Arms: top row and x where they touch the rocket hull. All of them are ARM_THICKNESS rows tall. */
 const ARM_THICKNESS = 3;
 const ARMS = [
-  { id: 'crew', top: 4, hullX: 20 },
-  { id: 'stage', top: 13, hullX: 21 },
-  { id: 'core', top: 19, hullX: 22 },
+  { id: 'crew', top: 3, hullX: 19 },
+  { id: 'upper', top: 7, hullX: 21 },
+  { id: 'stage', top: 11, hullX: 21 },
 ];
 
 function px(x, y, color, w = 1, h = 1, key = `${x},${y},${color}`) {

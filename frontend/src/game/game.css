@@ -791,8 +791,8 @@
 }
 
 .tower.is-launching .tower__arm--crew { animation-delay: 0s; }
-.tower.is-launching .tower__arm--stage { animation-delay: 0.08s; }
-.tower.is-launching .tower__arm--core { animation-delay: 0.16s; }
+.tower.is-launching .tower__arm--upper { animation-delay: 0.08s; }
+.tower.is-launching .tower__arm--stage { animation-delay: 0.16s; }
 
 @keyframes tower-arm-retract {
   from { transform: scaleX(1); }
