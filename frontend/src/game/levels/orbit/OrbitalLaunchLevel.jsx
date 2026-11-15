@@ -26,7 +26,6 @@ import { aimFromPointer, initialAim, siteAngleOf } from './orbitAiming.js'
 import {
   createView,
   drawOrbitScene,
-  mapRotationAt,
   flightPoseAt,
   siteScreenPosition,
   worldToScreen,
@@ -120,20 +119,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const [telemetry, setTelemetry] = useState(null)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600, pixelRatio: 1 })
 
-  // The map turns slowly (mapRotationAt). The canvas turns every frame; the launch base buttons
-  // follow ten times a second. With reduced motion the map stays still.
-  const [reduceMotion] = useState(() => Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches))
-  const rotationNow = () => (reduceMotion ? 0 : mapRotationAt(performance.now() / 1000))
-  const [mapRotation, setMapRotation] = useState(rotationNow)
-  useEffect(() => {
-    if (reduceMotion) return undefined
-    const timer = setInterval(() => setMapRotation(mapRotationAt(performance.now() / 1000)), 100)
-    return () => clearInterval(timer)
-  }, [reduceMotion])
-  const view = useMemo(
-    () => createView(canvasSize.width, canvasSize.height, mapRotation),
-    [canvasSize, mapRotation],
-  )
+  const view = useMemo(() => createView(canvasSize.width, canvasSize.height), [canvasSize])
   const site = LAUNCH_SITES.find((candidate) => candidate.id === siteId) ?? null
   // First level: no orbit choice. The satellite always aims for the hardest arrival orbit.
   const orbit = useMemo(() => hardestOrbit(), [])
@@ -201,7 +187,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   // The draw loop is created once and reads the latest state through this ref.
   const sceneRef = useRef(null)
   useLayoutEffect(() => {
-    sceneRef.current = { step, view, orbitId: orbit.id, orbitsForSite, arrival, aimPoint, prediction, images, finishFlight, canvasSize, reduceMotion }
+    sceneRef.current = { step, view, orbitId: orbit.id, orbitsForSite, arrival, aimPoint, prediction, images, finishFlight, canvasSize }
   })
 
   // Resize the canvas to its box (sharp on high-DPI screens).
@@ -255,8 +241,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
         }
 
         simTimeRef.current = flight?.simTime ?? 0
-        const turnedView = { ...current.view, rotation: current.reduceMotion ? 0 : mapRotationAt(now / 1000) }
-        drawOrbitScene(ctx, turnedView, {
+        drawOrbitScene(ctx, current.view, {
           step: current.step,
           orbits: current.orbitsForSite,
           selectedOrbitId: current.orbitId,
@@ -290,7 +275,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   }
 
   const aimAt = (point) => {
-    const nextAim = aimFromPointer(site, siteScreenPosition(view, site), point.x, point.y, view.aimMaxPixels, view.rotation)
+    const nextAim = aimFromPointer(site, siteScreenPosition(view, site), point.x, point.y, view.aimMaxPixels)
     if (nextAim) {
       setAim(nextAim)
       setAimPoint(point)
@@ -336,8 +321,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
 
   const handlePointerUp = () => {
     draggingRef.current = false
-    // The map keeps turning, so a crosshair left behind would drift away from the base.
-    setAimPoint(null)
   }
 
   // ---------------------------------------------------------------- steps

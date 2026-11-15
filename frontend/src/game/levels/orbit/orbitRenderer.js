@@ -32,6 +32,8 @@ const DOT_SIZE_PIXELS = 5
 const SATELLITE_SIZE_PIXELS = 10
 /** Before the launch satellites are only small dots of their type's color. */
 const SATELLITE_DOT_RADIUS_PIXELS = 4
+/** The Earth turns by changing sprite frames (ASSETS.earthSpin): seconds each frame is shown. */
+const EARTH_SPIN_SECONDS_PER_FRAME = 0.4
 /** Body of the planet inside one 32 x 32 spin frame (same area as EARTH_SPRITE_BODY, in blocks). */
 const EARTH_SPIN_BODY = { x: 2, y: 2, size: 28 }
 /**
@@ -70,19 +72,7 @@ const COLORS = {
 }
 
 /** Builds the view for a canvas area: the whole Earth plus the highest drawn altitude fit inside. */
-/**
- * The map turns slowly, like the Earth: launch bases, satellites, orbits and the trajectory all
- * turn together (a camera turning around the planet), so the physics does not change.
- * The Earth sprite steps through its spin frames in step with this turn.
- */
-export const MAP_TURN_SECONDS = 60
-
-/** Turn of the map (radians, counterclockwise as seen from above the North Pole) at a time in seconds. */
-export function mapRotationAt(seconds) {
-  return ((seconds / MAP_TURN_SECONDS) % 1) * Math.PI * 2
-}
-
-export function createView(width, height, rotation = 0) {
+export function createView(width, height) {
   const smallerSide = Math.min(width, height)
   const earthRadiusPixels = (smallerSide / 2 / (1 + ALTITUDE_DISPLAY_MAX_EARTH_RADII)) * 0.94
   return {
@@ -92,7 +82,6 @@ export function createView(width, height, rotation = 0) {
     centerY: height / 2,
     earthRadiusPixels,
     aimMaxPixels: smallerSide * AIM_MAX_VIEW_FRACTION,
-    rotation,
   }
 }
 
@@ -110,14 +99,14 @@ export function orbitRingRadius(view, altitudeKm) {
 /** World point (meters) → screen point (pixels). */
 export function worldToScreen(view, x, y) {
   const radius = Math.hypot(x, y)
-  const angle = Math.atan2(y, x) + (view.rotation ?? 0)
+  const angle = Math.atan2(y, x)
   const screenRadius = view.earthRadiusPixels + displayAltitudePixels(view, radius - EARTH_RADIUS_METERS)
   return { x: view.centerX + screenRadius * Math.cos(angle), y: view.centerY - screenRadius * Math.sin(angle) }
 }
 
 /** Angle around the Earth (world radians) of a screen point. */
 export function screenToWorldAngle(view, screenX, screenY) {
-  return Math.atan2(-(screenY - view.centerY), screenX - view.centerX) - (view.rotation ?? 0)
+  return Math.atan2(-(screenY - view.centerY), screenX - view.centerX)
 }
 
 /** Screen position of a launch site on the rim of the Earth. */
@@ -172,9 +161,7 @@ function drawEarth(ctx, view, images, clockSeconds = 0) {
   if (spin?.complete && spin.naturalWidth > 0) {
     // Turning planet: step through the frames of the spin sheet, like any pixel-art animation.
     const sheet = ASSETS.earthSpin
-    // Same turn as the map, so the bases ride along with the continents.
-    const turn = ((view.rotation ?? 0) / (Math.PI * 2)) % 1
-    const frame = Math.floor(turn * sheet.frames) % sheet.frames
+    const frame = Math.floor(clockSeconds / EARTH_SPIN_SECONDS_PER_FRAME) % sheet.frames
     ctx.drawImage(
       spin,
       frame * sheet.frameWidth + EARTH_SPIN_BODY.x, EARTH_SPIN_BODY.y, EARTH_SPIN_BODY.size, EARTH_SPIN_BODY.size,
