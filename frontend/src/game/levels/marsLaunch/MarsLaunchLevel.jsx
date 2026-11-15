@@ -23,6 +23,7 @@ import { ASSETS } from '../../rendering/assetManifest.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { FOOD_AND_WATER_FAILURES, hasAllFoodAndWater } from './marsSupplies.js'
+import { PARTS, partMax } from '../../parts.js'
 import { flightNotes } from '../../flightSummary.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
@@ -60,6 +61,11 @@ import { SitePin } from '../orbit/SitePin.jsx'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
 import { PixelIcon } from '../../PixelIcon.jsx'
+
+/** How many food and water packs the hangar allows (parts.js). */
+const PACK_MAXIMA = Object.fromEntries(
+  ['food', 'water'].map((id) => [id, partMax(PARTS.find((part) => part.id === id) ?? {})]),
+)
 
 /** The whole cruise plays in this many real seconds. */
 const FLIGHT_PLAYBACK_SECONDS = 7
@@ -230,7 +236,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
   const sequenceFailure = anyFailure?.at === 'climb' ? null : anyFailure
   // Packing every food pack and every water pack means the crew never starves or runs dry on
   // this trip: only other troubles (air, sickness, crashes) can end it.
-  const fullyStocked = useMemo(() => hasAllFoodAndWater(equipped), [equipped])
+  const fullyStocked = useMemo(() => hasAllFoodAndWater(equipped, PACK_MAXIMA), [equipped])
   const supplyFailure = useMemo(() => {
     const failure = flightSupplyFailure(equipped, mission)
     return failure && fullyStocked && FOOD_AND_WATER_FAILURES.has(failure.id) ? null : failure
