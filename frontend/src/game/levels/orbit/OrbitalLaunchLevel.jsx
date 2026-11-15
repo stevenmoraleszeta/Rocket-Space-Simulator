@@ -28,6 +28,7 @@ import { flightNotes } from '../../flightSummary.js'
 import { planScore, pathById } from '../../design/missionPlan.js'
 import { LAUNCH_FAILURES, flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { LAUNCH_SITES } from './launchSites.js'
+import { useLaunchRoute } from './useLaunchRoute.js'
 import { MissionCompleteScreen } from './MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from './MissionFailedScreen.jsx'
 import { EXPLODING_OUTCOMES, OUTCOMES, arrivalPosition, degreesToRadians, satellitePositionAt, simulateLaunch } from './launchSimulation.js'
@@ -130,7 +131,7 @@ function describePrediction(prediction) {
 /** How close (screen pixels) a tap must land to a satellite to open its card. */
 const SATELLITE_TAP_PIXELS = 18
 
-export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBackToHangar, onExit }) {
+export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launchPlace, onLaunchPlace, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
   // No boosters: the dotted path still shows the planned flight (as if they were there).
@@ -140,10 +141,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
     [equipped],
   )
 
-  const [step, setStep] = useState('site')
+  const { step, setStep, siteId, setSiteId } = useLaunchRoute(launchPlace, onLaunchPlace)
   // Same tracks as the hangar flight: intense music, plus the space ambience once the rocket flies.
   useSoundtrack(step === 'flight' || step === 'result' ? { music: MUSIC.flight, ambient: AMBIENCE.space } : { music: MUSIC.flight })
-  const [siteId, setSiteId] = useState(null)
   const [arrivalAngle, setArrivalAngle] = useState(null)
   const [aim, setAim] = useState(null)
   const [aimPoint, setAimPoint] = useState(null)
@@ -165,6 +165,13 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
     return hardestOrbit()
   }, [design])
   const siteCheck = site ? checkTargetFromSite(site, orbit) : null
+  // A refresh on the aim tab has the base, but the drag handle is built when Next is pressed.
+  useEffect(() => {
+    if (step !== 'aim' || aim || !site) return
+    const angle = siteAngleOf(site) + degreesToRadians(SUGGESTED_ARRIVAL_OFFSET_DEG)
+    setArrivalAngle(angle)
+    setAim(initialAim(site, arrivalPosition(orbit.altitudeKm, angle)))
+  }, [step, aim, site, orbit])
   const rotationBoost = rotationBoostForInclination(orbit.inclinationDeg)
   const arrival = useMemo(
     () => (orbit && arrivalAngle !== null ? arrivalPosition(orbit.altitudeKm, arrivalAngle) : null),

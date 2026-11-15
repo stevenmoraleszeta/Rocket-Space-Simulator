@@ -9,6 +9,7 @@ import { SPRITES } from '../levels';
 import { SFX, playSfx } from '../audio';
 import { PlanetHorizon } from './PlanetHorizon.jsx';
 import { Rocket } from './Rocket.jsx';
+import { t } from '../i18n/index.js';
 import { outsideTemperatureCelsius, rocketSkinCelsius } from './lifeSupport.js';
 import './ascent.css';
 
@@ -114,7 +115,7 @@ export function AscentScene({ equipped, hud, overheating = false, fallingBack = 
       </div>
       {exploded && failureMessage && (
         <div className="launch-boom" role="alert">
-          <p className="launch-boom__title">Boom!</p>
+          <p className="launch-boom__title">{t('Boom!')}</p>
           <p className="launch-boom__text">{failureMessage}</p>
         </div>
       )}
@@ -122,13 +123,13 @@ export function AscentScene({ equipped, hud, overheating = false, fallingBack = 
         {hud}
         <p className="flight__status ascent__status">
           {overheating
-            ? 'Too hot! There is no heat shield…'
+            ? t('Too hot! There is no heat shield…')
             : fallingBack
-              ? 'Not enough push! The rocket is losing height…'
-              : 'Leaving the atmosphere…'}
+              ? t('Not enough push! The rocket is losing height…')
+              : t('Leaving the atmosphere…')}
         </p>
         <p className="flight__status ascent__status">
-          {`Outside ${outside}°C · Cabin ${cabin}°C · Rocket ${skin}°C`}
+          {t('Outside {{out}}°C · Cabin {{cabin}}°C · Rocket {{skin}}°C', { out: outside, cabin, skin })}
         </p>
       </div>
     </div>

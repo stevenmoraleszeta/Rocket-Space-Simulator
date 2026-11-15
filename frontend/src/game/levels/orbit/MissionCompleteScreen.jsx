@@ -6,6 +6,7 @@
  */
 import { useEffect, useRef } from 'react'
 import { MISSIONS, Planet, StarRating } from '../../../levels'
+import { t } from '../../../i18n/index.js'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { MissionReport } from '../../design/MissionReport.jsx'
@@ -34,12 +35,12 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
       </div>
 
       <div className="mission-complete__card">
-        <p className="mission-complete__kicker">Mission {mission.number} · {mission.title}</p>
+        <p className="mission-complete__kicker">{t('Mission {{number}} · {{place}}', { number: mission.number, place: t(mission.title) })}</p>
         <h2 id="mission-complete-title" className="mission-complete__title">
-          {playerName ? sayTo(playerName, 'You did it!') : 'You did it!'}
+          {playerName ? sayTo(playerName, t('You did it!')) : t('You did it!')}
         </h2>
         <p className="mission-complete__lead">
-          {sayTo(playerName, lead ?? 'Your satellite is flying around the Earth.')}
+          {sayTo(playerName, t(lead ?? 'Your satellite is flying around the Earth.'))}
         </p>
 
         <div className="mission-complete__stars">

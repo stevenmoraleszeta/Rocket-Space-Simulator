@@ -6,72 +6,88 @@
  *   Level 3  MoonLaunchLevel     pick a base, the day and the aim, fly to the Moon, map it (mission 2)
  *   Level 4  MarsLaunchLevel     aim at exactly 135.55°, launch, cruise past debris to Mars (mission 3)
  *
- * Launch in the hangar hands the rocket to the next implemented stage of the mission (stages.js).
- * That stage plays the liftoff animation (LaunchSequence.jsx) when the rocket really leaves.
+ * Which of those screens is open comes from the URL (appRoute.js), so a refresh
+ * stays on the same tab. Launch in the hangar hands the rocket to the next
+ * implemented stage. That stage plays the liftoff animation (LaunchSequence.jsx)
+ * when the rocket really leaves.
  */
-import { useState } from 'react'
+import { useCallback, useMemo } from 'react'
+import { packFromLoadout } from '../lib/appRoute.js'
 import { GameScreen } from './GameScreen.jsx'
+import { EMPTY_LOADOUT } from './parts.js'
 import { OrbitalLaunchLevel } from './levels/orbit/OrbitalLaunchLevel.jsx'
 import { MoonLaunchLevel } from './levels/moon/MoonLaunchLevel.jsx'
 import { MarsLaunchLevel } from './levels/marsLaunch/MarsLaunchLevel.jsx'
-import { STAGE_IDS, STAGE_INFO, getFirstStage, getNextStage } from './stages.js'
+import { STAGE_IDS, STAGE_INFO, getNextStage } from './stages.js'
 
-export function MissionFlow({ mission, onExit, onNextMission }) {
-  const [stageId, setStageId] = useState(() => getFirstStage(mission.id))
-  // Rocket built in the hangar, handed to the launch stage.
-  const [equipped, setEquipped] = useState(null)
-
-  if (stageId === STAGE_IDS.ORBITAL_LAUNCH && equipped) {
-    return (
-      <OrbitalLaunchLevel
-        mission={mission}
-        stageInfo={STAGE_INFO[stageId]}
-        equipped={equipped}
-        onBackToHangar={() => setStageId(STAGE_IDS.BUILD_AND_LAUNCH)}
-        onExit={onExit}
-      />
-    )
+function loadoutFromPack(pack) {
+  const loadout = { ...EMPTY_LOADOUT }
+  if (!pack) return loadout
+  for (const [id, count] of Object.entries(pack)) {
+    if (id in loadout) loadout[id] = count
   }
+  return loadout
+}
 
-  if (stageId === STAGE_IDS.MOON_TRANSIT && equipped) {
-    return (
-      <MoonLaunchLevel
-        mission={mission}
-        stageInfo={STAGE_INFO[stageId]}
-        equipped={equipped}
-        onBackToHangar={() => setStageId(STAGE_IDS.BUILD_AND_LAUNCH)}
-        onExit={onExit}
-        onNextMission={onNextMission}
-      />
-    )
-  }
+export function MissionFlow({ mission, route, onRoute, onExit, onNextMission }) {
+  const equipped = useMemo(() => loadoutFromPack(route.pack), [route.pack])
+  const launchStageId = getNextStage(mission.id, STAGE_IDS.BUILD_AND_LAUNCH)
+  const launchReady = Boolean(launchStageId && STAGE_INFO[launchStageId]?.implemented)
 
-  if (stageId === STAGE_IDS.MARS_TRANSIT && equipped) {
-    return (
-      <MarsLaunchLevel
-        mission={mission}
-        stageInfo={STAGE_INFO[stageId]}
-        equipped={equipped}
-        onBackToHangar={() => setStageId(STAGE_IDS.BUILD_AND_LAUNCH)}
-        onExit={onExit}
-      />
-    )
+  const onPack = useCallback((loadout) => {
+    onRoute((current) => {
+      if (current.missionId !== mission.id || current.screen !== 'hangar') return current
+      return { ...current, pack: packFromLoadout(loadout) }
+    }, 'replace')
+  }, [mission.id, onRoute])
+
+  const onLaunchPlace = useCallback((place) => {
+    onRoute((current) => {
+      if (current.missionId !== mission.id || current.screen !== 'launch') return current
+      if (current.step === place.step && (current.siteId ?? null) === (place.siteId ?? null)) return current
+      return { ...current, step: place.step, siteId: place.siteId ?? null }
+    }, 'replace')
+  }, [mission.id, onRoute])
+
+  const backToHangar = useCallback(() => {
+    onRoute((current) => ({ ...current, screen: 'hangar', step: null, siteId: null }), 'push')
+  }, [onRoute])
+
+  if (route.screen === 'launch' && launchReady) {
+    const shared = {
+      mission,
+      stageInfo: STAGE_INFO[launchStageId],
+      equipped,
+      launchPlace: { step: route.step, siteId: route.siteId },
+      onLaunchPlace,
+      onBackToHangar: backToHangar,
+      onExit,
+    }
+    if (launchStageId === STAGE_IDS.ORBITAL_LAUNCH) return <OrbitalLaunchLevel {...shared} />
+    if (launchStageId === STAGE_IDS.MOON_TRANSIT) {
+      return <MoonLaunchLevel {...shared} onNextMission={onNextMission} />
+    }
+    if (launchStageId === STAGE_IDS.MARS_TRANSIT) return <MarsLaunchLevel {...shared} />
   }
 
   // Hangar. Missions with a playable stage after it receive the rocket through onLaunch;
   // the others keep the hangar's own flight phase.
-  const nextStageId = getNextStage(mission.id, STAGE_IDS.BUILD_AND_LAUNCH)
-  const hasNextStage = Boolean(nextStageId && STAGE_INFO[nextStageId]?.implemented)
-  const handleLaunch = (builtLoadout) => {
-    setEquipped(builtLoadout)
-    setStageId(nextStageId)
+  const startLaunch = (builtLoadout) => {
+    onRoute((current) => ({
+      ...current,
+      screen: 'launch',
+      step: 'site',
+      siteId: null,
+      pack: packFromLoadout(builtLoadout),
+    }), 'push')
   }
   return (
     <GameScreen
       mission={mission}
       onExit={onExit}
-      initialEquipped={equipped ?? undefined}
-      onLaunch={hasNextStage ? handleLaunch : undefined}
+      initialEquipped={route.pack ? equipped : undefined}
+      onEquippedChange={onPack}
+      onLaunch={launchReady ? startLaunch : undefined}
     />
   )
 }

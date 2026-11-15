@@ -12,12 +12,16 @@
  * so any screen or bot can read it safely.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { applyLanguage } from '../i18n/index.js';
 import { DEFAULT_SETTINGS, loadSettings, normalize, saveSettings } from './settingsStore.js';
 
 const SettingsContext = createContext(null);
 const SAVE_DELAY_MS = 400;
 
 export function SettingsProvider({ userId = 'guest', storage = null, children }) {
+  // Subscribes the whole game to language changes so every screen redraws.
+  useTranslation();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [hydrated, setHydrated] = useState(false);
   const settingsRef = useRef(settings);
@@ -47,6 +51,7 @@ export function SettingsProvider({ userId = 'guest', storage = null, children })
     const apply = (raw) => {
       if (cancelled) return;
       const next = normalize(raw);
+      applyLanguage(next.language);
       loadedSerial.current = JSON.stringify(next);
       dirty.current = false;
       settingsRef.current = next;
@@ -82,7 +87,11 @@ export function SettingsProvider({ userId = 'guest', storage = null, children })
   }, [settings, hydrated, storage, userId]);
 
   const update = useCallback((patch) => {
-    setSettings((prev) => normalize({ ...prev, ...patch }));
+    setSettings((prev) => {
+      const next = normalize({ ...prev, ...patch });
+      applyLanguage(next.language);
+      return next;
+    });
   }, []);
 
   const value = useMemo(() => ({ ...settings, update }), [settings, update]);

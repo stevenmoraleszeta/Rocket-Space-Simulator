@@ -33,6 +33,7 @@ import { flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { partCount } from '../../parts.js'
 import { goldRocketImage, isUpgraded } from '../../rendering/upgradedRocket.js'
 import { LAUNCH_SITES } from '../orbit/launchSites.js'
+import { useLaunchRoute } from '../orbit/useLaunchRoute.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
 import { formatLaunchDate, MOON_SYNODIC_MONTH_DAYS } from './moonLaunchPlanning.js'
@@ -288,15 +289,15 @@ const EVENT_SOUNDS = {
   misfire: SYNTH.cough,
 }
 
-export function MoonLaunchLevel({ mission, stageInfo, equipped, design, onBackToHangar, onExit, onNextMission }) {
+export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPlace, onLaunchPlace, onBackToHangar, onExit, onNextMission }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
   const uiScale = useUiScale()
 
-  const [step, setStep] = useState('site')
+  const { step, setStep, siteId, setSiteId } = useLaunchRoute(launchPlace, onLaunchPlace)
   // Tips for the current step: open on the first visit of each step unless turned off.
   const [tipsOpen, setTipsOpen] = useState(() => !tipsTurnedOff())
-  const [tipsSeen, setTipsSeen] = useState(() => new Set(['site']))
+  const [tipsSeen, setTipsSeen] = useState(() => new Set([step]))
   const [helpMessage, setHelpMessage] = useState('')
   const [hasDragged, setHasDragged] = useState(false)
   const [leavingMap, setLeavingMap] = useState(false)
@@ -312,7 +313,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, onBackTo
     if (tipsSeen.has(nextStep) || tipsTurnedOff()) return
     setTipsSeen((seen) => new Set(seen).add(nextStep))
     setTipsOpen(true)
-  }  const [siteId, setSiteId] = useState(null)
+  }
   const [cycleHours, setCycleHours] = useState(0)
   const [aim, setAim] = useState(DEFAULT_AIM)
   const [liftingOff, setLiftingOff] = useState(false)

@@ -10,9 +10,15 @@ export const DEFAULT_SETTINGS = Object.freeze({
   musicVolume: 0.6,   // 0..1
   ambientVolume: 0.8, // 0..1 (ambience + sound effects)
   playerName: '',
+  language: 'en', // 'en' | 'es'. English until the player picks Spanish.
 });
 
 const clamp01 = (n) => (Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0);
+
+/** English unless the saved value is Spanish. */
+export function normalizeLanguage(value) {
+  return value === 'es' ? 'es' : 'en';
+}
 
 /** Trims, collapses spaces and caps the length of a player name. */
 export function cleanName(name) {
@@ -46,6 +52,7 @@ export function normalize(raw) {
     musicVolume: clamp01(Number(s.musicVolume)),
     ambientVolume: clamp01(Number(s.ambientVolume)),
     playerName: cleanName(s.playerName),
+    language: normalizeLanguage(s.language),
   };
 }
 

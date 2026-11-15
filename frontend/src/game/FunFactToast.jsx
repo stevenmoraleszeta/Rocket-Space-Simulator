@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from 'react'
 import { SYNTH, playSynth } from '../audio'
+import { t } from '../i18n/index.js'
 import './funFacts.css'
 
 const FUN_FACTS = [
@@ -60,10 +61,10 @@ export function FunFactToast({ facts = FUN_FACTS, paused = false }) {
     <aside className="fun-fact" role="status" key={count}>
       <span className="fun-fact__icon" aria-hidden="true">{fact.icon}</span>
       <div>
-        <p className="fun-fact__label">Did you know?</p>
-        <p className="fun-fact__text">{fact.text}</p>
+        <p className="fun-fact__label">{t('Did you know?')}</p>
+        <p className="fun-fact__text">{t(fact.text)}</p>
       </div>
-      <button type="button" className="fun-fact__close" aria-label="Close" onClick={() => setFact(null)}>✕</button>
+      <button type="button" className="fun-fact__close" aria-label={t('Close')} onClick={() => setFact(null)}>✕</button>
       <span className="fun-fact__timer" aria-hidden="true" style={{ animationDuration: `${SHOW_MS}ms` }} />
     </aside>
   )

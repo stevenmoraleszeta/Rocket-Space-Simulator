@@ -26,6 +26,8 @@ import { ASCENT_MS, AscentScene } from './AscentScene.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../audio';
+import { t } from '../i18n/index.js';
+import { failureHint, failureMessage } from '../i18n/text.js';
 import { useSettings } from '../settings/SettingsContext.jsx';
 import { engineerName, sayTo } from '../settings/settingsStore.js';
 import './game.css';
@@ -50,8 +52,9 @@ const SWAP_IN_MS = 1700;
  *   onLaunch(equipped)  when given, Launch hands the built rocket to the next stage
  *                       (the orbit trajectory plays the liftoff itself, see LaunchSequence.jsx)
  *   initialEquipped     loadout to start with (keeps the parts when coming back to the hangar)
+ *   onEquippedChange    reports the fitted parts so the URL can restore them
  */
-export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
+export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquippedChange }) {
   const playerName = engineerName(useSettings().playerName);
   const { completeMission } = useProgress();
   const loggedTrip = useRef(false);
@@ -62,6 +65,9 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
   const sidePopout = useWideScreen();
   const [laikaTalking, setLaikaTalking] = useState(false);
   const [equipped, setEquipped] = useState(initialEquipped ?? EMPTY_LOADOUT);
+  useEffect(() => {
+    onEquippedChange?.(equipped);
+  }, [equipped, onEquippedChange]);
   const [flightSeconds, setFlightSeconds] = useState(0);
   const [flightHeld, setFlightHeld] = useState(false);
   // Upgrade swap on the pad: a crane hoists the rocket away ('out'), then lowers the new one
@@ -234,14 +240,14 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
   const hud = (
     <header className="game__hud">
       <button type="button" className="game__back" onClick={onExit}>
-        Missions
+        {t('Missions')}
       </button>
       <div className="game__mission">
-        <div className="game__num">Mission {mission.number}</div>
+        <div className="game__num">{t('Mission {{number}}', { number: mission.number })}</div>
         <h1>{mission.title}</h1>
-        {playerName && <p className="game__engineer">Engineer {playerName}</p>}
+        {playerName && <p className="game__engineer">{t('Engineer {{name}}', { name: playerName })}</p>}
       </div>
-      <div className="game__place">{mission.place}</div>
+      <div className="game__place">{t(mission.place)}</div>
     </header>
   );
 
@@ -257,8 +263,8 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           <MissionFailedScreen
             mission={mission}
             result={{ outcome: { type: failure?.id }, success: false }}
-            reason={sayTo(playerName, failure?.message ?? '')}
-            hint={failure?.hint}
+            reason={sayTo(playerName, failureMessage(failure))}
+            hint={failureHint(failure)}
             onHangar={returnToHangar}
           />
         </div>
@@ -279,10 +285,10 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           <div className="flight">
             <p className="flight__status">
               {goingHome
-                ? sayTo(playerName, 'The crew is too weak to go on. Mission control is bringing them home.')
+                ? sayTo(playerName, t('The crew is too weak to go on. Mission control is bringing them home.'))
                 : flightHeld
-                  ? sayTo(playerName, 'The crew made it. Food, air, and power held for the whole trip.')
-                  : sayTo(playerName, `Liftoff! Heading to ${mission.place}.`)}
+                  ? sayTo(playerName, t('The crew made it. Food, air, and power held for the whole trip.'))
+                  : sayTo(playerName, t('Liftoff! Heading to {{place}}.', { place: t(mission.place) }))}
             </p>
             <Rocket
               equipped={equipped}
@@ -294,7 +300,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
               rows={flightReadout(equipped, mission, flightSeconds, { altitudeMeters: 400000, speedMetersPerSecond: 0 })}
             />
             <button type="button" className="game__back" onClick={returnToHangar}>
-              Hangar
+              {t('Hangar')}
             </button>
           </div>
         </div>
@@ -339,11 +345,11 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
             type="button"
             className={storyOpen ? 'bulb is-on' : 'bulb'}
             aria-pressed={storyOpen}
-            aria-label={storyOpen ? 'Close the story' : 'Open the story'}
+            aria-label={storyOpen ? t('Close the story') : t('Open the story')}
             onClick={() => setStoryOpen((open) => !open)}
           >
             <BulbIcon />
-            <span className="bulb__label">Story</span>
+            <span className="bulb__label">{t('Story')}</span>
           </button>
         </div>
         <Meters meters={meters} />
@@ -392,23 +398,25 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
               aria-pressed={upgraded}
               disabled={!canUpgrade || Boolean(swap)}
               title={upgraded
-                ? 'Take the upgrade off and get the credits back'
-                : `A bigger rocket: +${upgrade.pct}% mass and power`}
+                ? t('Take the upgrade off and get the credits back')
+                : t('A bigger rocket: +{{pct}}% mass and power', { pct: upgrade.pct })}
               onClick={toggleUpgrade}
             >
-              <span className="bay__upgrade-name">{upgraded ? 'Upgraded' : 'Upgrade'}</span>
+              <span className="bay__upgrade-name">{upgraded ? t('Upgraded') : t('Upgrade')}</span>
               <span className="bay__upgrade-info">
-                +{upgrade.pct}% cargo · {upgraded ? 'on' : `${upgrade.cost} cr`}
+                {upgraded
+                  ? t('+{{pct}}% cargo · on', { pct: upgrade.pct })
+                  : t('+{{pct}}% cargo · {{cost}} cr', { pct: upgrade.pct, cost: upgrade.cost })}
               </span>
             </button>
           )}
           <button
             type="button"
             className="bay__launch"
-            aria-label={onLaunch ? 'Aim the rocket' : 'Launch'}
+            aria-label={onLaunch ? t('Aim the rocket') : t('Launch')}
             onClick={startLaunch}
           >
-            {onLaunch ? 'Aim' : 'Launch'}
+            {onLaunch ? t('Aim') : t('Launch')}
           </button>
         </div>
       </div>
@@ -454,27 +462,29 @@ function Briefing({ mission, onClose }) {
           <header className="brief__head">
             <div className="brief__heading">
               <p className="brief__kicker">
-                {playerName ? `Engineer ${playerName}` : `Mission ${mission.number}`} · {mission.place}
+                {playerName
+                  ? t('Engineer {{name}}', { name: playerName })
+                  : t('Mission {{number}}', { number: mission.number })} · {t(mission.place)}
               </p>
-              <h2 id="brief-title" className="brief__title">Story</h2>
+              <h2 id="brief-title" className="brief__title">{t('Story')}</h2>
             </div>
             <button type="button" className="brief__close" onClick={onClose}>
-              Close
+              {t('Close')}
             </button>
           </header>
-          {mission.intro && <p className="brief__intro">{mission.intro}</p>}
+          {mission.intro && <p className="brief__intro">{t(mission.intro)}</p>}
           <div className="brief__body">
             <div className="brief__story">
               {story.map((line, index) => (
-                <p key={line}>{index === 0 ? sayTo(playerName, line) : line}</p>
+                <p key={line}>{index === 0 ? sayTo(playerName, t(line)) : t(line)}</p>
               ))}
             </div>
             {hints.length > 0 && (
               <aside className="brief__hints">
-                <h3>Clues</h3>
+                <h3>{t('Clues')}</h3>
                 <ol>
                   {hints.map((hint) => (
-                    <li key={hint}>{hint}</li>
+                    <li key={hint}>{t(hint)}</li>
                   ))}
                 </ol>
               </aside>
@@ -599,15 +609,15 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose, anchor = null
         <span className="part-dialog__icon" aria-hidden="true">
           <PartIcon part={part} lit />
         </span>
-        <h2 id="part-dialog-title" className="part-dialog__title">{part.name}</h2>
+        <h2 id="part-dialog-title" className="part-dialog__title">{t(part.name)}</h2>
         <button type="button" className="part-dialog__close" onClick={onClose}>
-          Close
+          {t('Close')}
         </button>
       </div>
-      <p className="part-dialog__blurb">{part.blurb}</p>
+      <p className="part-dialog__blurb">{t(part.blurb)}</p>
       <p className="part__tags">
         {partTags(part).map((tag) => (
-          <span key={tag.text} className={`part__tag part__tag--${tag.kind}`}>{tag.text}</span>
+          <span key={tag.phrase} className={`part__tag part__tag--${tag.kind}`}>{t(tag.phrase, tag.vars)}</span>
         ))}
       </p>
       <div className="part-dialog__stepper">
@@ -615,7 +625,7 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose, anchor = null
           type="button"
           className="step-btn"
           disabled={count <= 0}
-          aria-label={`Remove one ${part.name}`}
+          aria-label={t('Remove one {{name}}', { name: t(part.name) })}
           onClick={() => onChange(part.id, -1)}
         >
           −
@@ -625,8 +635,8 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose, anchor = null
           type="button"
           className={denied ? 'step-btn is-denied' : 'step-btn'}
           disabled={count >= max}
-          title={broke && count < max ? 'Not enough money' : undefined}
-          aria-label={`Add one ${part.name}`}
+          title={broke && count < max ? t('Not enough money') : undefined}
+          aria-label={t('Add one {{name}}', { name: t(part.name) })}
           onClick={tryAdd}
         >
           +
@@ -642,9 +652,9 @@ const METER_CELLS = 8;
 
 export function Meters({ meters }) {
   return (
-    <section className="meters" aria-label="Rocket supplies">
+    <section className="meters" aria-label={t('Rocket supplies')}>
       <header className="meters__head">
-        <h2 className="meters__title">Supplies</h2>
+        <h2 className="meters__title">{t('Supplies')}</h2>
         <span className="meters__stripes" aria-hidden="true" />
       </header>
       <div className="meters__grid">
@@ -661,21 +671,21 @@ export function Meters({ meters }) {
               {!METER_ICONS[meter.id] && meter.icon && (
                 <span className="meter__icon meter__icon--emoji" aria-hidden="true">{meter.icon}</span>
               )}
-              <span className="meter__label" title={meter.tooltip}>{meter.label}</span>
+              <span className="meter__label" title={meter.tooltip ? t(meter.tooltip) : undefined}>{t(meter.label)}</span>
               <div
                 className="meter__track"
                 role="meter"
-                aria-label={meter.label}
+                aria-label={t(meter.label)}
                 aria-valuemin={0}
                 aria-valuemax={meter.max}
                 aria-valuenow={meter.current}
-                aria-valuetext={`${meter.label}: ${meter.text}`}
+                aria-valuetext={t('{{label}}: {{text}}', { label: t(meter.label), text: meter.phrase ? t(meter.phrase, meter.vars) : meter.text })}
               >
                 {Array.from({ length: METER_CELLS }, (_, index) => (
                   <span key={index} className={index < lit ? 'meter__cell is-lit' : 'meter__cell'} />
                 ))}
               </div>
-              <span className="meter__value">{meter.text}</span>
+              <span className="meter__value">{meter.phrase ? t(meter.phrase, meter.vars) : meter.text}</span>
             </div>
           );
         })}

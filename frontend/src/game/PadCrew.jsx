@@ -1,4 +1,5 @@
 import sheet from '../assets/images/crew/engineers_sheet.png';
+import { t } from '../i18n/index.js';
 
 /**
  * Crew working around the unlit rocket. Each sheet row is a different person.
@@ -13,14 +14,15 @@ const CREW = [
 ];
 
 /** scrub: the launch was called off (no astronaut). Everyone walks away but one, who says "no". */
-export function PadCrew({ scrub = false, bubble = 'No astronauts!' }) {
+export function PadCrew({ scrub = false, bubble }) {
+  const line = bubble ? t(bubble) : t('No astronauts!');
   return (
     <div className="crew" aria-hidden={!scrub}>
       {CREW.map((person) => {
         if (scrub && person.saysNo) {
           return (
             <span key={person.job} className="crew__mover" style={{ left: person.left, bottom: person.bottom }}>
-              <span className="crew__bubble" role="status">{bubble}</span>
+              <span className="crew__bubble" role="status">{line}</span>
               <span className={`engineer engineer--${person.job} is-saying-no`}>
                 <span className="engineer__sheet" style={{ backgroundImage: `url(${sheet})` }} />
               </span>

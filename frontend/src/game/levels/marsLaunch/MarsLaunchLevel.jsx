@@ -25,6 +25,7 @@ import { flightNotes } from '../../flightSummary.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
 import { LAUNCH_SITES } from '../orbit/launchSites.js'
+import { useLaunchRoute } from '../orbit/useLaunchRoute.js'
 import { REAL_SATELLITES } from '../orbit/realSatellites.js'
 import { createView as createEarthView, drawOrbitScene, siteScreenPosition } from '../orbit/orbitRenderer.js'
 import { useUiScale } from '../../../lib/uiScale.js'
@@ -151,12 +152,11 @@ function failureHint(result) {
   }
 }
 
-export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, onExit }) {
+export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onLaunchPlace, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
 
-  const [step, setStep] = useState('site')
-  const [siteId, setSiteId] = useState(null)
+  const { step, setStep, siteId, setSiteId } = useLaunchRoute(launchPlace, onLaunchPlace)
   const site = LAUNCH_SITES.find((candidate) => candidate.id === siteId) ?? null
   const [aim, setAim] = useState(FIRST_AIM)
   const [result, setResult] = useState(null)
