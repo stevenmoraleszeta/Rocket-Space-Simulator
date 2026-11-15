@@ -147,12 +147,9 @@ def main():
         radius = ((90 - lat) / 180) * RADIUS
         sx = CX + radius * math.cos(math.radians(lon))
         sy = CY - radius * math.sin(math.radians(lon))
-        cell = (int(sx // CELL) * CELL, int(sy // CELL) * CELL)
-        if grid.get(cell) not in WATER:
-            continue
         for y in range(int(sy - 6), int(sy + 7), CELL):
             for x in range(int(sx - 6), int(sx + 7), CELL):
-                if (x + CELL / 2 - sx) ** 2 + (y + CELL / 2 - sy) ** 2 > 16:
+                if (x + CELL / 2 - sx) ** 2 + (y + CELL / 2 - sy) ** 2 > 10:
                     continue
                 pad = (int(x // CELL) * CELL, int(y // CELL) * CELL)
                 if grid.get(pad) in WATER:
