@@ -57,6 +57,8 @@
   background: #f1f3f4;
   box-shadow: inset var(--px) var(--px) 0 #fff, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #dadce0;
 }
+.st-google-host { width: 100%; min-height: 44px; margin-top: 10px; }
+.st-google-host > div { display: flex; justify-content: center; }
 .st-google__mark { width: 28px; height: 28px; flex: none; display: block; image-rendering: pixelated; }
 .st-label .st-google__mark { width: 22px; height: 22px; }
 .st-signed {
@@ -78,6 +80,15 @@
 }
 .st-range::-moz-range-thumb { width: 1.25rem; height: 1.25rem; background: var(--ms-yellow); border: 0.1875rem solid #2a2000; border-radius: 0.25rem; }
 .st-range:focus-visible { outline: 0.1875rem solid var(--ms-yellow); outline-offset: 0.25rem; border-radius: 0.375rem; }
+
+.st-lang { display: flex; gap: 0.5rem; }
+.st-lang .ms-btn { flex: 1; min-width: 0; }
+.st-lang .ms-btn.is-on { color: #241800; }
+.st-lang .ms-btn.is-on::before { background: #8a6a12; }
+.st-lang .ms-btn.is-on::after {
+  background: var(--ms-yellow);
+  box-shadow: inset var(--px) var(--px) 0 #fff4b0, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #a67c00;
+}
 
 .st-done { width: 100%; margin-top: 0.25rem; }
 

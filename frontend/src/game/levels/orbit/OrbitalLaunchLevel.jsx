@@ -16,6 +16,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { StarRating, getMission, useProgress } from '../../../levels'
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../../../audio'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
+import { formatNumber, t } from '../../../i18n/index.js'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
@@ -28,6 +29,7 @@ import { flightNotes } from '../../flightSummary.js'
 import { planScore, pathById } from '../../design/missionPlan.js'
 import { LAUNCH_FAILURES, flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { LAUNCH_SITES } from './launchSites.js'
+import { useLaunchRoute } from './useLaunchRoute.js'
 import { MissionCompleteScreen } from './MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from './MissionFailedScreen.jsx'
 import { EXPLODING_OUTCOMES, OUTCOMES, arrivalPosition, degreesToRadians, satellitePositionAt, simulateLaunch } from './launchSimulation.js'
@@ -49,6 +51,7 @@ import {
 } from './orbitTargets.js'
 import { REAL_SATELLITES, SATELLITE_KIND_COLORS } from './realSatellites.js'
 import { useUiScale } from '../../../lib/uiScale.js'
+import { SitePin } from './SitePin.jsx'
 import '../../game.css'
 import './orbitalLaunch.css'
 
@@ -81,7 +84,7 @@ function loadImage(src) {
   return image
 }
 
-const formatKm = (meters) => `${Math.round(meters / 1000).toLocaleString('en-US')} km`
+const formatKm = (meters) => `${formatNumber(Math.round(meters / 1000))} km`
 const formatKmPerSecond = (metersPerSecond) => `${(metersPerSecond / 1000).toFixed(1)} km/s`
 const radiansToDegrees = (radians) => Math.round((radians * 180) / Math.PI)
 
@@ -105,32 +108,39 @@ function playbackSimTime(realSeconds, prediction) {
   return end + (realSeconds - ascentReal - coastReal) * ORBIT_PLAYBACK_WARP
 }
 
-/** One-line explanation of what the dotted line predicts. */
+function siteBlockText(check, site) {
+  if (!check || check.ok) return ''
+  if (check.reason.startsWith('From ')) {
+    const latitude = Math.abs(site.latitudeDeg)
+    return t('From {{latitude}}° latitude, an orbit cannot be tilted less than {{latitude}}°.', { latitude })
+  }
+  return t(check.reason)
+}
 function describePrediction(prediction) {
   const { outcome, closestTargetKm, bestInsertion } = prediction
   switch (outcome.type) {
     case OUTCOMES.ORBIT_REACHED:
-      return { tone: 'good', text: 'Great aim! The satellite reaches its path around Earth.' }
+      return { tone: 'good', text: t('Great aim! The satellite reaches its path around Earth.') }
     case OUTCOMES.SATELLITE_COLLISION:
-      return { tone: 'bad', text: `Careful! The rocket hits ${outcome.satelliteName}.` }
+      return { tone: 'bad', text: t('Careful! The rocket hits {{name}}.', { name: t(outcome.satelliteName) }) }
     case OUTCOMES.EARTH_IMPACT:
-      return { tone: 'bad', text: 'Not enough. It falls back and hits the Earth. Aim flatter or add power.' }
+      return { tone: 'bad', text: t('Not enough. It falls back and hits the Earth. Aim flatter or add power.') }
     case OUTCOMES.NO_LIFTOFF:
-      return { tone: 'bad', text: 'Too heavy. The engines cannot lift the rocket.' }
+      return { tone: 'bad', text: t('Too heavy. The engines cannot lift the rocket.') }
     case OUTCOMES.LOST_IN_SPACE:
-      return { tone: 'bad', text: 'Too much power. It flies way past the path and blows up.' }
+      return { tone: 'bad', text: t('Too much power. It flies way past the path and blows up.') }
     default:
       if (bestInsertion) {
-        return { tone: 'warn', text: 'It reaches the spot too fast or too slow to stay. Change the power.' }
+        return { tone: 'warn', text: t('It reaches the spot too fast or too slow to stay. Change the power.') }
       }
-      return { tone: 'warn', text: `It misses the spot by ${Math.round(closestTargetKm).toLocaleString('en-US')} km.` }
+      return { tone: 'warn', text: t('It misses the spot by {{km}} km.', { km: formatNumber(Math.round(closestTargetKm)) }) }
   }
 }
 
 /** How close (screen pixels) a tap must land to a satellite to open its card. */
 const SATELLITE_TAP_PIXELS = 18
 
-export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBackToHangar, onExit }) {
+export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launchPlace, onLaunchPlace, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
   // No boosters: the dotted path still shows the planned flight (as if they were there).
@@ -140,10 +150,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
     [equipped],
   )
 
-  const [step, setStep] = useState('site')
+  const { step, setStep, siteId, setSiteId } = useLaunchRoute(launchPlace, onLaunchPlace)
   // Same tracks as the hangar flight: intense music, plus the space ambience once the rocket flies.
   useSoundtrack(step === 'flight' || step === 'result' ? { music: MUSIC.flight, ambient: AMBIENCE.space } : { music: MUSIC.flight })
-  const [siteId, setSiteId] = useState(null)
   const [arrivalAngle, setArrivalAngle] = useState(null)
   const [aim, setAim] = useState(null)
   const [aimPoint, setAimPoint] = useState(null)
@@ -165,6 +174,13 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
     return hardestOrbit()
   }, [design])
   const siteCheck = site ? checkTargetFromSite(site, orbit) : null
+  // A refresh on the aim tab has the base, but the drag handle is built when Next is pressed.
+  useEffect(() => {
+    if (step !== 'aim' || aim || !site) return
+    const angle = siteAngleOf(site) + degreesToRadians(SUGGESTED_ARRIVAL_OFFSET_DEG)
+    setArrivalAngle(angle)
+    setAim(initialAim(site, arrivalPosition(orbit.altitudeKm, angle)))
+  }, [step, aim, site, orbit])
   const rotationBoost = rotationBoostForInclination(orbit.inclinationDeg)
   const arrival = useMemo(
     () => (orbit && arrivalAngle !== null ? arrivalPosition(orbit.altitudeKm, arrivalAngle) : null),
@@ -558,13 +574,13 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
   const hud = (
     <header className="game__hud orbit-level__hud">
       <button type="button" className="game__back" onClick={onExit}>
-        Missions
+        {t('Missions')}
       </button>
       <div className="game__mission">
-        <div className="game__num">Level {stageInfo.levelNumber} · {stageInfo.title}</div>
-        <h1>{mission.title}</h1>
+        <div className="game__num">{t('Level {{number}} · {{title}}', { number: stageInfo.levelNumber, title: t(stageInfo.title) })}</div>
+        <h1>{t(mission.title)}</h1>
       </div>
-      <div className="game__place">{mission.place}</div>
+      <div className="game__place">{t(mission.place)}</div>
     </header>
   )
 
@@ -593,8 +609,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
           reason={sayTo(
             playerName,
             result.outcome.type === OUTCOMES.SATELLITE_COLLISION
-              ? `The rocket hit ${result.outcome.satelliteName}.`
-              : OUTCOME_MESSAGES[result.outcome.type],
+              ? t('The rocket hit {{name}}.', { name: t(result.outcome.satelliteName) })
+              : t(OUTCOME_MESSAGES[result.outcome.type] || ''),
           )}
           hint={
             result.failure?.hint ??
@@ -610,14 +626,14 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
           <canvas
             ref={canvasRef}
             className={`orbit-canvas orbit-canvas--${step}`}
-            aria-label="Earth seen from space with launch bases, satellites and the predicted path"
+            aria-label={t('Earth seen from space with launch bases, satellites and the predicted path')}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             onPointerLeave={handlePointerLeave}
           />
-          <p className="orbit-note">This is a simulation, not a real flight.</p>
+          <p className="orbit-note">{t('This is a simulation, not a real flight.')}</p>
           {shownSatellite && (
             <div
               className={`satellite-card${shownSatellite.y < 150 ? ' is-below' : ''}${hoveredSatellite ? ' is-hover' : ''}`}
@@ -626,23 +642,23 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
                 top: shownSatellite.y,
               }}
               role={hoveredSatellite ? 'tooltip' : 'dialog'}
-              aria-label={shownSatellite.satellite.shortName}
+              aria-label={t(shownSatellite.satellite.shortName)}
             >
               {!hoveredSatellite && (
-                <button type="button" className="satellite-card__close" aria-label="Close" onClick={() => setSatelliteInfo(null)}>
+                <button type="button" className="satellite-card__close" aria-label={t('Close')} onClick={() => setSatelliteInfo(null)}>
                   ✕
                 </button>
               )}
-              <h3 className="satellite-card__name">{shownSatellite.satellite.shortName}</h3>
+              <h3 className="satellite-card__name">{t(shownSatellite.satellite.shortName)}</h3>
               <p className="satellite-card__kind">
                 <span
                   className="satellite-card__dot"
                   style={{ background: SATELLITE_KIND_COLORS[shownSatellite.satellite.kind] }}
                   aria-hidden="true"
                 />
-                {shownSatellite.satellite.kind} · {shownSatellite.satellite.altitudeKm} km
+                {t(shownSatellite.satellite.kind)} · {shownSatellite.satellite.altitudeKm} km
               </p>
-              <p className="satellite-card__summary">{shownSatellite.satellite.summary}</p>
+              <p className="satellite-card__summary">{t(shownSatellite.satellite.summary)}</p>
             </div>
           )}
           {/* Launch bases: real buttons on top of the planet, big enough to tap and read. */}
@@ -659,10 +675,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
               if (step !== 'site') {
                 return (
                   <span key={candidate.id} className={className} style={style}>
-                    <span className="orbit-site__dot" />
+                    <SitePin selected={selected} />
                     <span className="orbit-site__name">
-                    {candidate.name}
-                    <span className="orbit-site__country">{candidate.country}</span>
+                    {t(candidate.name)}
+                    <span className="orbit-site__country">{t(candidate.country)}</span>
                   </span>
                   </span>
                 )
@@ -675,13 +691,13 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
                   style={style}
                   aria-pressed={selected}
                   disabled={!siteOk}
-                  title={siteOk ? candidate.name : checkTargetFromSite(candidate, orbit).reason}
+                  title={siteOk ? t(candidate.name) : siteBlockText(checkTargetFromSite(candidate, orbit), candidate)}
                   onClick={() => selectSite(candidate.id)}
                 >
-                  <span className="orbit-site__dot" />
+                  <SitePin selected={selected} />
                   <span className="orbit-site__name">
-                    {candidate.name}
-                    <span className="orbit-site__country">{candidate.country}</span>
+                    {t(candidate.name)}
+                    <span className="orbit-site__country">{t(candidate.country)}</span>
                   </span>
                 </button>
               )
@@ -692,62 +708,62 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
         <aside className="orbit-panel" aria-live="polite">
           {step === 'site' && (
             <>
-              <h2 className="orbit-panel__title">1. Pick a launch base</h2>
+              <h2 className="orbit-panel__title">{t('1. Pick a launch base')}</h2>
               <p className="orbit-panel__hint">
                 {sayTo(playerName, design
-                  ? `Tap a base that can fly your road, the ${pathById(design.jobId, design.pathId)?.name ?? orbit.name}. Dim bases cannot.`
-                  : `Tap a base on the Earth. This trip goes ${orbit.altitudeKm} km up, on the path called ${orbit.name}.`)}
+                  ? t('Tap a base that can fly your road, the {{name}}. Dim bases cannot.', { name: t(pathById(design.jobId, design.pathId)?.name ?? orbit.name) })
+                  : t('Tap a base on the Earth. This trip goes {{km}} km up, on the path called {{name}}.', { km: orbit.altitudeKm, name: t(orbit.name) }))}
               </p>
               {site ? (
                 <div className="orbit-detail">
-                  <p className="orbit-detail__name">{site.name}, {site.country}</p>
-                  <p><b>Spaceport:</b> {site.spaceport}</p>
-                  <p className={`orbit-badge orbit-badge--${siteRating.level}`}>{siteRating.label}</p>
-                  <p><b>Why here?</b> {site.why}</p>
-                  <p><b>What for?</b> {site.whatFor}</p>
-                  {siteCheck && !siteCheck.ok && <p>{siteCheck.reason}</p>}
+                  <p className="orbit-detail__name">{t(site.name)}, {t(site.country)}</p>
+                  <p><b>{t('Spaceport:')}</b> {t(site.spaceport)}</p>
+                  <p className={`orbit-badge orbit-badge--${siteRating.level}`}>{t(siteRating.label)}</p>
+                  <p><b>{t('Why here?')}</b> {t(site.why)}</p>
+                  <p><b>{t('What for?')}</b> {t(site.whatFor)}</p>
+                  {siteCheck && !siteCheck.ok && <p>{siteBlockText(siteCheck, site)}</p>}
                 </div>
               ) : (
-                <p className="orbit-detail">{sayTo(playerName, 'Pick a base that can fly over the top and bottom of the Earth. Your satellite will take pictures.')}</p>
+                <p className="orbit-detail">{sayTo(playerName, t('Pick a base that can fly over the top and bottom of the Earth. Your satellite will take pictures.'))}</p>
               )}
               <div className="orbit-panel__actions">
-                <button type="button" className="game__back" onClick={onBackToHangar}>Hangar</button>
-                <button type="button" className="ms-btn" disabled={!site || !siteCheck?.ok} onClick={goToAim}>Next</button>
+                <button type="button" className="game__back" onClick={onBackToHangar}>{t('Hangar')}</button>
+                <button type="button" className="ms-btn" disabled={!site || !siteCheck?.ok} onClick={goToAim}>{t('Next')}</button>
               </div>
             </>
           )}
 
           {step === 'aim' && site && orbit && aim && (
             <>
-              <h2 className="orbit-panel__title">2. Aim and launch</h2>
+              <h2 className="orbit-panel__title">{t('2. Aim and launch')}</h2>
               <p className="orbit-panel__hint">
                 {sayTo(playerName, design
-                  ? 'Your road is already drawn. Press Launch. Drag the dots only if you want to try a different aim.'
-                  : 'Hold and drag. The dots show the path. Farther from the base means more power.')}
+                  ? t('Your road is already drawn. Press Launch. Drag the dots only if you want to try a different aim.')
+                  : t('Hold and drag. The dots show the path. Farther from the base means more power.'))}
               </p>
               {!design && (
                 <dl className="orbit-stats">
-                  <div><dt>Direction</dt><dd>{radiansToDegrees(aim.tiltRadians)}°</dd></div>
-                  <div><dt>Power</dt><dd>{Math.round(aim.power * 100)}%</dd></div>
+                  <div><dt>{t('Direction')}</dt><dd>{radiansToDegrees(aim.tiltRadians)}°</dd></div>
+                  <div><dt>{t('Power')}</dt><dd>{Math.round(aim.power * 100)}%</dd></div>
                 </dl>
               )}
               {predictionSummary && <p className={`orbit-prediction is-${predictionSummary.tone}`}>{sayTo(playerName, predictionSummary.text)}</p>}
               <div className="orbit-panel__actions">
-                <button type="button" className="game__back" onClick={() => goBack('site')}>Back</button>
-                <button type="button" className="ms-btn" onClick={launch}>Launch</button>
+                <button type="button" className="game__back" onClick={() => goBack('site')}>{t('Back')}</button>
+                <button type="button" className="ms-btn" onClick={launch}>{t('Launch')}</button>
               </div>
             </>
           )}
 
           {step === 'flight' && (
             <>
-              <h2 className="orbit-panel__title">{playerName ? sayTo(playerName, 'Liftoff!') : 'Liftoff!'}</h2>
+              <h2 className="orbit-panel__title">{playerName ? sayTo(playerName, t('Liftoff!')) : t('Liftoff!')}</h2>
               {telemetry && (
                 <FlightReadout
                   rows={[
                     { id: 'alt', label: 'Altitude', value: formatKm(Math.max(0, telemetry.altitudeMeters)) },
                     { id: 'speed', label: 'Speed', value: formatKmPerSecond(telemetry.speed) },
-                    { id: 'engine', label: 'Engine', value: telemetry.burning ? 'On' : 'Off' },
+                    { id: 'engine', label: 'Engine', value: telemetry.burning ? t('On') : t('Off') },
                     ...telemetry.rows,
                   ]}
                 />
@@ -758,12 +774,12 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
           {/* A failed mission is told on the "You lose" screen (MissionFailedScreen), not here. */}
           {step === 'result' && result?.success && (
             <>
-              <h2 className="orbit-panel__title">{sayTo(playerName, 'Mission complete!')}</h2>
-              <p className="orbit-prediction is-good">{sayTo(playerName, OUTCOME_MESSAGES[result.outcome.type])}</p>
+              <h2 className="orbit-panel__title">{sayTo(playerName, t('Mission complete!'))}</h2>
+              <p className="orbit-prediction is-good">{sayTo(playerName, t(OUTCOME_MESSAGES[result.outcome.type] || ''))}</p>
               <div className="orbit-result__stars"><StarRating stars={result.stars} size={36} /></div>
               <dl className="orbit-stats">
-                <div><dt>Score</dt><dd>{result.pct}%</dd></div>
-                <div><dt>Off target</dt><dd>{Math.round(result.outcome.missKm)} km</dd></div>
+                <div><dt>{t('Score')}</dt><dd>{result.pct}%</dd></div>
+                <div><dt>{t('Off target')}</dt><dd>{Math.round(result.outcome.missKm)} km</dd></div>
               </dl>
               {result.supplies && (
                 <FlightReadout
@@ -772,11 +788,11 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, onBac
               )}
               {result.unlockedMissionId && (
                 <p className="orbit-panel__hint">
-                  {sayTo(playerName, `New mission unlocked: ${getMission(result.unlockedMissionId)?.title}!`)}
+                  {sayTo(playerName, t('New mission unlocked: {{title}}!', { title: t(getMission(result.unlockedMissionId)?.title || '') }))}
                 </p>
               )}
               <div className="orbit-panel__actions">
-                <button type="button" className="ms-btn" onClick={onExit}>Missions</button>
+                <button type="button" className="ms-btn" onClick={onExit}>{t('Missions')}</button>
               </div>
             </>
           )}

@@ -5,6 +5,7 @@
  * While a card is open the level plays calm music (MoonLaunchLevel useSoundtrack).
  */
 import { useEffect, useRef, useState } from 'react'
+import { t } from '../../../i18n/index.js'
 import { SYNTH, playSynth } from '../../../audio'
 import { tipsTurnedOff, turnTipsOff } from './moonTipsStorage.js'
 import { PixelMoon } from './PixelMoon.jsx'
@@ -15,6 +16,7 @@ import satelliteUrl from '../../../assets/images/satellites/comms_satellite.png'
 import rocketUrl from '../../../assets/images/rockets/rocket_32x32.png'
 import handUrl from '../../../assets/images/icons/hand_pointer.svg'
 import junkUrl from '../../../assets/images/icons/space_junk.svg'
+import pinUrl from '../../../assets/images/icons/pin.svg'
 
 /** Pixel sprite sized like the emoji it replaced (1em), so the tip layouts stay the same. */
 function Sprite({ src }) {
@@ -28,7 +30,7 @@ const ART = {
   pin: (
     <div className="moon-tut-art moon-tut-art--pin" aria-hidden="true">
       <span className="moon-tut-globe"><Sprite src={earthUrl} /></span>
-      <span className="moon-tut-pin">📍</span>
+      <span className="moon-tut-pin"><Sprite src={pinUrl} /></span>
     </div>
   ),
   orbit: (
@@ -95,7 +97,7 @@ const ART = {
 
 const MOON_TIPS = {
   site: [
-    { art: 'pin', title: 'Pick a base', text: 'Tap a pin, then press Accept.' },
+    { art: 'pin', title: 'Pick a base', text: 'Tap a pin, then press Next.' },
   ],
   aim: [
     { art: 'light', title: 'Pick a bright Moon', text: 'The Sun lights half the Moon. Pick a day when the side we see is bright.' },
@@ -147,8 +149,8 @@ export function MoonTips({ step, onClose }) {
       <div className="moon-tips__card" key={`${step}-${index}`}>
         {ART[slide.art]}
         <div className="moon-tips__copy">
-          <h2 id="moon-tips-title">{slide.title}</h2>
-          <p className="moon-tips__text">{slide.text}</p>
+          <h2 id="moon-tips-title">{t(slide.title)}</h2>
+          <p className="moon-tips__text">{t(slide.text)}</p>
         </div>
       </div>
       <div className="moon-tips__foot">
@@ -161,13 +163,13 @@ export function MoonTips({ step, onClose }) {
           className="moon-tips__btn is-main"
           onClick={last ? onClose : () => go(1)}
         >
-          {last ? 'Got it!' : 'Next ▶'}
+          {last ? t('Got it!') : t('Next ▶')}
         </button>
         <div className="moon-tips__small">
-          {!last && <button type="button" className="moon-tips__skip" onClick={onClose}>Skip</button>}
+          {!last && <button type="button" className="moon-tips__skip" onClick={onClose}>{t('Skip')}</button>}
           <label className="moon-tips__hide">
             <input type="checkbox" checked={hideNextTime} onChange={toggleHide} />
-            Don’t show again
+            {t('Don’t show again')}
           </label>
         </div>
       </div>

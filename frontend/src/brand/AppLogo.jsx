@@ -3,6 +3,7 @@
  * screens stay the same picture. Pass wordmark to show the name beside it.
  * Pass bare to draw just the rocket, without the icon's square backdrop and star.
  */
+import { t } from '../i18n/index.js'
 import './brand.css'
 
 export function AppLogo({ size = 64, wordmark = false, bare = false, className = '' }) {
@@ -13,7 +14,7 @@ export function AppLogo({ size = 64, wordmark = false, bare = false, className =
       <img
         className="brand__mark"
         src={bare ? '/rocket-mark.svg' : '/favicon.svg'}
-        alt={named ? '' : 'Rocket Space Simulator'}
+        alt={named ? '' : t('Rocket Space Simulator')}
         width={size}
         height={size}
         draggable="false"

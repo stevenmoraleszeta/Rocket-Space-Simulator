@@ -2,7 +2,7 @@
  * One question per screen. Big cards, one sentence each.
  * The player picks a job's tool, a rocket, a road, and whether to bring a radio.
  */
-import { useState } from 'react'
+import { t } from '../../i18n/index.js'
 import { SpaceBackground } from '../../levels'
 import { SFX, playSfx } from '../../audio'
 import {
@@ -77,16 +77,16 @@ export function DesignWizard({ mission, initial, onDone, onExit }) {
     <SpaceBackground>
       <div className="dw">
         <header className="dw__bar">
-          <button type="button" className="game__back" onClick={onExit}>Missions</button>
-          <p className="dw__count">Step {index + 1} of {steps.length}</p>
+          <button type="button" className="game__back" onClick={onExit}>{t('Missions')}</button>
+          <p className="dw__count">{t('Step {{step}} of {{total}}', { step: index + 1, total: steps.length })}</p>
         </header>
         <div className="dw__card">
-          <p className="dw__kicker">Mission {mission.number}</p>
-          <h1 className="dw__title">{STEP_TITLES[step]}</h1>
+          <p className="dw__kicker">{t('Mission {{number}}', { number: mission.number })}</p>
+          <h1 className="dw__title">{t(STEP_TITLES[step])}</h1>
           {step === 'job' && (
             <>
-              <p className="dw__lead">{job.line}</p>
-              <p className="dw__note">A real NASA mission like this is called {job.nasaName}.</p>
+              <p className="dw__lead">{t(job.line)}</p>
+              <p className="dw__note">{t('A real NASA mission like this is called {{name}}.', { name: job.nasaName })}</p>
             </>
           )}
           {step === 'tool' && (
@@ -142,21 +142,21 @@ export function DesignWizard({ mission, initial, onDone, onExit }) {
           {step === 'radio' && (
             <ChoiceGrid>
               <Choice
-                title="Radio dish"
-                line="Sends the photos home. Costs a little money."
+                title={t('Radio dish')}
+                line={t('Sends the photos home. Costs a little money.')}
                 selected={radio === true}
                 onPick={() => pick('radio', 'on')}
               />
               <Choice
-                title="No radio"
-                line="Only a few photos can get home. On the quiet road, none do."
+                title={t('No radio')}
+                line={t('Only a few photos can get home. On the quiet road, none do.')}
                 selected={radio === false}
                 onPick={() => pick('radio', 'off')}
               />
             </ChoiceGrid>
           )}
           {step !== 'job' && (
-            <p className="dw__money">Money left: {moneyLeft({ ...draft, radio: radio === true })}</p>
+            <p className="dw__money">{t('Money left: {{left}}', { left: moneyLeft({ ...draft, radio: radio === true }) })}</p>
           )}
           <div className="dw__actions">
             <button
@@ -165,16 +165,16 @@ export function DesignWizard({ mission, initial, onDone, onExit }) {
               disabled={index === 0}
               onClick={() => { playSfx(SFX.cancel); setIndex(index - 1) }}
             >
-              Back
+              {t('Back')}
             </button>
             <button type="button" className="ms-btn" disabled={!canNext} onClick={next}>
-              {step === 'radio' ? 'Pack the rocket' : 'Next'}
+              {step === 'radio' ? t('Pack the rocket') : t('Next')}
             </button>
           </div>
           {step === 'radio' && toolById(toolId) && (
             <p className="dw__note">
-              {pathById(mission.id, pathId)?.nasa}
-              {' '}A radio costs {RADIO_COST}. Food, water, and air for the crew are packed for you.
+              {t(pathById(mission.id, pathId)?.nasa)}
+              {' '}{t('A radio costs {{cost}}. Food, water, and air for the crew are packed for you.', { cost: RADIO_COST })}
             </p>
           )}
         </div>
@@ -196,8 +196,8 @@ function Choice({ title, line, selected, locked, onPick }) {
       disabled={locked}
       onClick={onPick}
     >
-      <b>{title}</b>
-      <span>{line}</span>
+      <b>{t(title)}</b>
+      <span>{t(line)}</span>
     </button>
   )
 }

@@ -11,6 +11,7 @@
  * onRetry  "Try again" (optional); onHangar "Hangar" (optional)
  */
 import { useEffect, useRef } from 'react'
+import { t } from '../../../i18n/index.js'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { LaunchFact } from './LaunchFact.jsx'
@@ -30,33 +31,33 @@ export function MissionFailedScreen({ mission, result, reason, hint, onRetry, on
   return (
     <div className={`mission-complete mission-failed is-${look.tone}`} role="dialog" aria-modal="true" aria-labelledby="mission-failed-title">
       <div className="mission-complete__card mission-failed__card">
-        <p className="mission-complete__kicker">Mission {mission.number} · {mission.title}</p>
+        <p className="mission-complete__kicker">{t('Mission {{number}} · {{place}}', { number: mission.number, place: t(mission.title) })}</p>
         <div className={`mission-failed__art is-${look.motion}`} aria-hidden="true">
           <span>{look.art}</span>
         </div>
-        <p className="mission-failed__lose">{playerName ? sayTo(playerName, 'You lose') : 'You lose'}</p>
+        <p className="mission-failed__lose">{playerName ? sayTo(playerName, t('You lose')) : t('You lose')}</p>
         <h2 id="mission-failed-title" className="mission-complete__title mission-failed__title">
-          {look.title}
+          {t(look.title)}
         </h2>
 
         <section className="mission-failed__why">
-          <p className="mission-failed__label">What happened</p>
-          <p className="mission-failed__reason">{reason}</p>
-          {hint && <p className="mission-failed__hint">{hint}</p>}
+          <p className="mission-failed__label">{t('What happened')}</p>
+          <p className="mission-failed__reason">{t(reason)}</p>
+          {hint && <p className="mission-failed__hint">{t(hint)}</p>}
         </section>
 
-        <LaunchFact result={result} mission={mission} label="Trivia" className="mission-complete__fact" />
+        <LaunchFact result={result} mission={mission} label={t('Trivia')} className="mission-complete__fact" />
 
         <div className="mission-complete__actions">
           {onHangar ? (
             <button ref={onRetry ? undefined : primaryRef} type="button" className="game__back" onClick={onHangar}>
-              Hangar
+              {t('Hangar')}
             </button>
           ) : (
             <span />
           )}
           {onRetry && (
-            <button ref={primaryRef} type="button" className="ms-btn" onClick={onRetry}>Try again</button>
+            <button ref={primaryRef} type="button" className="ms-btn" onClick={onRetry}>{t('Try again')}</button>
           )}
         </div>
       </div>

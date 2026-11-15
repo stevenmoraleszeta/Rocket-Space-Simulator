@@ -2,29 +2,29 @@ import { FOOD_KG_PER_PERSON_DAY, WATER_KG_PER_PERSON_DAY, WATTS_PER_ENERGY_POINT
 
 /** Short chips shown on a part button. Only the stats that part actually changes. */
 export function partTags(part) {
-  const each = part.stack ? ' each' : '';
+  const each = Boolean(part.stack);
   const tags = [
-    { kind: 'cost', text: `${part.cost} cr${each}` },
-    { kind: 'mass', text: `${part.mass} kg${each}` },
+    { kind: 'cost', phrase: each ? '{{n}} cr each' : '{{n}} cr', vars: { n: part.cost } },
+    { kind: 'mass', phrase: each ? '{{n}} kg each' : '{{n}} kg', vars: { n: part.mass } },
   ];
-  if (part.energy) tags.push({ kind: 'draw', text: `-${part.energy * WATTS_PER_ENERGY_POINT} W${each}` });
-  if (part.heat) tags.push({ kind: 'good', text: `+${part.heat} heat` });
-  if (part.thrust) tags.push({ kind: 'good', text: `+${part.thrust} thrust` });
-  if (part.foodDays) tags.push({ kind: 'good', text: `+${formatKg(part.foodDays * FOOD_KG_PER_PERSON_DAY)} food${each}` });
-  if (part.waterDays) tags.push({ kind: 'good', text: `+${formatKg(part.waterDays * WATER_KG_PER_PERSON_DAY)} water${each}` });
-  if (part.waterKgPerDay) tags.push({ kind: 'draw', text: `-${formatKg(part.waterKgPerDay)} water/day` });
-  if (part.propellantHangarKg && !part.thrust) tags.push({ kind: 'good', text: '+fuel' });
-  if (part.o2Kg) tags.push({ kind: 'good', text: `+${formatKg(part.o2Kg)} oxygen${each}` });
-  if (part.o2Recycle) tags.push({ kind: 'good', text: 'Cleans used air' });
-  if (part.co2Filter) tags.push({ kind: 'good', text: 'Cleans breathed-out air' });
-  if (part.descent) tags.push({ kind: 'good', text: 'Slows onto the Moon' });
-  if (part.prospects) tags.push({ kind: 'good', text: 'Looks for ice' });
-  if (part.waterRecycle) tags.push({ kind: 'good', text: 'Cleans used water' });
-  if (part.stormShelter) tags.push({ kind: 'good', text: 'Safe in a Sun storm' });
-  if (part.lands) tags.push({ kind: 'good', text: 'Slows the landing' });
-  if (part.explores) tags.push({ kind: 'good', text: 'Looks at the rocks' });
-  if (part.radio) tags.push({ kind: 'good', text: 'Calls home' });
-  return tags;
+  if (part.energy) tags.push({ kind: 'draw', phrase: each ? '-{{n}} W each' : '-{{n}} W', vars: { n: part.energy * WATTS_PER_ENERGY_POINT } });
+  if (part.heat) tags.push({ kind: 'good', phrase: '+{{n}} heat', vars: { n: part.heat } });
+  if (part.thrust) tags.push({ kind: 'good', phrase: '+{{n}} thrust', vars: { n: part.thrust } });
+  if (part.foodDays) tags.push({ kind: 'good', phrase: each ? '+{{n}} food each' : '+{{n}} food', vars: { n: formatKg(part.foodDays * FOOD_KG_PER_PERSON_DAY) } });
+  if (part.waterDays) tags.push({ kind: 'good', phrase: each ? '+{{n}} water each' : '+{{n}} water', vars: { n: formatKg(part.waterDays * WATER_KG_PER_PERSON_DAY) } });
+  if (part.waterKgPerDay) tags.push({ kind: 'draw', phrase: '-{{n}} water/day', vars: { n: formatKg(part.waterKgPerDay) } });
+  if (part.propellantHangarKg && !part.thrust) tags.push({ kind: 'good', phrase: '+fuel', vars: {} });
+  if (part.o2Kg) tags.push({ kind: 'good', phrase: each ? '+{{n}} oxygen each' : '+{{n}} oxygen', vars: { n: formatKg(part.o2Kg) } });
+  if (part.o2Recycle) tags.push({ kind: 'good', phrase: 'Cleans used air', vars: {} });
+  if (part.co2Filter) tags.push({ kind: 'good', phrase: 'Cleans breathed-out air', vars: {} });
+  if (part.descent) tags.push({ kind: 'good', phrase: 'Slows onto the Moon', vars: {} });
+  if (part.prospects) tags.push({ kind: 'good', phrase: 'Looks for ice', vars: {} });
+  if (part.waterRecycle) tags.push({ kind: 'good', phrase: 'Cleans used water', vars: {} });
+  if (part.stormShelter) tags.push({ kind: 'good', phrase: 'Safe in a Sun storm', vars: {} });
+  if (part.lands) tags.push({ kind: 'good', phrase: 'Slows the landing', vars: {} });
+  if (part.explores) tags.push({ kind: 'good', phrase: 'Looks at the rocks', vars: {} });
+  if (part.radio) tags.push({ kind: 'good', phrase: 'Calls home', vars: {} });
+  return tags.map((tag) => ({ ...tag, text: tag.phrase }));
 }
 
 /**
@@ -48,6 +48,8 @@ export function rocketStatus(equipped, mission) {
       fill: budgetLeft < 0 ? 100 : Math.max(0, Math.min(100, Math.round((budgetLeft / limits.budget) * 100))),
       current: Math.max(0, budgetLeft),
       text: budgetLeft < 0 ? `${-budgetLeft} cr over` : `${budgetLeft} cr left`,
+      phrase: budgetLeft < 0 ? '{{n}} cr over' : '{{n}} cr left',
+      vars: { n: budgetLeft < 0 ? -budgetLeft : budgetLeft },
       bar: true,
     },
     { ...roomMeter('mass', 'Mass', report.massKg, limits.mass, 'kg'), text: `${report.massKg} kg` },

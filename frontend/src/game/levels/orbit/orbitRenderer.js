@@ -12,6 +12,7 @@
  *   centerX, centerY     screen position of the center of the Earth (CSS pixels)
  *   earthRadiusPixels    radius of the drawn Earth
  */
+import { t } from '../../../i18n/index.js'
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { circularOrbitAngularSpeed, pointOnCircle } from '../../physics/orbitalMechanics.js'
 import { EXPLODING_OUTCOMES, OUTCOMES, degreesToRadians, satellitePositionAt } from './launchSimulation.js'
@@ -130,14 +131,15 @@ function drawCircle(ctx, x, y, radius, fill) {
 }
 
 function drawLabel(ctx, text, x, y, align, color, size = 15) {
+  const shown = t(text)
   ctx.font = `700 ${size}px ${LABEL_FONT}`
   ctx.textAlign = align
   ctx.textBaseline = 'middle'
   ctx.lineWidth = 4
   ctx.strokeStyle = 'rgba(5, 6, 26, 0.9)'
-  ctx.strokeText(text, x, y)
+  ctx.strokeText(shown, x, y)
   ctx.fillStyle = color
-  ctx.fillText(text, x, y)
+  ctx.fillText(shown, x, y)
 }
 
 /** Dotted circle made of square dots, like the trajectory. */

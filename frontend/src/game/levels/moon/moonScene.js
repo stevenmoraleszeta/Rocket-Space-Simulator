@@ -11,6 +11,7 @@
  * After mapping, the ship flies home: it goes about half way round the Moon, the same way it
  * arrived, and the way home carries on from that side.
  */
+import { t } from '../../../i18n/index.js'
 import {
   CAPTURE_KM,
   DEBRIS_BAND_HALF,
@@ -103,14 +104,15 @@ export function aimHandlePosition(view, siteAngle, aim) {
 }
 
 function drawLabel(ctx, text, x, y, align = 'center', color = COLORS.label, size = 13) {
+  const shown = t(text)
   ctx.font = `700 ${size}px ${LABEL_FONT}`
   ctx.textAlign = align
   ctx.textBaseline = 'middle'
   ctx.lineWidth = 4
   ctx.strokeStyle = 'rgba(5, 6, 26, 0.9)'
-  ctx.strokeText(text, x, y)
+  ctx.strokeText(shown, x, y)
   ctx.fillStyle = color
-  ctx.fillText(text, x, y)
+  ctx.fillText(shown, x, y)
 }
 
 /** Darkens the half of a round body that faces away from the Sun. */

@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AppLogo } from './brand/AppLogo.jsx'
 import { BlackHoleBackground, MISSIONS, MissionSelect, ProgressProvider } from './levels'
 import { MissionFlow } from './game/MissionFlow.jsx'
 import { SettingsMenu, SettingsProvider } from './settings'
 import { AMBIENCE, AudioVolumeSync, MUSIC, useSoundtrack } from './audio'
+import { menuRoute, missionRoute, readAppRoute, routesEqual, writeAppRoute } from './lib/appRoute.js'
+import { t } from './i18n/index.js'
 import { createCloudProgressStorage, createCloudSettingsStorage } from './lib/cloudStorage.js'
 import { usePlayerSession } from './lib/playerSession.js'
 import './levels/missions.css'
@@ -16,7 +18,29 @@ function MenuSoundtrack() {
 
 export default function App() {
   const session = usePlayerSession()
-  const [mission, setMission] = useState(null)
+  // The open mission and tab come from the hash, so a refresh stays on that screen.
+  const [route, setRoute] = useState(() => readAppRoute())
+  const navigate = useCallback((update, mode = 'push') => {
+    setRoute((current) => {
+      const next = typeof update === 'function' ? update(current) : update
+      if (!next || routesEqual(current, next)) return current
+      writeAppRoute(next, mode)
+      return next
+    })
+  }, [])
+
+  useEffect(() => {
+    writeAppRoute(readAppRoute(), 'replace')
+    const sync = () => setRoute(readAppRoute())
+    window.addEventListener('popstate', sync)
+    window.addEventListener('hashchange', sync)
+    return () => {
+      window.removeEventListener('popstate', sync)
+      window.removeEventListener('hashchange', sync)
+    }
+  }, [])
+
+  const mission = MISSIONS.find((item) => item.id === route.missionId) ?? null
   const progressStorage = useMemo(
     () => (session.remote ? createCloudProgressStorage() : null),
     [session.remote],
@@ -31,7 +55,7 @@ export default function App() {
       <BlackHoleBackground>
         <div className="brand-splash">
           <AppLogo size={96} wordmark bare />
-          <p className="brand-splash__status">Loading…</p>
+          <p className="brand-splash__status">{t('Loading…')}</p>
         </div>
       </BlackHoleBackground>
     )
@@ -45,13 +69,19 @@ export default function App() {
           <MissionFlow
             key={mission.id}
             mission={mission}
-            onExit={() => setMission(null)}
-            onNextMission={() => setMission(MISSIONS.find((item) => item.id === 'mars') ?? null)}
+            route={route}
+            onRoute={navigate}
+            onExit={() => navigate(menuRoute())}
+            onNextMission={() => navigate(missionRoute('mars'))}
           />
         ) : (
           <>
             <MenuSoundtrack />
-            <MissionSelect googleSignedIn={session.google} authError={session.authError} onStartMission={setMission} />
+            <MissionSelect
+              googleSignedIn={session.google}
+              authError={session.authError}
+              onStartMission={(next) => navigate(missionRoute(next.id))}
+            />
           </>
         )}
         {/* The mission menu shows its own settings button; on the game screens it comes from here,

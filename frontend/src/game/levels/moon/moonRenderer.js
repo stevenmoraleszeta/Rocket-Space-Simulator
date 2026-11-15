@@ -3,6 +3,7 @@
  * The picture is a side view: Earth on the left, the Moon on the right.
  * Up and down are the high road and the low road. The belts are drawn, not hit.
  */
+import { t } from '../../../i18n/index.js'
 import { MOON_LANDMARKS, MOON_OUTCOMES, shouldExplode } from './moonRoute.js'
 
 const LABEL_FONT = '"Pixelify Sans", sans-serif'
@@ -64,14 +65,15 @@ function drawAsteroid(ctx, sheet, frame, x, y, size) {
 }
 
 function drawLabel(ctx, text, x, y, align = 'center') {
+  const shown = t(text)
   ctx.font = `13px ${LABEL_FONT}`
   ctx.textAlign = align
   ctx.textBaseline = 'top'
   ctx.lineWidth = 3
   ctx.strokeStyle = '#05061a'
-  ctx.strokeText(text, x, y)
+  ctx.strokeText(shown, x, y)
   ctx.fillStyle = '#f4f7fb'
-  ctx.fillText(text, x, y)
+  ctx.fillText(shown, x, y)
 }
 
 function drawGate(ctx, view, half) {

@@ -62,3 +62,33 @@ export async function moonDistanceLine(date = new Date()) {
   }
   return `Today the Moon is about ${formatKm(localKm)} away. That number comes from the real Moon orbit.`
 }
+
+/** Distance for the mission report. The screen translates the sentence. */
+export async function moonDistanceFact(date = new Date()) {
+  const localKm = getMoonPosition(date).distanceKm
+  const start = date.toISOString().slice(0, 10)
+  const stopDate = new Date(date)
+  stopDate.setUTCDate(stopDate.getUTCDate() + 1)
+  const stop = stopDate.toISOString().slice(0, 10)
+  try {
+    const params = new URLSearchParams({
+      format: 'json',
+      COMMAND: "'301'",
+      MAKE_EPHEM: "'YES'",
+      EPHEM_TYPE: "'OBSERVER'",
+      CENTER: "'500@399'",
+      START_TIME: `'${start}'`,
+      STOP_TIME: `'${stop}'`,
+      STEP_SIZE: "'1 d'",
+      QUANTITIES: "'20'",
+    })
+    const response = await fetch(`https://ssd.jpl.nasa.gov/api/horizons.api?${params}`)
+    if (!response.ok) throw new Error('horizons')
+    const data = await response.json()
+    const found = horizonsRangeKm(String(data.result ?? ''))
+    if (found) return { km: found, fromNasa: true }
+  } catch {
+    /* The flight still explains the distance from the orbit the game already uses. */
+  }
+  return { km: localKm, fromNasa: false }
+}

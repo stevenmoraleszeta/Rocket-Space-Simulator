@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import {
   GoogleAuthProvider,
   getRedirectResult,
-  linkWithRedirect,
+  linkWithCredential,
   onAuthStateChanged,
   signInAnonymously,
   signInWithCredential,
-  signInWithRedirect,
 } from 'firebase/auth'
+import { onGoogleCredential } from './googleSignIn.js'
 import { auth, firebaseReady } from './firebase.js'
 
 const AUTH_TIMEOUT_MS = 8000
@@ -33,35 +33,47 @@ function sessionFromUser(user) {
   return { uid: user.uid, ready: true, remote: true, google: isGoogleUser(user) }
 }
 
-function googleProvider() {
-  const provider = new GoogleAuthProvider()
-  provider.setCustomParameters({ prompt: 'select_account' })
-  return provider
-}
-
 function credentialFrom(error) {
   const alreadyUsed = error?.code === 'auth/credential-already-in-use' || error?.code === 'auth/email-already-in-use'
   return alreadyUsed ? GoogleAuthProvider.credentialFromError(error) : null
 }
 
+function accountAlreadyUsed(error) {
+  return error?.code === 'auth/credential-already-in-use' || error?.code === 'auth/email-already-in-use'
+}
+
 /**
- * Sends the whole page to Google. A popup cannot finish a passkey or phone
- * check, which is what was stopping sign-in. An anonymous session is linked
- * first so the stars saved under that uid stay with the player.
+ * Turns a Google ID token into this player's Firebase session.
+ * An anonymous session is linked first so the stars saved under that uid stay
+ * with the player. If that Google account already belongs to another session,
+ * the player enters that session instead.
  */
-export async function signInWithGoogle() {
+export async function signInWithGoogleIdToken(idToken) {
   if (!firebaseReady || !auth) {
     const error = new Error('Google sign-in is not ready.')
     error.code = 'auth/unavailable'
     throw error
   }
-
-  const current = auth.currentUser
-  if (current?.isAnonymous) {
-    await linkWithRedirect(current, googleProvider())
-    return
+  if (!idToken) {
+    const error = new Error('Google did not return an account.')
+    error.code = 'auth/missing-credential'
+    throw error
   }
-  await signInWithRedirect(auth, googleProvider())
+  if (typeof auth.authStateReady === 'function') await auth.authStateReady()
+
+  const credential = GoogleAuthProvider.credential(idToken)
+  const current = auth.currentUser
+  if (isGoogleUser(current)) return
+  if (current?.isAnonymous) {
+    try {
+      await linkWithCredential(current, credential)
+      return
+    } catch (error) {
+      if (error?.code === 'auth/provider-already-linked') return
+      if (!accountAlreadyUsed(error)) throw error
+    }
+  }
+  await signInWithCredential(auth, credential)
 }
 
 let redirectResult = null
@@ -111,6 +123,10 @@ export function googleSignInMessage(error) {
       return 'This browser is blocking Google. Try Chrome.'
     case 'auth/redirect-cancelled-by-user':
       return 'The Google page closed. You can try again.'
+    case 'auth/missing-credential':
+    case 'auth/invalid-credential':
+    case 'auth/invalid-id-token':
+      return 'Google did not accept that sign-in. Try again.'
     default:
       return 'Google sign-in did not work. Try again.'
   }
@@ -135,15 +151,35 @@ export function usePlayerSession() {
 
     let active = true
     let ready = false
+    let unsub = () => {}
     const publish = (next) => {
       if (!active) return
       ready = true
       setSession(next)
     }
 
-    consumeGoogleRedirect().then((message) => {
-      if (active && message) setAuthError(message)
+    const stopCredential = onGoogleCredential(async (response) => {
+      if (!response?.credential) {
+        if (response) setAuthError(googleSignInMessage({ code: 'auth/missing-credential' }))
+        return
+      }
+      try {
+        await signInWithGoogleIdToken(response.credential)
+        if (active) setAuthError('')
+      } catch (error) {
+        console.warn('Google sign-in failed.', error)
+        if (active) setAuthError(googleSignInMessage(error))
+      }
     })
+
+    // Finish any sign-in that already left this page before starting a new
+    // anonymous user. Doing both at once drops the Google result.
+    const redirectSettled = Promise.race([
+      consumeGoogleRedirect(),
+      new Promise((resolve) => {
+        setTimeout(() => resolve(''), AUTH_TIMEOUT_MS)
+      }),
+    ])
 
     const timer = setTimeout(() => {
       if (ready) return
@@ -151,26 +187,36 @@ export function usePlayerSession() {
       publish({ uid: 'guest', ready: true, remote: false, google: false })
     }, AUTH_TIMEOUT_MS)
 
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        clearTimeout(timer)
-        publish(sessionFromUser(user))
-        return
-      }
-      if (ready) {
-        publish(sessionFromUser(null))
-        return
-      }
-      ensureAnonymousUser().catch((error) => {
-        console.warn('Anonymous sign-in failed. Player data stays on this device.', error)
-        clearTimeout(timer)
-        publish({ uid: 'guest', ready: true, remote: false, google: false })
+    redirectSettled.then((message) => {
+      if (!active) return
+      if (message) setAuthError(message)
+      const next = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          clearTimeout(timer)
+          publish(sessionFromUser(user))
+          return
+        }
+        if (ready) {
+          publish(sessionFromUser(null))
+          return
+        }
+        ensureAnonymousUser().catch((error) => {
+          console.warn('Anonymous sign-in failed. Player data stays on this device.', error)
+          clearTimeout(timer)
+          publish({ uid: 'guest', ready: true, remote: false, google: false })
+        })
       })
+      if (!active) {
+        next()
+        return
+      }
+      unsub = next
     })
 
     return () => {
       active = false
       clearTimeout(timer)
+      stopCredential()
       unsub()
     }
   }, [])
