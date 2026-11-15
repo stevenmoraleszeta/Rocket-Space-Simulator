@@ -1,8 +1,10 @@
 /**
  * MISSION 3 — LAUNCH TO MARS, after the hangar. Same mechanics as mission 1 (OrbitalLaunchLevel):
  *
- *   aim      hold and drag from Earth: the direction is the launch angle, the distance the power.
- *            The dotted line shows the real path. Only exactly 135.55° meets Mars (marsLaunchRoute.js).
+ *   site     pick the launch base, from the same real cities as mission 1
+ *   aim      hold and drag from the base: the direction is the launch angle, the distance the power.
+ *            The dotted line shows the real path, leaving from the base. 135.55° is the best angle;
+ *            anything from 134° to 138° still meets Mars (marsLaunchRoute.js).
  *   liftoff  the pad and the climb (LaunchSequence); missing parts blow up or stop the launch
  *   flight   the cruise around the Sun plays in a few seconds; Mars, Earth and the hazards move
  *   result   "You did it!" or "You lose" with the reason, saved with the other missions
@@ -20,7 +22,9 @@ import { flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { flightNotes } from '../../flightSummary.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
+import { LAUNCH_SITES } from '../orbit/launchSites.js'
 import {
+  ANGLE_WINDOW,
   IDEAL_TRIP_DAYS,
   MARS_DEG_PER_DAY,
   MARS_EXPLODING,
@@ -34,6 +38,7 @@ import {
 import { aimFromPointer, createMarsView, drawMarsScene, pathColor, toScreen } from './marsLaunchRenderer.js'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
+import './marsLaunch.css'
 
 /** The whole cruise plays in this many real seconds. */
 const FLIGHT_PLAYBACK_SECONDS = 7
@@ -44,8 +49,9 @@ const KEY_ANGLE_STEP_DEG = 0.01
 const KEY_POWER_STEP = 0.01
 /** A tap this close to a hazard opens its card. */
 const HAZARD_TAP_PIXELS = 20
-/** Angle mistakes up to this still count as "the right angle" when explaining a miss. */
-const ANGLE_OK_DEG = 0.2
+/** The aim is inside the allowed window (134°–138°). */
+const angleInWindow = (deg) => deg >= ANGLE_WINDOW.min && deg <= ANGLE_WINDOW.max
+const WINDOW_TEXT = `between ${ANGLE_WINDOW.min}° and ${ANGLE_WINDOW.max}°`
 
 const FIRST_AIM = { angleDeg: 120, power: 0.55 }
 
@@ -68,9 +74,9 @@ function describeTrip(trip, aim) {
     case MARS_OUTCOMES.SHORT:
       return { tone: 'warn', text: 'Not enough power: it never reaches Mars’s orbit.' }
     default:
-      return Math.abs(trip.angleErrorDeg) <= ANGLE_OK_DEG
+      return angleInWindow(aim.angleDeg)
         ? { tone: 'warn', text: 'Good angle, but with this power Mars is not there when you arrive.' }
-        : { tone: 'warn', text: `At ${formatAngle(aim.angleDeg)} Mars has moved away. Aim at exactly ${TARGET_ANGLE_DEG}°.` }
+        : { tone: 'warn', text: `At ${formatAngle(aim.angleDeg)} Mars has moved away. Aim ${WINDOW_TEXT} (best: ${TARGET_ANGLE_DEG}°).` }
   }
 }
 
@@ -95,11 +101,13 @@ function failureHint(result) {
   if (result.failure) return result.failure.hint
   switch (result.outcome.type) {
     case MARS_OUTCOMES.HAZARD:
-      return `Watch the red danger zones. The right path at exactly ${TARGET_ANGLE_DEG}° slips between them.`
+      return `Watch the red danger zones. Aimed ${WINDOW_TEXT} with the right power, the path slips between them.`
     case MARS_OUTCOMES.SHORT:
       return 'Drag farther from Earth to give the rocket more power.'
     default:
-      return result.angleRight ? 'Change the power: drag a little closer or farther from Earth.' : `Aim at exactly ${TARGET_ANGLE_DEG}°. Use the arrow keys to fine-tune.`
+      return result.angleRight
+        ? 'Change the power: drag a little closer or farther from the base.'
+        : `Aim ${WINDOW_TEXT} (best: ${TARGET_ANGLE_DEG}°). Use the arrow keys to fine-tune.`
   }
 }
 
@@ -107,7 +115,9 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
 
-  const [step, setStep] = useState('aim')
+  const [step, setStep] = useState('site')
+  const [siteId, setSiteId] = useState(null)
+  const site = LAUNCH_SITES.find((candidate) => candidate.id === siteId) ?? null
   const [aim, setAim] = useState(FIRST_AIM)
   const [result, setResult] = useState(null)
   const [telemetryDay, setTelemetryDay] = useState(0)
@@ -149,7 +159,11 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     const pct = success ? scoreMarsArrival(outcome, trip.angleErrorDeg) : 0
     let progress = null
     try {
-      progress = completeMission(mission.id, { pct, success, flight: flightNotes(equipped, { orbit: formatAngle(aim.angleDeg) }) })
+      progress = completeMission(mission.id, {
+        pct,
+        success,
+        flight: flightNotes(equipped, { site: site ? `${site.name}, ${site.country}` : '', orbit: formatAngle(aim.angleDeg) }),
+      })
     } catch {
       /* mission locked or unknown: show the result anyway */
     }
@@ -163,12 +177,12 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
       unlockedMissionId: progress?.unlockedMissionId ?? null,
       aimDeg: aim.angleDeg,
       directionDeg: aim.angleDeg.toFixed(2),
-      angleRight: Math.abs(trip.angleErrorDeg) <= ANGLE_OK_DEG,
+      angleRight: angleInWindow(aim.angleDeg),
       failure,
       exploded,
     })
     setStep('result')
-  }, [aim, trip, completeMission, mission.id, equipped])
+  }, [aim, trip, completeMission, mission.id, equipped, site])
 
   const failLaunch = useCallback(() => {
     setLiftingOff(false)
@@ -194,7 +208,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
 
   // ------------------------------------------------------------ drawing loop
   useLayoutEffect(() => {
-    sceneRef.current = { step, view, trip, aim, images, canvasSize, finishCruise }
+    sceneRef.current = { step, view, trip, aim, site, images, canvasSize, finishCruise }
   })
 
   useEffect(() => {
@@ -239,6 +253,8 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
           step: current.step,
           trip: current.trip,
           aim: current.aim,
+          site: current.site,
+          sites: LAUNCH_SITES,
           flight,
           images: current.images,
           clockSeconds: now / 1000,
@@ -276,7 +292,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   }
 
   const aimAt = (point) => {
-    const next = aimFromPointer(view, point.x, point.y)
+    const next = aimFromPointer(view, point.x, point.y, site)
     if (next) setAim(next)
   }
 
@@ -326,6 +342,20 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   }, [step, liftingOff])
 
   // ------------------------------------------------------------ steps
+  const selectSite = (id) => {
+    playSfx(SFX.select)
+    setSiteId(id)
+  }
+  const goToAim = () => {
+    if (!site) return
+    playSfx(SFX.confirm)
+    setStep('aim')
+  }
+  const backToSites = () => {
+    playSfx(SFX.cancel)
+    setStep('site')
+  }
+
   const launch = () => {
     playSfx(SFX.liftoff)
     setHazardCard(null)
@@ -423,23 +453,50 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
         </div>
 
         <aside className="orbit-panel" aria-live="polite">
+          {step === 'site' && (
+            <>
+              <h2 className="orbit-panel__title">1. Pick a launch base</h2>
+              <p className="orbit-panel__hint">The rocket leaves from this city. It shows in yellow on the Earth.</p>
+              <ul className="mars-sites">
+                {LAUNCH_SITES.map((candidate) => (
+                  <li key={candidate.id}>
+                    <button
+                      type="button"
+                      className={candidate.id === siteId ? 'mars-site is-selected' : 'mars-site'}
+                      aria-pressed={candidate.id === siteId}
+                      onClick={() => selectSite(candidate.id)}
+                    >
+                      <span className="mars-site__name">{candidate.name}, {candidate.country}</span>
+                      <span className="mars-site__port">{candidate.spaceport}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {site && <p className="orbit-panel__hint">{site.why}</p>}
+              <div className="orbit-panel__actions">
+                <button type="button" className="game__back" onClick={onBackToHangar}>Hangar</button>
+                <button type="button" className="ms-btn" disabled={!site} onClick={goToAim}>Next</button>
+              </div>
+            </>
+          )}
           {step === 'aim' && (
             <>
-              <h2 className="orbit-panel__title">Aim at Mars</h2>
+              <h2 className="orbit-panel__title">2. Aim at Mars from {site?.name}</h2>
               <p className="orbit-panel__hint">
-                Hold the click on the map and move: the direction from Earth is your launch angle, farther away is more
-                power. Mars moves, so only <b>exactly {TARGET_ANGLE_DEG}°</b> meets it. Arrow keys fine-tune (Shift: faster).
+                Hold the click on the map and move: the direction from the base is your launch angle, farther away is
+                more power. Mars moves, so aim <b>{WINDOW_TEXT}</b> (best: {TARGET_ANGLE_DEG}°). Arrow keys fine-tune
+                (Shift: faster).
               </p>
               <dl className="orbit-stats">
                 <div><dt>Your angle</dt><dd>{formatAngle(aim.angleDeg)}</dd></div>
-                <div><dt>Target</dt><dd>{TARGET_ANGLE_DEG}°</dd></div>
+                <div><dt>Allowed</dt><dd>{ANGLE_WINDOW.min}°–{ANGLE_WINDOW.max}°</dd></div>
                 <div><dt>Power</dt><dd>{Math.round(aim.power * 100)}%</dd></div>
               </dl>
               <p className={`orbit-prediction is-${prediction.tone}`} style={{ borderColor: pathColor(trip.outcome) }}>
                 {sayTo(playerName, prediction.text)}
               </p>
               <div className="orbit-panel__actions">
-                <button type="button" className="game__back" onClick={onBackToHangar}>Hangar</button>
+                <button type="button" className="game__back" onClick={backToSites}>Back</button>
                 <button type="button" className="ms-btn" onClick={launch} disabled={liftingOff}>Launch 🚀</button>
               </div>
             </>

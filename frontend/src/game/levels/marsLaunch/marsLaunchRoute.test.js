@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  ANGLE_WINDOW,
   IDEAL_POWER,
   MARS_DEG_PER_DAY,
   MARS_HAZARDS,
@@ -16,26 +17,29 @@ test('the exact angle with the ideal power meets Mars', () => {
   assert.ok(Math.abs(trip.outcome.marsOffsetDeg) < 0.01)
 })
 
-test('the right path slips between every hazard', () => {
-  const trip = simulateMarsTrip(TARGET_ANGLE_DEG, IDEAL_POWER)
-  for (const hazard of MARS_HAZARDS) {
-    const closest = Math.min(...trip.samples.map((s) => {
-      const spot = hazardPosition(hazard, s.day)
-      return Math.hypot(spot.x - s.x, spot.y - s.y)
-    }))
-    assert.ok(closest > hazard.dangerAu, `${hazard.id} passes ${closest.toFixed(3)} AU away`)
+test('every angle from 134° to 138° meets Mars and slips between the hazards', () => {
+  for (let angle = ANGLE_WINDOW.min; angle <= ANGLE_WINDOW.max + 1e-9; angle += 0.25) {
+    const trip = simulateMarsTrip(angle, IDEAL_POWER)
+    assert.equal(trip.outcome.type, MARS_OUTCOMES.REACHED, `${angle}°`)
+    for (const hazard of MARS_HAZARDS) {
+      const closest = Math.min(...trip.samples.map((s) => {
+        const spot = hazardPosition(hazard, s.day)
+        return Math.hypot(spot.x - s.x, spot.y - s.y)
+      }))
+      assert.ok(closest > hazard.dangerAu, `${angle}°: ${hazard.id} passes ${closest.toFixed(3)} AU away`)
+    }
   }
 })
 
-test('a few tenths of a degree off no longer meets Mars', () => {
-  for (const angle of [TARGET_ANGLE_DEG - 0.3, TARGET_ANGLE_DEG + 0.3, 130, 140]) {
+test('outside 134°–138° Mars has moved away', () => {
+  for (const angle of [ANGLE_WINDOW.min - 0.1, ANGLE_WINDOW.max + 0.1, 130, 142]) {
     const trip = simulateMarsTrip(angle, IDEAL_POWER)
     assert.notEqual(trip.outcome.type, MARS_OUTCOMES.REACHED, `${angle}°`)
   }
 })
 
 test('a missed Mars says how many days away it was, at its real speed', () => {
-  const trip = simulateMarsTrip(TARGET_ANGLE_DEG - 0.3, IDEAL_POWER)
+  const trip = simulateMarsTrip(ANGLE_WINDOW.min - 0.5, IDEAL_POWER)
   assert.equal(trip.outcome.type, MARS_OUTCOMES.MISSED)
   assert.ok(Math.abs(MARS_DEG_PER_DAY - 0.524) < 0.001)
   assert.ok(Math.abs(trip.outcome.marsOffsetDays - Math.abs(trip.outcome.marsOffsetDeg) / MARS_DEG_PER_DAY) < 1e-9)

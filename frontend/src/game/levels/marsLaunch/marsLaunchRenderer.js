@@ -5,6 +5,7 @@
  */
 import { ASSETS } from '../../rendering/assetManifest.js'
 import {
+  ANGLE_WINDOW,
   EARTH_ORBIT_AU,
   MARS_HAZARDS,
   MARS_ORBIT_AU,
@@ -24,6 +25,8 @@ const PLANET_PIXELS = { earth: 34, mars: 28, sun: 46 }
 const ROCKET_PIXELS = 30
 const HAZARD_PIXELS = 18
 const EXPLOSION = { frameSize: 32, frames: 8, fps: 10, pixels: 96 }
+/** The drawn path leaves from the launch base and blends into the real orbit over these days. */
+const BASE_BLEND_DAYS = 16
 
 const COLORS = {
   earthOrbit: 'rgba(79, 195, 255, 0.35)',
@@ -54,23 +57,49 @@ export function toScreen(view, x, y) {
   return { x: view.centerX + x * view.pixelsPerAu, y: view.centerY - y * view.pixelsPerAu }
 }
 
-/** Direction (degrees, counterclockwise from the right) and power from Earth to the pointer. */
-export function aimFromPointer(view, pointerX, pointerY) {
-  const earth = toScreen(view, earthPosition(0).x, earthPosition(0).y)
-  const dx = pointerX - earth.x
-  const dy = earth.y - pointerY
+/**
+ * Where a launch base sits on the drawn Earth (seen from above the North Pole, like mission 1):
+ * on the rim of the Earth picture at the base's longitude.
+ */
+export function baseScreenPosition(view, site, day = 0) {
+  const earthWorld = earthPosition(day)
+  const earth = toScreen(view, earthWorld.x, earthWorld.y)
+  const angle = ((site?.longitudeDeg ?? 0) * Math.PI) / 180
+  const rim = PLANET_PIXELS.earth / 2
+  return { x: earth.x + Math.cos(angle) * rim, y: earth.y - Math.sin(angle) * rim }
+}
+
+/**
+ * Screen point of a path sample. Planets are drawn much bigger than real, so near Earth the path
+ * is pulled to start at the launch base on the Earth picture and then joins the real orbit.
+ */
+export function pathScreenPoint(view, sample, site) {
+  const point = toScreen(view, sample.x, sample.y)
+  if (!site || sample.day >= BASE_BLEND_DAYS) return point
+  const earthWorld = earthPosition(0)
+  const earth = toScreen(view, earthWorld.x, earthWorld.y)
+  const base = baseScreenPosition(view, site, 0)
+  const pull = 1 - sample.day / BASE_BLEND_DAYS
+  return { x: point.x + (base.x - earth.x) * pull, y: point.y + (base.y - earth.y) * pull }
+}
+
+/** Direction (degrees, counterclockwise from the right) and power from the launch base to the pointer. */
+export function aimFromPointer(view, pointerX, pointerY, site) {
+  const base = baseScreenPosition(view, site)
+  const dx = pointerX - base.x
+  const dy = base.y - pointerY
   const distance = Math.hypot(dx, dy)
   if (distance < 6) return null
   const angleDeg = (((Math.atan2(dy, dx) * 180) / Math.PI) % 360 + 360) % 360
   return { angleDeg, power: Math.min(1, Math.max(0.2, distance / view.aimMaxPixels)) }
 }
 
-/** Screen point the pointer would be at for an aim (to draw the aim line). */
-export function aimScreenPoint(view, aim) {
-  const earth = toScreen(view, earthPosition(0).x, earthPosition(0).y)
+/** Screen point the pointer would be at for an aim (to draw the aim line from the base). */
+export function aimScreenPoint(view, aim, site) {
+  const base = baseScreenPosition(view, site)
   const angle = (aim.angleDeg * Math.PI) / 180
   const length = aim.power * view.aimMaxPixels
-  return { x: earth.x + Math.cos(angle) * length, y: earth.y - Math.sin(angle) * length }
+  return { x: base.x + Math.cos(angle) * length, y: base.y - Math.sin(angle) * length }
 }
 
 function circle(ctx, x, y, radius, fill) {
@@ -168,20 +197,20 @@ export function pathColor(outcome) {
   return COLORS.pathMiss
 }
 
-function drawPath(ctx, view, samples, color, untilDay = Infinity, alpha = 1) {
+function drawPath(ctx, view, samples, site, color, untilDay = Infinity, alpha = 1) {
   ctx.globalAlpha = alpha
   ctx.fillStyle = color
   for (const sample of samples) {
     if (sample.day > untilDay) break
-    const point = toScreen(view, sample.x, sample.y)
+    const point = pathScreenPoint(view, sample, site)
     ctx.fillRect(Math.round(point.x) - 2, Math.round(point.y) - 2, 4, 4)
   }
   ctx.globalAlpha = 1
 }
 
-/** Little protractor at Earth: the 0° line to the right and the current direction. */
-function drawProtractor(ctx, view, aim) {
-  const earth = toScreen(view, earthPosition(0).x, earthPosition(0).y)
+/** Little protractor at the launch base: the 0° line to the right and the current direction. */
+function drawProtractor(ctx, view, aim, site) {
+  const earth = baseScreenPosition(view, site)
   const radius = 44
   ctx.strokeStyle = COLORS.protractor
   ctx.lineWidth = 2
@@ -197,7 +226,7 @@ function drawProtractor(ctx, view, aim) {
   ctx.beginPath()
   ctx.arc(earth.x, earth.y, radius, 0, -angle, true)
   ctx.stroke()
-  const tip = aimScreenPoint(view, aim)
+  const tip = aimScreenPoint(view, aim, site)
   ctx.strokeStyle = '#ffffff'
   ctx.lineWidth = 2
   ctx.beginPath()
@@ -209,11 +238,11 @@ function drawProtractor(ctx, view, aim) {
   ctx.fillRect(Math.round(tip.x) - 1, Math.round(tip.y) - 7, 3, 14)
 }
 
-function drawRocket(ctx, view, images, here, ahead) {
+function drawRocket(ctx, view, images, here, ahead, site) {
   const image = images.rocket
   if (!image?.complete) return
-  const a = toScreen(view, here.x, here.y)
-  const b = toScreen(view, ahead.x, ahead.y)
+  const a = pathScreenPoint(view, here, site)
+  const b = pathScreenPoint(view, ahead, site)
   const sprite = ASSETS.rocketUpperStage
   const cell = sprite.frameX + (Math.floor(performance.now() / 90) % sprite.frames) * sprite.frameWidth
   ctx.save()
@@ -223,10 +252,10 @@ function drawRocket(ctx, view, images, here, ahead) {
   ctx.restore()
 }
 
-function drawExplosion(ctx, view, images, point, secondsSince) {
+function drawExplosion(ctx, view, images, point, secondsSince, site) {
   const frame = Math.floor(secondsSince * EXPLOSION.fps)
   if (frame >= EXPLOSION.frames || !images.explosion?.complete) return
-  const at = toScreen(view, point.x, point.y)
+  const at = pathScreenPoint(view, point, site)
   ctx.drawImage(
     images.explosion,
     frame * EXPLOSION.frameSize, 0, EXPLOSION.frameSize, EXPLOSION.frameSize,
@@ -234,8 +263,20 @@ function drawExplosion(ctx, view, images, point, secondsSince) {
   )
 }
 
+/** Launch bases on the Earth picture: all of them while choosing, then only the chosen one. */
+function drawBases(ctx, view, sites, chosenId, day, choosing) {
+  for (const site of sites) {
+    const chosen = site.id === chosenId
+    if (!choosing && !chosen) continue
+    const spot = baseScreenPosition(view, site, day)
+    circle(ctx, spot.x, spot.y, chosen ? 5 : 3.5, chosen ? '#ffd23f' : '#ff8fa6')
+    if (chosen) label(ctx, site.name, spot.x, spot.y - 14, '#ffd23f', 'center', 12)
+  }
+}
+
 /**
- * scene: { step, trip, aim, flight: { day, secondsSinceEnd } | null, images, clockSeconds }
+ * scene: { step, trip, aim, site, sites, flight: { day, secondsSinceEnd } | null, images, clockSeconds }
+ *   step 'site': planets on launch day and every launch base on Earth; the chosen one is yellow
  *   step 'aim': planets on launch day, hazards as dots, the dotted prediction and the protractor
  *   step 'flight' / 'result': everything moves with the trip day; the rocket follows the path
  */
@@ -249,26 +290,27 @@ export function drawMarsScene(ctx, view, scene) {
   dottedRing(ctx, view, MARS_ORBIT_AU, COLORS.marsOrbit)
   drawHazards(ctx, view, scene.images, day, launched, scene.clockSeconds)
   drawPlanets(ctx, view, scene.images, day)
+  drawBases(ctx, view, scene.sites ?? [], scene.site?.id, day, scene.step === 'site')
 
-  const { trip } = scene
-  if (!trip) return
+  const { trip, site } = scene
+  if (!trip || scene.step === 'site') return
   const color = pathColor(trip.outcome)
   if (!launched) {
-    drawPath(ctx, view, trip.samples, color)
-    drawProtractor(ctx, view, scene.aim)
-    label(ctx, `Aim: exactly ${TARGET_ANGLE_DEG}°`, view.width / 2, 22, '#ffd23f', 'center', 15)
+    drawPath(ctx, view, trip.samples, site, color)
+    drawProtractor(ctx, view, scene.aim, site)
+    label(ctx, `Aim: ${TARGET_ANGLE_DEG}° (from ${ANGLE_WINDOW.min}° to ${ANGLE_WINDOW.max}° still works)`, view.width / 2, 22, '#ffd23f', 'center', 15)
     return
   }
-  drawPath(ctx, view, trip.samples, color, Infinity, 0.25)
-  drawPath(ctx, view, trip.samples, color, day)
+  drawPath(ctx, view, trip.samples, site, color, Infinity, 0.25)
+  drawPath(ctx, view, trip.samples, site, color, day)
   const { outcome } = trip
   if (day < outcome.day) {
     const here = tripPointAt(trip.samples, day)
-    drawRocket(ctx, view, scene.images, here, tripPointAt(trip.samples, day + 3))
+    drawRocket(ctx, view, scene.images, here, tripPointAt(trip.samples, day + 3), site)
   } else if (outcome.type === MARS_OUTCOMES.HAZARD) {
-    drawExplosion(ctx, view, scene.images, outcome, scene.flight?.secondsSinceEnd ?? 0)
+    drawExplosion(ctx, view, scene.images, outcome, scene.flight?.secondsSinceEnd ?? 0, site)
   } else {
     const before = tripPointAt(trip.samples, outcome.day - 3)
-    drawRocket(ctx, view, scene.images, outcome, { x: outcome.x * 2 - before.x, y: outcome.y * 2 - before.y })
+    drawRocket(ctx, view, scene.images, outcome, { day: outcome.day + 3, x: outcome.x * 2 - before.x, y: outcome.y * 2 - before.y }, site)
   }
 }

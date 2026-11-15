@@ -1,0 +1,30 @@
+/* Mission 3: list of launch bases in the panel (MarsLaunchLevel.jsx). */
+.mars-sites {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.mars-site {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 2px solid rgba(185, 194, 236, 0.35);
+  border-radius: 8px;
+  background: rgba(5, 6, 26, 0.6);
+  color: var(--ms-text, #fff);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.mars-site:hover { border-color: var(--ms-accent, #4fc3ff); }
+.mars-site:focus-visible { outline: 3px solid var(--ms-yellow, #ffd23f); outline-offset: 2px; }
+.mars-site.is-selected { border-color: var(--ms-yellow, #ffd23f); background: rgba(255, 210, 63, 0.12); }
+.mars-site__name { font-size: 15px; font-weight: 700; }
+.mars-site.is-selected .mars-site__name { color: var(--ms-yellow, #ffd23f); }
+.mars-site__port { font-size: 13px; color: var(--ms-muted, #b9c2ec); }
