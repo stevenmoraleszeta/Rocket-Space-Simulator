@@ -325,10 +325,11 @@ function Meters({ meters }) {
   return (
     <section className="meters" aria-label="Rocket supplies">
       <h2 className="meters__title">Supplies</h2>
-      <p className="meters__hint">Green bars are ready. Yellow bars still need help.</p>
       <div className="meters__grid">
         {meters.map((meter) => (
-          <div key={meter.id} className={`meter is-${meter.tone}`}>
+          // Only the budget colors its bar (ok / low / over). The other bars all share one color
+          // and show just the number, so kids find the right amounts by trying
+          <div key={meter.id} className={meter.bar ? `meter is-${meter.tone}` : 'meter is-plain'}>
             {METER_ICONS[meter.id] && (
               <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />
             )}

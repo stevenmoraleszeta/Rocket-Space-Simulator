@@ -709,6 +709,12 @@
   color: #c6b36a;
 }
 
+/* Supplies other than the budget: one color for every bar and value, whatever the amount,
+   so the color never tells whether it is enough */
+.meter.is-plain {
+  --meter: #7f9be0;
+}
+
 .meter__track {
   grid-column: 2;
   grid-row: 1;

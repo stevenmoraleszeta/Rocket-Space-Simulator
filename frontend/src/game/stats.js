@@ -67,8 +67,14 @@ export function rocketStatus(equipped, mission) {
   const energyLeft = limits.energy - totals.energy;
 
   const meters = [
-    roomMeter('budget', 'Budget', budgetLeft, limits.budget, 'cr'),
-    roomMeter('mass', 'Mass', massLeft, limits.mass, 'kg'),
+    // Budget is a hard limit, so it keeps its bar and the money left
+    {
+      ...roomMeter('budget', 'Budget', budgetLeft, limits.budget, 'cr'),
+      text: budgetLeft < 0 ? `${-budgetLeft} cr over` : `${budgetLeft} cr left`,
+      bar: true,
+    },
+    // Mass shows how much the rocket weighs, not the room left
+    { ...roomMeter('mass', 'Mass', massLeft, limits.mass, 'kg'), text: `${totals.mass} kg` },
     roomMeter('energy', 'Energy', energyLeft, limits.energy, ''),
     goalMeter('heat', 'Heat', totals.heat, limits.heat),
     goalMeter('thrust', 'Thrust', totals.thrust, limits.thrust),
@@ -92,13 +98,14 @@ function roomMeter(id, label, left, max, unit) {
   const over = left < 0;
   const ratio = max > 0 ? left / max : 0;
   const tone = over ? 'over' : ratio <= 0.2 ? 'warn' : 'ok';
-  const amount = `${over ? -left : left}${unit ? ` ${unit}` : ''}`;
+  // Just the number: no "left" and no limit, so kids find the right amounts by trying
+  const amount = `${left}${unit ? ` ${unit}` : ''}`;
   return {
     id,
     label,
     current: Math.max(0, left),
     max,
-    text: over ? `${amount} over` : `${amount} left`,
+    text: amount,
     tone,
     fill: over ? 100 : fillOf(left, max),
   };
@@ -112,7 +119,7 @@ function goalMeter(id, label, current, max) {
     label,
     current: Math.min(current, max),
     max,
-    text: `${current} / ${max}`,
+    text: `${current}`, // no target shown: kids find it by trying
     tone: met ? 'ok' : current > 0 ? 'warn' : 'short',
     fill: fillOf(current, max),
   };
