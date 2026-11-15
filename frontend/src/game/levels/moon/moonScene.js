@@ -8,7 +8,8 @@
  *
  * The Sun is far off the map: its light crosses the whole map from one side, and the small
  * Moons on the Moon's orbit show why the Moon has phases (the Sun always lights the same half).
- * After mapping, the ship flies home: the trip out and the trip back draw a figure 8.
+ * After mapping, the ship flies home: it goes about half way round the Moon, the same way it
+ * arrived, and the way home carries on from that side.
  */
 import {
   CAPTURE_KM,
@@ -445,19 +446,6 @@ export function trafficAtPoint(view, traffic, launchDate, point, seconds = 0) {
   return best
 }
 
-/** The way home, shifted so it starts at the Moon where the ship meets it (see drawMoonScene). */
-function homeFromMeetingPoint(samples, meetMoon, leaveMoon) {
-  const dx = meetMoon.x - leaveMoon.x
-  const dy = meetMoon.y - leaveMoon.y
-  const startRadius = Math.hypot(samples[0].x, samples[0].y)
-  const fadeTo = startRadius * 0.4
-  return samples.map((sample) => {
-    const radius = Math.hypot(sample.x, sample.y)
-    const weight = Math.min(1, Math.max(0, (radius - fadeTo) / (startRadius - fadeTo)))
-    return { ...sample, x: sample.x + dx * weight, y: sample.y + dy * weight }
-  })
-}
-
 function pathColor(outcomeType) {
   if (outcomeType === TRANSFER_OUTCOMES.ARRIVED) return COLORS.pathGood
   if (
@@ -485,23 +473,91 @@ function lensDistance(view, distanceKm, captureKm) {
  * Screen point of a ship sample { x, y, t }. The drawn Moon is much bigger than the real one,
  * so near the Moon the map zooms in around it (a "lens"): the ship really reaches the drawn
  * Moon at the same time as the real ship reaches the real Moon, and its orbit is visible.
+ *
+ * `frame` (optional) draws a whole path around one Moon instead of a moving one:
+ *   anchorT  near the Moon, each point is placed around the Moon at this time (not at its own
+ *            time), so the approach and the way home are smooth curves on one side of the Moon
+ *   spin     turns the part near the Moon by this angle (radians), fading out farther away
  */
-export function shipScreen(view, scene, sample) {
+export function shipScreen(view, scene, sample, frame = null) {
   const base = spaceToScreen(view, sample.x, sample.y)
   if (!scene.moonTable) return base
   const moon = moonAt(scene.moonTable, sample.t ?? 0)
-  const dx = sample.x - moon.x
-  const dy = sample.y - moon.y
+  let dx = sample.x - moon.x
+  let dy = sample.y - moon.y
   const distance = Math.hypot(dx, dy)
   const captureKm = scene.captureKm ?? CAPTURE_KM
+  let center = moon
+  let start = base
+  if (frame) {
+    // Smooth 1 → 0 between the capture distance and `reach` capture distances.
+    const fade = (reach) => {
+      const reachKm = captureKm * reach
+      if (distance >= reachKm) return 0
+      const s = distance <= captureKm ? 1 : 1 - (distance - captureKm) / (reachKm - captureKm)
+      return s * s * (3 - 2 * s)
+    }
+    const shift = fade(FRAME_SHIFT_REACH)
+    const turn = (frame.spin ?? 0) * fade(FRAME_SPIN_REACH)
+    if (shift > 0 || turn !== 0) {
+      const anchor = moonAt(scene.moonTable, frame.anchorT ?? sample.t ?? 0)
+      const cos = Math.cos(turn)
+      const sin = Math.sin(turn)
+      ;[dx, dy] = [dx * cos - dy * sin, dx * sin + dy * cos]
+      center = { x: moon.x + (anchor.x - moon.x) * shift, y: moon.y + (anchor.y - moon.y) * shift }
+      start = spaceToScreen(view, center.x + dx, center.y + dy)
+    }
+  }
   const far = captureKm * 4
-  if (distance >= far || distance === 0) return base
-  const moonScreen = spaceToScreen(view, moon.x, moon.y)
+  if (distance >= far || distance === 0) return start
+  const moonScreen = spaceToScreen(view, center.x, center.y)
   const reach = lensDistance(view, distance, captureKm)
   const lensed = { x: moonScreen.x + (dx / distance) * reach, y: moonScreen.y - (dy / distance) * reach }
   const s = distance <= captureKm ? 1 : 1 - (distance - captureKm) / (far - captureKm)
   const w = s * s * (3 - 2 * s)
-  return { x: base.x + (lensed.x - base.x) * w, y: base.y + (lensed.y - base.y) * w }
+  return { x: start.x + (lensed.x - start.x) * w, y: start.y + (lensed.y - start.y) * w }
+}
+
+/** How far out (in capture distances) a path is still drawn around one Moon (shipScreen frame). */
+const FRAME_SHIFT_REACH = 4
+/** How far out (in capture distances) the way home is still turned toward the far side. */
+const FRAME_SPIN_REACH = 9
+
+/**
+ * The half turn round the Moon after arriving, and how much the way home has to turn so it
+ * leaves from the side opposite to where the ship came in. Angles are around the Moon, in km space.
+ */
+export function moonTurn(scene, prediction, returnPrediction) {
+  const arrival = prediction.samples[prediction.samples.length - 1]
+  const moonIn = moonAt(scene.moonTable, arrival.t)
+  const arrivalAngle = Math.atan2(arrival.y - moonIn.y, arrival.x - moonIn.x)
+  const sense = scene.arrivalSense ?? 1
+  const leaveAngle = arrivalAngle + sense * Math.PI
+  let spin = 0
+  if (returnPrediction?.samples?.length) {
+    const first = returnPrediction.samples[0]
+    const moonOut = moonAt(scene.moonTable, first.t)
+    const departAngle = Math.atan2(first.y - moonOut.y, first.x - moonOut.x)
+    spin = Math.atan2(Math.sin(leaveAngle - departAngle), Math.cos(leaveAngle - departAngle))
+  }
+  return { arrival, arrivalAngle, leaveAngle, sense, spin }
+}
+
+/** Dotted half turn round the Moon (screen space), from the arrival point to the far side. */
+function drawHalfTurn(ctx, view, moonScreen, arrivalScreen, sense, color, alpha, phase) {
+  const ring = orbitRing(view)
+  const startAngle = Math.atan2(-(arrivalScreen.y - moonScreen.y), arrivalScreen.x - moonScreen.x)
+  const startRadius = Math.hypot(arrivalScreen.x - moonScreen.x, arrivalScreen.y - moonScreen.y)
+  const points = []
+  const steps = 40
+  for (let step = 0; step <= steps; step += 1) {
+    const f = step / steps
+    const settle = Math.min(1, f * 2)
+    const radius = startRadius + (ring - startRadius) * settle * settle * (3 - 2 * settle)
+    const angle = startAngle + sense * Math.PI * f
+    points.push({ x: moonScreen.x + radius * Math.cos(angle), y: moonScreen.y - radius * Math.sin(angle) })
+  }
+  drawScreenDots(ctx, points, color, points.length - 1, alpha, phase, 4)
 }
 
 /** Dots along a line of screen points. `phase` (pixels) makes the dots march forward. */
@@ -531,8 +587,8 @@ function drawScreenDots(ctx, points, color, untilIndex = points.length - 1, alph
 }
 
 /** Dotted path of simulated samples ({ t, x, y } in km), drawn through the Moon lens. */
-function drawDottedPath(ctx, view, scene, samples, color, untilIndex = samples.length - 1, alpha = 1, phase = 0, size = 5) {
-  const points = samples.map((sample) => shipScreen(view, scene, sample))
+function drawDottedPath(ctx, view, scene, samples, color, untilIndex = samples.length - 1, alpha = 1, phase = 0, size = 5, frame = null) {
+  const points = samples.map((sample) => shipScreen(view, scene, sample, frame))
   drawScreenDots(ctx, points, color, untilIndex, alpha, phase, size)
   return points
 }
@@ -624,10 +680,15 @@ function drawHandHint(ctx, view, scene, clock) {
   const ease = move * move * (3 - 2 * move)
   ctx.save()
   ctx.globalAlpha *= cycle > 0.85 ? (1 - cycle) / 0.15 : 0.9
-  ctx.font = '30px system-ui, "Segoe UI Emoji", sans-serif'
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'top'
-  ctx.fillText('👆', base.x + (handle.x - base.x) * ease - 8, base.y + (handle.y - base.y) * ease - 2)
+  // Pixel hand sprite (icons/hand_pointer.svg, 16×16 art pixels), drawn 32×32 with the fingertip
+  // on the path from the base to the aim handle.
+  const image = scene.images?.hand
+  const x = Math.round(base.x + (handle.x - base.x) * ease - 12)
+  const y = Math.round(base.y + (handle.y - base.y) * ease - 2)
+  if (image?.complete && image.naturalWidth) {
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(image, x, y, 32, 32)
+  }
   ctx.restore()
   drawLabel(ctx, 'HOLD AND DRAG', base.x, base.y + 26, 'center', '#ffffff', 12)
 }
@@ -645,17 +706,17 @@ function shipPose(samples, position) {
 }
 
 /** Ship with an exhaust trail, at a fractional sample position along `samples`. */
-function drawShipOn(ctx, view, scene, samples, position, clock, { size = 36, flame = true, heat = 0 } = {}) {
-  const screen = shipScreen(view, scene, shipPose(samples, position))
-  const next = shipScreen(view, scene, shipPose(samples, Math.min(samples.length - 1, position + 1.5)))
-  const back1 = shipScreen(view, scene, shipPose(samples, Math.max(0, position - 1.5)))
+function drawShipOn(ctx, view, scene, samples, position, clock, { size = 36, flame = true, heat = 0, frame = null } = {}) {
+  const screen = shipScreen(view, scene, shipPose(samples, position), frame)
+  const next = shipScreen(view, scene, shipPose(samples, Math.min(samples.length - 1, position + 1.5)), frame)
+  const back1 = shipScreen(view, scene, shipPose(samples, Math.max(0, position - 1.5)), frame)
   const heading = Math.hypot(next.x - screen.x, next.y - screen.y) > 0.5
     ? Math.atan2(next.y - screen.y, next.x - screen.x)
     : Math.atan2(screen.y - back1.y, screen.x - back1.x)
   // Exhaust trail: fading puffs behind the ship.
   ctx.save()
   for (let puff = 1; puff <= 14; puff += 1) {
-    const back = shipScreen(view, scene, shipPose(samples, Math.max(0, position - puff * 0.9)))
+    const back = shipScreen(view, scene, shipPose(samples, Math.max(0, position - puff * 0.9)), frame)
     ctx.globalAlpha = (1 - puff / 15) * 0.7
     ctx.fillStyle = puff < 4 ? '#ffd23f' : puff < 8 ? '#ff9f6b' : '#9aa6c8'
     const puffSize = Math.max(2, 7 - puff * 0.35)
@@ -714,9 +775,13 @@ function drawExplosion(ctx, view, scene, point, secondsSinceEnd, image) {
   ctx.restore()
 }
 
+/** Real seconds the ship takes for its half turn round the Moon after arriving. */
+const HALF_TURN_SECONDS = 2.6
+
 /**
- * After a good arrival the ship circles the Moon: it starts exactly where it arrived and
- * spirals down onto the orbit ring, going the same way round as it came in.
+ * After a good arrival the ship goes half way round the Moon: it starts exactly where it arrived,
+ * spirals down onto the orbit ring going the same way round as it came in, and stops on the far
+ * side, where the way home starts.
  */
 function drawOrbitingShip(ctx, view, moonScreen, arrival, secondsSinceArrival, image) {
   const ring = orbitRing(view)
@@ -724,7 +789,9 @@ function drawOrbitingShip(ctx, view, moonScreen, arrival, secondsSinceArrival, i
   const startRadius = Math.hypot(arrival.x - moonScreen.x, arrival.y - moonScreen.y)
   const settle = Math.min(1, secondsSinceArrival / 2.2)
   const ease = settle * settle * (3 - 2 * settle)
-  const angle = startAngle + arrival.sense * secondsSinceArrival * 1.3
+  // Half a turn round the Moon, then it waits on the far side, where the burn home starts.
+  const turnF = Math.min(1, secondsSinceArrival / HALF_TURN_SECONDS)
+  const angle = startAngle + arrival.sense * Math.PI * turnF * turnF * (3 - 2 * turnF)
   const radius = startRadius + (ring - startRadius) * ease
   ctx.save()
   ctx.globalAlpha = 0.45 * ease
@@ -965,18 +1032,27 @@ export function drawMoonScene(ctx, view, sceneIn) {
 
   ctx.save()
   ctx.globalAlpha = planAlpha
-  // The way home: found with real gravity (simulateReturn), shown with the trip out.
+  // Near the Moon every path is drawn around one Moon: where it is at arrival while aiming, and
+  // where it is now while flying. The approach is then a smooth curve on one side of the Moon.
+  const anchorT = flying ? shownSeconds : prediction?.closest?.t ?? 0
+  const outFrame = prediction ? { anchorT } : null
+  const arrivedOk = prediction?.outcome.type === TRANSFER_OUTCOMES.ARRIVED
+  const turn = arrivedOk ? moonTurn(scene, prediction, scene.returnPrediction) : null
+  // The way home: found with real gravity (simulateReturn), shown with the trip out. It is turned
+  // near the Moon so it leaves from the far side, after the half turn.
+  const homeFrame = { anchorT, spin: turn?.spin ?? 0 }
   let homePoints = null
   if (showHome) {
+    const homeSamples = scene.returnPrediction.samples
     const travelling = flight?.home
-    // While aiming the ship is not there yet: the way home is drawn leaving from the Moon on
-    // day 3 (the yellow ring), so it clearly starts at the Moon. The day the crew spends there
-    // moves the Moon a little; that shift fades out as the path comes down to Earth.
-    const homeSamples = !flying && prediction
-      ? homeFromMeetingPoint(scene.returnPrediction.samples, moonAt(scene.moonTable, prediction.outcome.t), moonAt(scene.moonTable, scene.returnPrediction.samples[0].t))
-      : scene.returnPrediction.samples
-    homePoints = drawDottedPath(ctx, view, scene, homeSamples, COLORS.home, homeSamples.length - 1, travelling ? 0.35 : 0.75, travelling ? 0 : clock * 22, 4)
-    if (travelling) drawDottedPath(ctx, view, scene, homeSamples, COLORS.home, Math.floor(flight.returnPosition ?? 0), 1)
+    const alpha = travelling ? 0.35 : 0.75
+    const phase = travelling ? 0 : clock * 22
+    if (turn && !travelling) {
+      const anchorMoon = moonAt(scene.moonTable, anchorT)
+      drawHalfTurn(ctx, view, spaceToScreen(view, anchorMoon.x, anchorMoon.y), shipScreen(view, scene, turn.arrival, outFrame), turn.sense, COLORS.home, alpha, phase)
+    }
+    homePoints = drawDottedPath(ctx, view, scene, homeSamples, COLORS.home, homeSamples.length - 1, alpha, phase, 4, homeFrame)
+    if (travelling) drawDottedPath(ctx, view, scene, homeSamples, COLORS.home, Math.floor(flight.returnPosition ?? 0), 1, 0, 5, homeFrame)
     if (!flying) {
       const middle = homePoints[Math.floor(homePoints.length * 0.55)]
       drawLabel(ctx, 'WAY HOME', middle.x, middle.y - 14, 'center', COLORS.home, 11)
@@ -984,14 +1060,15 @@ export function drawMoonScene(ctx, view, sceneIn) {
   }
   if (prediction) {
     const color = pathColor(prediction.outcome.type)
+    const last = prediction.samples.length - 1
     if (flying && (flight.orbiting || flight.home)) {
       // The trip out stays on the map, next to the way home.
-      drawDottedPath(ctx, view, scene, prediction.samples, color, prediction.samples.length - 1, 0.55)
+      drawDottedPath(ctx, view, scene, prediction.samples, color, last, 0.55, 0, 5, outFrame)
     } else if (flying) {
-      drawDottedPath(ctx, view, scene, prediction.samples, color, prediction.samples.length - 1, 0.22)
-      drawDottedPath(ctx, view, scene, prediction.samples, color, flightIndex)
+      drawDottedPath(ctx, view, scene, prediction.samples, color, last, 0.22, 0, 5, outFrame)
+      drawDottedPath(ctx, view, scene, prediction.samples, color, flightIndex, 1, 0, 5, outFrame)
     } else {
-      drawDottedPath(ctx, view, scene, prediction.samples, color, prediction.samples.length - 1, 1, clock * 22)
+      drawDottedPath(ctx, view, scene, prediction.samples, color, last, 1, clock * 22, 5, outFrame)
     }
     drawHits(ctx, view, scene, (scene.hits ?? []).filter((hit) => !flying || hit.index <= flightIndex), clock)
   }
@@ -1012,26 +1089,19 @@ export function drawMoonScene(ctx, view, sceneIn) {
       const last = homeSamples.length - 1
       const position = Math.min(last, flight.returnPosition ?? 0)
       if (position >= last) {
-        drawSplash(ctx, shipScreen(view, scene, homeSamples[last]), flight.secondsSinceSplash ?? 0, clock)
+        drawSplash(ctx, shipScreen(view, scene, homeSamples[last], homeFrame), flight.secondsSinceSplash ?? 0, clock)
       } else {
-        drawShipOn(ctx, view, scene, homeSamples, position, clock, { size: 30, flame: position < 6, heat: Math.max(0, (position / last - 0.9) / 0.1) })
+        drawShipOn(ctx, view, scene, homeSamples, position, clock, { size: 30, flame: position < 6, heat: Math.max(0, (position / last - 0.9) / 0.1), frame: homeFrame })
       }
     } else if (flight.orbiting) {
-      const lastSample = prediction.samples[prediction.samples.length - 1]
-      const arrivalMoon = moonAt(scene.moonTable, lastSample.t)
-      const arrivalScreen = shipScreen(view, scene, lastSample)
-      const moonAtArrival = spaceToScreen(view, arrivalMoon.x, arrivalMoon.y)
-      // Keep the arrival point fixed to the Moon while it moves on.
-      const arrival = {
-        x: moonScreen.x + (arrivalScreen.x - moonAtArrival.x),
-        y: moonScreen.y + (arrivalScreen.y - moonAtArrival.y),
-        sense: scene.arrivalSense ?? 1,
-      }
+      // The arrival point is drawn around the Moon where it is now, so it stays fixed to the Moon.
+      const arrivalScreen = shipScreen(view, scene, prediction.samples[prediction.samples.length - 1], outFrame)
+      const arrival = { x: arrivalScreen.x, y: arrivalScreen.y, sense: scene.arrivalSense ?? 1 }
       drawOrbitingShip(ctx, view, moonScreen, arrival, flight.secondsSinceArrival ?? 99, scene.images.rocket)
     } else if (ended && crashed) {
       drawExplosion(ctx, view, scene, prediction.samples[prediction.samples.length - 1], flight.secondsSinceEnd, scene.images.explosion)
     } else {
-      const ship = drawShipOn(ctx, view, scene, prediction.samples, flightPosition, clock)
+      const ship = drawShipOn(ctx, view, scene, prediction.samples, flightPosition, clock, { frame: outFrame })
       if (flash < 0.5) {
         ctx.save()
         ctx.globalAlpha = 1 - flash / 0.5

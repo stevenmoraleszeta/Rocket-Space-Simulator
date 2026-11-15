@@ -372,9 +372,10 @@ function circularRate(altitudeKm) {
 /**
  * The flight plays days in a few seconds, so at real speed the ISS would circle Earth about seven
  * times a second on screen. Satellites and junk clouds move on this slower clock instead: about one
- * ISS lap every 5 seconds. Hits use the same angles, so what the player sees is still what counts.
+ * ISS lap every 1.7 seconds, quick enough to feel like traffic. Hits use the same angles, so what
+ * the player sees is still what counts.
  */
-export const TRAFFIC_TIME_SCALE = 1 / 36
+export const TRAFFIC_TIME_SCALE = 1 / 12
 
 export function trafficAngle(object, launchDate, seconds) {
   const shown = seconds * TRAFFIC_TIME_SCALE
@@ -662,8 +663,6 @@ export const STAY_SECONDS = DAY_SECONDS
 const ENTRY_ALTITUDE_KM = 120
 const TARGET_PERIGEE_ALTITUDE_KM = 40
 const MAX_RETURN_SECONDS = 6 * DAY_SECONDS
-/** Beyond this distance from Earth the way home should look straight (no swing around Earth). */
-const FAR_FROM_EARTH_KM = 60_000
 
 /** One RK4 step under Earth and Moon gravity, the Moon moving inside the step. */
 function stepShip(state, dt, moonTable) {
@@ -751,72 +750,84 @@ function flyHome(moonTable, departT, angle, burn, sense, record) {
   return { crashed: false, entered, perigeeAltitudeKm: lowest - EARTH_RADIUS_KM, samples, departT }
 }
 
+/** How far (radians) the ship turns around the Moon from `fromAngle` to `toAngle`, going `sense` way. */
+function turnBetween(fromAngle, toAngle, sense) {
+  return normalizeAngle(sense * (toAngle - fromAngle))
+}
+
+/** The ship leaves from the side opposite to where it arrived, give or take this much. */
+const OPPOSITE_SIDE_SLACK = 30 * DEG
+
 /**
  * The trip home from lunar orbit, found like mission control does: try burns at many points
  * of the orbit and keep the smallest one whose path dips into the air at the right height.
+ * The ship keeps going round the Moon the way it arrived (`sense`). When `arrival` (the last
+ * sample of the trip out) is given it leaves after half a turn, from the side opposite to the one
+ * it came in on, even if that needs a bigger burn than the cheapest point of the orbit.
  * Returns { samples (t from launch, km), burn (km/s), perigeeAltitudeKm, entered } or null.
  */
-export function simulateReturn({ moonTable, arrivalT, sense = 1, stay = STAY_SECONDS }) {
+export function simulateReturn({ moonTable, arrivalT, sense = 1, stay = STAY_SECONDS, arrival = null }) {
   const departT = arrivalT + stay
+  const moonAtArrival = moonAt(moonTable, arrivalT)
+  const arrivalAngle = arrival ? Math.atan2(arrival.y - moonAtArrival.y, arrival.x - moonAtArrival.x) : null
   const miss = (angleDeg, burn, way) => {
     const result = flyHome(moonTable, departT, angleDeg * DEG, burn, way, false)
     return result.crashed || !Number.isFinite(result.perigeeAltitudeKm) ? null : result.perigeeAltitudeKm - TARGET_PERIGEE_ALTITUDE_KM
   }
-  // For each burn point on the orbit, the lowest point over Earth changes smoothly with the
-  // burn size: find where it crosses the target height, then home in on it (bisection).
-  // Every burn point that works is kept; the most direct path home wins (see below).
-  let best = null
-  const options = []
-  for (const way of [sense, -sense]) {
-    for (let angleDeg = 0; angleDeg < 360; angleDeg += 6) {
-      let previous = null
-      for (let burn = 0.6; burn <= 1.6001; burn += 0.1) {
-        const value = miss(angleDeg, burn, way)
-        if (previous && value !== null && Math.sign(value) !== Math.sign(previous.value)) {
-          let low = previous.burn
-          let high = burn
-          let lowValue = previous.value
-          for (let step = 0; step < 14; step += 1) {
-            const mid = (low + high) / 2
-            const midValue = miss(angleDeg, mid, way)
-            if (midValue === null) break
-            if (Math.sign(midValue) === Math.sign(lowValue)) {
-              low = mid
-              lowValue = midValue
-            } else {
-              high = mid
-            }
+  /** For one burn point: the lowest point over Earth changes smoothly with the burn size, so find
+   *  where it crosses the target height, then home in on it (bisection). */
+  const solveAt = (angleDeg, way, maxBurn) => {
+    let previous = null
+    for (let burn = 0.6; burn <= 1.6001; burn += 0.1) {
+      if (burn - 0.1 > maxBurn) return null
+      const value = miss(angleDeg, burn, way)
+      if (previous && value !== null && Math.sign(value) !== Math.sign(previous.value)) {
+        let low = previous.burn
+        let high = burn
+        let lowValue = previous.value
+        for (let step = 0; step < 14; step += 1) {
+          const mid = (low + high) / 2
+          const midValue = miss(angleDeg, mid, way)
+          if (midValue === null) break
+          if (Math.sign(midValue) === Math.sign(lowValue)) {
+            low = mid
+            lowValue = midValue
+          } else {
+            high = mid
           }
-          const found = (low + high) / 2
-          const error = Math.abs(miss(angleDeg, found, way) ?? Infinity)
-          // The smallest burn that works is the cheapest way home.
-          const rank = error < 5 ? found : 100 + error
-          if (error < 5) options.push({ rank, angleDeg, burn: found, way })
-          if (!best || rank < best.rank) best = { rank, angleDeg, burn: found, way }
-          break
         }
-        previous = value === null ? null : { burn, value }
+        const found = (low + high) / 2
+        const error = Math.abs(miss(angleDeg, found, way) ?? Infinity)
+        return error < 5 ? { angleDeg, burn: found, way } : null
       }
+      previous = value === null ? null : { burn, value }
     }
+    return null
+  }
+  // Half a turn after arriving: the burn home happens on the far side, so the way home leaves
+  // from the side opposite to the one the ship came in on.
+  const isOppositeSide = (angleDeg, way) => {
+    if (arrivalAngle === null) return false
+    return Math.abs(turnBetween(arrivalAngle, angleDeg * DEG, way) - Math.PI) <= OPPOSITE_SIDE_SLACK
+  }
+
+  let best = null
+  for (const way of [sense, -sense]) {
+    let cheapest = null
+    let cheapestOpposite = null
+    for (let angleDeg = 0; angleDeg < 360; angleDeg += 6) {
+      const opposite = isOppositeSide(angleDeg, way)
+      // A bigger burn than one already found cannot be better: skip the search past it.
+      const limit = opposite ? (cheapestOpposite?.burn ?? Infinity) : (cheapest?.burn ?? Infinity)
+      const option = solveAt(angleDeg, way, limit)
+      if (!option) continue
+      if (opposite && (!cheapestOpposite || option.burn < cheapestOpposite.burn)) cheapestOpposite = option
+      if (!cheapest || option.burn < cheapest.burn) cheapest = option
+    }
+    best = cheapestOpposite ?? cheapest
+    if (best) break
   }
   if (!best) return null
-  // Straight from the Moon to Earth: of the cheaper ways home, the one that turns least
-  // around Earth (no swing up and over), with a small nudge toward smaller burns.
-  options.sort((a, b) => a.burn - b.burn)
-  let straightest = null
-  for (const option of options) {
-    const trial = flyHome(moonTable, departT, option.angleDeg * DEG, option.burn, option.way, true)
-    // Only paths that really get home: into the air, in a few days
-    if (trial.crashed || !trial.samples || !trial.entered) continue
-    const days = (trial.samples[trial.samples.length - 1].t - departT) / DAY_SECONDS
-    // The swing in the last part, close to Earth, is how every ship slides into the air;
-    // what matters on the map is the long way from the Moon, which should come straight in.
-    const far = trial.samples.filter((sample) => Math.hypot(sample.x, sample.y) > FAR_FROM_EARTH_KM)
-    const turn = far.length > 1 ? turnAroundEarthDeg(far) : 0
-    const score = turn + option.burn * 20 + Math.max(0, days - 3.5) * 40
-    if (!straightest || score < straightest.score) straightest = { ...option, score }
-  }
-  if (straightest) best = straightest
   const flown = flyHome(moonTable, departT, best.angleDeg * DEG, best.burn, best.way, true)
   return {
     samples: flown.samples,

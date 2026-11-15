@@ -9,6 +9,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "test:moon": "node --test src/game/levels/moon/moonLaunchPlanning.test.js src/game/levels/moon/moonTransfer.test.js src/game/levels/moon/moonOrbitEvents.test.js",
+    "test:mars": "node --test src/game/levels/marsLaunch/marsLaunchRoute.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
