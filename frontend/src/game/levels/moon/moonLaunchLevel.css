@@ -1707,3 +1707,99 @@
     transition: none;
   }
 }
+
+/* Pixel-art Moon sprites (PixelMoon.jsx) in the "Pick a bright Moon" tip and the arrival card. */
+.pixel-moon {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.moon-above__sprite {
+  image-rendering: pixelated;
+}
+
+/* Every Moon in the tip bounces the same way, one after another; the full Moon also glows.
+   The art box is wider than the other tips so the five sprites do not touch while they bounce. */
+.moon-tips .moon-tut-art--light {
+  width: 17rem;
+}
+
+.moon-tut-cycle {
+  left: 3.5rem;
+  align-items: center;
+}
+
+.moon-tut-cycle span {
+  display: block;
+  width: 1.875rem;
+  height: 1.875rem;
+  animation: moon-tut-phase 2.5s ease-in-out infinite;
+}
+
+.moon-tut-cycle span:nth-child(5) { animation-delay: 0.8s; }
+
+.moon-tut-cycle .is-best {
+  width: 2.5rem;
+  height: 2.5rem;
+  filter: drop-shadow(0 0 0.375rem #ffd23f);
+  animation: moon-tut-phase 2.5s ease-in-out 0.8s infinite;
+}
+
+.moon-phase-card__disk .pixel-moon {
+  filter: drop-shadow(0 0 0.25rem rgba(255, 216, 74, 0.25));
+}
+
+.moon-phase-card__name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.pixel-moon--icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+/* Pixel sprites in the tip cards (MoonTips.jsx Sprite). 1em = the size the emoji had before. */
+.moon-tut-sprite {
+  display: block;
+  width: 1em;
+  height: 1em;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+}
+
+.moon-tut-art--light .moon-tut-sun {
+  font-size: 2.75rem;
+}
+
+.moon-tut-junk {
+  display: flex;
+  justify-content: space-around;
+  font-size: 2.25rem;
+}
+
+.moon-tut-junk .moon-tut-sprite:nth-child(2) {
+  transform: rotate(90deg) translateY(0.5rem);
+}
+
+/* The rocket sprite points straight up (the emoji leaned right), so it turns a bit more to face its path. */
+.moon-tut-rocket {
+  font-size: 3rem;
+  animation-name: moon-tut-fly-sprite;
+}
+
+@keyframes moon-tut-fly-sprite {
+  0% { transform: translate(0, 0) rotate(75deg); }
+  50% { transform: translate(5rem, -1rem) rotate(80deg); }
+  100% { transform: translate(10rem, -4rem) rotate(60deg); }
+}
+
+/* After touchdown: "Try again" on the left, the main "Start mapping" button bigger on the right. */
+.moon-landing__actions--done {
+  grid-template-columns: 1fr 2fr;
+}
