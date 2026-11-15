@@ -14,7 +14,7 @@
  * Space debris and satellites drift across the road. Tap one to see what it is.
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useProgress } from '../../../levels'
+import { SPRITES, useProgress } from '../../../levels'
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../../../audio'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
@@ -182,7 +182,9 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   const flightRef = useRef(null) // { startedAt, endDay, endedAt }
   const sceneRef = useRef(null)
   const [images] = useState(() => ({
+    // Picking the base uses mission 1's Earth; the Sun map uses the menu's Earth.
     earth: loadImage(ASSETS.earthPlanet.src),
+    menuEarth: loadImage(SPRITES.planets.earth.src),
     mars: loadImage(ASSETS.marsPlanet.src),
     sun: loadImage(ASSETS.sun.src),
     rocket: loadImage(ASSETS.rocketUpperStage.src),

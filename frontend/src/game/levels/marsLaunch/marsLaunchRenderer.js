@@ -146,7 +146,8 @@ function drawPlanets(ctx, view, images, day) {
 
   const earthWorld = earthPosition(day)
   const earth = toScreen(view, earthWorld.x, earthWorld.y)
-  if (!drawImageCentered(ctx, images.earth, earth.x, earth.y, PLANET_PIXELS.earth)) circle(ctx, earth.x, earth.y, PLANET_PIXELS.earth / 2, '#2f8fe6')
+  // The same Earth as the mission menu (levels/assets/earth.svg).
+  if (!drawImageCentered(ctx, images.menuEarth, earth.x, earth.y, PLANET_PIXELS.earth)) circle(ctx, earth.x, earth.y, PLANET_PIXELS.earth / 2, '#2f8fe6')
   label(ctx, 'Earth', earth.x, earth.y + PLANET_PIXELS.earth / 2 + 12, '#9fdcff')
 
   const marsWorld = marsPosition(day)
