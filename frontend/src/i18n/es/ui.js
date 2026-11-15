@@ -1,6 +1,12 @@
 /** Buttons, menus, settings, and short labels. */
 export const ui = {
   'Loading…': 'Cargando…',
+  'Coming soon!': '¡Próximamente!',
+  'Mission {{number}}, {{title}}. Locked. Coming soon.': 'Misión {{number}}, {{title}}. Bloqueada. Próximamente.',
+  // Missions 4 and 5 on the menu (levels/data/upcomingMissions.js)
+  'Lord of the Rings': 'El señor de los anillos',
+  'The White Hole': 'El agujero blanco',
+  'A white hole': 'Un agujero blanco',
   'Settings': 'Ajustes',
   'Settings. Add your name or sign in with Google.': 'Ajustes. Añade tu nombre o entra con Google.',
   'Add your name or sign in with Google': 'Añade tu nombre o entra con Google',
