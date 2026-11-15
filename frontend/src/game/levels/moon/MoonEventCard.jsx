@@ -1,5 +1,37 @@
 import { useEffect, useRef, useState } from 'react'
 import { SYNTH, playSynth } from '../../../audio'
+import { PixelMoon } from './PixelMoon.jsx'
+import sunUrl from '../../../assets/images/planets/sun_animated.svg'
+import asteroidUrl from '../../../assets/images/asteroids/asteroid.gif'
+import rocketUrl from '../../../assets/images/rockets/rocket_32x32.png'
+import iceUrl from '../../../assets/images/icons/ice_block.svg'
+import bubblesUrl from '../../../assets/images/icons/bubbles.svg'
+import warningUrl from '../../../assets/images/icons/warning.svg'
+import gamepadUrl from '../../../assets/images/icons/gamepad.svg'
+import sparkleUrl from '../../../assets/images/icons/sparkle.svg'
+import handUrl from '../../../assets/images/icons/hand_pointer.svg'
+import lockUrl from '../../../assets/images/items/lock.svg'
+
+/** Pixel sprite for each event (moonOrbitEvents.js id). The radio blackout shows a thin Moon. */
+const EVENT_SPRITES = {
+  storm: sunUrl,
+  ice: iceUrl,
+  air: bubblesUrl,
+  rock: asteroidUrl,
+  misfire: rocketUrl,
+}
+const BLACKOUT_MOON = { illumination: 0.3, waxing: false }
+
+function EventSprite({ id }) {
+  if (id === 'shadow') return <PixelMoon look={BLACKOUT_MOON} className="moon-event__sprite" />
+  const src = EVENT_SPRITES[id]
+  return src ? <img className="moon-event__sprite" src={src} alt="" draggable="false" /> : null
+}
+
+/** Small pixel icon at the start of a button label, in place of an emoji. */
+function ButtonIcon({ src }) {
+  return <img className="moon-button__icon" src={src} alt="" draggable="false" />
+}
 
 /** Tap fast: a big button and a bar that fills. */
 function TapAction({ action, onDone }) {
@@ -16,7 +48,7 @@ function TapAction({ action, onDone }) {
       <p>{action.label}</p>
       <div className="moon-action__bar" aria-hidden="true"><span style={{ width: `${(taps / goal) * 100}%` }} /></div>
       <button type="button" className="moon-button moon-button--primary moon-action__tap" onClick={tap} autoFocus>
-        👊 Tap! {taps} / {goal}
+        <ButtonIcon src={handUrl} />Tap! {taps} / {goal}
       </button>
     </div>
   )
@@ -47,7 +79,7 @@ function AimAction({ action, onDone }) {
         <span className={`moon-action__pointer${inside ? ' is-in' : ''}`} style={{ left: `${value}%` }} aria-hidden="true">▲</span>
       </div>
       <button type="button" className={`moon-button moon-button--primary${inside ? ' is-ready' : ''}`} onClick={() => onDone(inside)}>
-        🔒 Lock it {inside ? '✓' : ''}
+        <ButtonIcon src={lockUrl} />Lock it {inside ? '✓' : ''}
       </button>
     </div>
   )
@@ -105,7 +137,7 @@ export function MoonEventCard({ activeEvent, blockedReason, onChoose, onAct, onC
           </div>
         )}
         <div className={`moon-event__art is-${event.id}`} aria-hidden="true">
-          <span className="moon-event__icon">{event.icon}</span>
+          <span className="moon-event__icon"><EventSprite id={event.id} /></span>
           <span className="moon-event__fx" />
         </div>
         <h2 id="moon-event-title">{event.name}</h2>
@@ -167,7 +199,7 @@ export function MoonEventCard({ activeEvent, blockedReason, onChoose, onAct, onC
                       title={reason}
                       onClick={() => pick(choice)}
                     >
-                      {choice.risky ? '⚠️ ' : choice.action ? '🎮 ' : '✨ '}{choice.label}
+                      <ButtonIcon src={choice.risky ? warningUrl : choice.action ? gamepadUrl : sparkleUrl} />{choice.label}
                       {reason && <small>{reason}</small>}
                     </button>
                   )
