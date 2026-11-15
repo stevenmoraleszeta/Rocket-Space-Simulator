@@ -749,7 +749,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
               <p className="mars-encounter__kicker"><PixelIcon name="warning" /> {t('Day {{day}} · {{name}}', { day: Math.round(encounter.day), name: t(encounter.hazard.name) })}</p>
               {!encounter.picked ? (
                 <>
-                  <h3 id="mars-encounter-question" className="mars-encounter__question">{t(encounter.situation.question)}</h3>
+                  <h3 id="mars-encounter-question" className="mars-encounter__question">{t(encounter.situation.question, { name: t(encounter.hazard.name) })}</h3>
                   {encounter.situation.story && <p className="mars-encounter__story">{t(encounter.situation.story)}</p>}
                   <div className="mars-encounter__choices">
                     {encounter.situation.choices.map((choice) => (

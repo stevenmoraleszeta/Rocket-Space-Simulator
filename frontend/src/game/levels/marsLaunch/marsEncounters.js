@@ -26,11 +26,14 @@ export const MILD_LIMIT = 2
 
 export const CHOICE = Object.freeze({ GOOD: 'good', MILD: 'mild', BAD: 'bad' })
 
-/** Situations for old rocket stages (kind 'debris'). `{name}` is the object's name. */
+/**
+ * Situations for old rocket stages (kind 'debris'). `{{name}}` is the object's name: the screen
+ * translates the question first and then fills in the translated name (i18n t() variables).
+ */
 const DEBRIS_SITUATIONS = [
   {
     id: 'tumbling-stage',
-    question: 'The {name} is tumbling toward your path! What should the crew do?',
+    question: 'The {{name}} is tumbling toward your path! What should the crew do?',
     choices: [
       { kind: CHOICE.GOOD, text: 'Fire the small side thrusters to move out of the way', explain: 'Smart! A small push was enough to slip past it.' },
       { kind: CHOICE.MILD, text: 'Keep going and hope it misses', explain: 'It missed, but only by luck. Real crews never just hope.' },
@@ -39,7 +42,7 @@ const DEBRIS_SITUATIONS = [
   },
   {
     id: 'bolt-cloud',
-    question: 'Tiny bolts and paint chips from the {name} are flying ahead! What should the crew do?',
+    question: 'Tiny bolts and paint chips from the {{name}} are flying ahead! What should the crew do?',
     choices: [
       { kind: CHOICE.GOOD, text: 'Turn the ship so its strong shield faces the cloud', explain: 'Great! The shield took the little hits and the crew stayed safe.' },
       { kind: CHOICE.MILD, text: 'Close the window covers and wait', explain: 'The covers helped a bit, but some chips scratched the ship.' },
@@ -52,7 +55,7 @@ const DEBRIS_SITUATIONS = [
 const SATELLITE_SITUATIONS = [
   {
     id: 'close-satellite',
-    question: '{name} is right ahead! What should the crew do?',
+    question: '{{name}} is right ahead! What should the crew do?',
     choices: [
       { kind: CHOICE.GOOD, text: 'Call mission control and follow the safe path they send', explain: 'Perfect! Mission control always knows where the spacecraft are.' },
       { kind: CHOICE.MILD, text: 'Turn on all the lights so it can see you', explain: 'Spacecraft do not have eyes! It did not help, but you were not too close.' },
@@ -61,7 +64,7 @@ const SATELLITE_SITUATIONS = [
   },
   {
     id: 'radio-noise',
-    question: 'Your radio gets noisy near {name}. What should the crew do?',
+    question: 'Your radio gets noisy near {{name}}. What should the crew do?',
     choices: [
       { kind: CHOICE.GOOD, text: 'Switch to the backup antenna and keep talking to Earth', explain: 'Nice! A backup is there for moments like this.' },
       { kind: CHOICE.MILD, text: 'Turn the radio off for a while', explain: 'You stayed safe, but Earth could not hear you for hours.' },
@@ -166,7 +169,6 @@ export function tripEncounters(trip) {
         hazard: pass.hazard,
         situation: {
           ...base,
-          question: base.question.replace('{name}', pass.hazard.name),
           choices: shuffled(base.choices, Math.round(pass.day) + index * 7),
         },
       }

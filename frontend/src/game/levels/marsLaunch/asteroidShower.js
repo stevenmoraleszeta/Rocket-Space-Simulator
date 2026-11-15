@@ -5,6 +5,7 @@
  * field and slides left and right after the mouse (or the arrow keys, or a finger) to dodge them.
  *   - SHOWER_SECONDS long; rocks fall faster and come more often as time goes on
  *   - SIDE_SHARE of the rocks fall near the left and right edges, so hiding at a side is not safe
+ *   - rocks come in three sizes (rockRadius): small pebbles, rocks and a few big boulders
  *   - each hit breaks one of SHIELDS shields and costs HIT_PENALTY points
  *   - losing every shield breaks the ship apart
  * Units are pixels of the small field (FIELD_W × FIELD_H) and seconds.
@@ -30,6 +31,17 @@ export function rockStartX(random, r) {
     return random() < 0.5 ? r + offset : FIELD_W - r - offset
   }
   return r + random() * span
+}
+
+/**
+ * Rock sizes (radius in field pixels): many small pebbles, some middle rocks and a few big
+ * boulders, so the shower does not look like copies of the same rock.
+ */
+export function rockRadius(random) {
+  const roll = random()
+  if (roll < 0.45) return 2 + Math.floor(random() * 2) // pebble: 2–3
+  if (roll < 0.85) return 4 + Math.floor(random() * 2) // rock: 4–5
+  return 7 + Math.floor(random() * 3) // boulder: 7–9
 }
 
 /** After a hit the ship blinks and cannot be hit again for this long. */
@@ -93,7 +105,7 @@ export function stepShower(shower, dt, targetX) {
   const level = difficultyAt(shower.time)
   shower.nextRock -= dt
   while (shower.nextRock <= 0 && shower.time < SHOWER_SECONDS - 0.6) {
-    const r = 3 + Math.floor(shower.random() * 3)
+    const r = rockRadius(shower.random)
     shower.rocks.push({
       x: rockStartX(shower.random, r),
       y: -r,
