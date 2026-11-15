@@ -19,7 +19,9 @@ import launchBaseUrl from '../../assets/images/rockets/launch_base.png'
 import explosionSheetUrl from '../../assets/images/rockets/animations/explosion_sheet.png'
 import earthPlanetUrl from '../../assets/images/planets/earth.svg'
 import spaceBackgroundUrl from '../../assets/images/backgrounds/space.svg'
-import asteroidSheetUrl from '../../assets/images/asteroids/asteroid_sheet.png'
+import goldSatelliteSheetUrl from '../../assets/images/satellites/gold_satellite_sheet.png'
+import commsSatelliteUrl from '../../assets/images/satellites/comms_satellite.png'
+import spaceTelescopeUrl from '../../assets/images/satellites/space_telescope.png'
 
 export const ASSETS = Object.freeze({
   // Rocket waiting on the pad: engine off (cold nozzle), like in the hangar before liftoff.
@@ -31,6 +33,11 @@ export const ASSETS = Object.freeze({
   explosion: { src: explosionSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
   earthPlanet: { src: earthPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
   spaceBackground: { src: spaceBackgroundUrl, frameWidth: 320, frameHeight: 180, frames: 1 },
-  // Objects circling Earth on the orbit map, drawn as spinning asteroids. 8 frames of 32 x 32 in one row.
-  asteroid: { src: asteroidSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
+  // Satellites circling Earth on the orbit map. Three looks, mixed so neighbors never match.
+  // Gold box with solar panels: sun glint and blinking light, 4 frames of 24 x 16 in one row.
+  goldSatellite: { src: goldSatelliteSheetUrl, frameWidth: 24, frameHeight: 16, frames: 4 },
+  // Communications satellite: dish antenna and long solar wings.
+  commsSatellite: { src: commsSatelliteUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
+  // Space telescope: silver tube with the lid open.
+  spaceTelescope: { src: spaceTelescopeUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
 })
