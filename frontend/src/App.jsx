@@ -30,7 +30,7 @@ export default function App() {
     return (
       <SpaceBackground>
         <div className="brand-splash">
-          <AppLogo size={96} wordmark />
+          <AppLogo size={96} wordmark bare />
           <p className="brand-splash__status">Loading…</p>
         </div>
       </SpaceBackground>
