@@ -23,6 +23,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useProgress } from '../../../levels'
 import { AMBIENCE, MUSIC, SFX, SYNTH, playSfx, playSynth, useSoundtrack } from '../../../audio'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
+import { formatDate, formatNumber, t } from '../../../i18n/index.js'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { useUiScale } from '../../../lib/uiScale.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
@@ -67,7 +68,7 @@ import { aimFromPointer, angleBetween, createMoonView, drawMoonScene, trafficAtP
 import { MoonDisk, MoonPhaseCard } from './MoonPhaseCard.jsx'
 import { MoonEventCard } from './MoonEventCard.jsx'
 import { MoonTips } from './MoonTips.jsx'
-import { MoonLanding } from './MoonLanding.jsx'
+import { MoonLanding, landingCopy } from './MoonLanding.jsx'
 import { tipsTurnedOff } from './moonTipsStorage.js'
 import { FunFactToast } from '../../FunFactToast.jsx'
 import { choiceBlockedReason, pickOrbitEvents, resolveOrbitEvent } from './moonOrbitEvents.js'
@@ -92,8 +93,9 @@ const ACTION_SECONDS = 10
 /** Wait after the aim stops changing before the way home is worked out. */
 const HOME_PLAN_DELAY_MS = 250
 
-const DAY_FORMAT = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
-const CLOCK_FORMAT = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+const formatKm = (km) => `${formatNumber(Math.round(km))} km`
+const DATE_OPTIONS = { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }
+const CLOCK_OPTIONS = { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }
 const DEG_PER_DAY_MOON = 360 / 27.321661
 const DEG_PER_DAY_SUN = 360 / 365.2422
 
@@ -198,8 +200,6 @@ function loadImage(src) {
   return image
 }
 
-const formatKm = (km) => `${Math.round(km).toLocaleString('en-US')} km`
-
 /** Damage the hits did, all together. A heat shield blocks half of what junk does. */
 function damageFrom(hits, equipped) {
   const shielded = partCount(equipped, 'shield') > 0
@@ -239,7 +239,7 @@ function BaseMap({ siteId, onSelect, leaving }) {
     <div className={`moon-base-map${leaving ? ' is-leaving' : ''}`}>
       <div className="moon-base-map__globe">
         <span className="moon-base-map__halo" aria-hidden="true" />
-        <svg viewBox="16 16 224 224" className="moon-base-map__earth" role="img" aria-label="Earth seen from above the North Pole">
+        <svg viewBox="16 16 224 224" className="moon-base-map__earth" role="img" aria-label={t('Earth seen from above the North Pole')}>
           <defs>
             <clipPath id="moon-base-map-clip"><circle cx="128" cy="128" r="112" /></clipPath>
           </defs>
@@ -262,13 +262,13 @@ function BaseMap({ siteId, onSelect, leaving }) {
                 className={`moon-pin moon-pin--${side}${selected ? ' is-selected' : ''}`}
                 style={{ left: `${left}%`, top: `${top}%`, '--order': order }}
                 aria-pressed={selected}
-                aria-label={`${candidate.name}, ${candidate.country}`}
+                aria-label={t('{{name}}, {{country}}', { name: t(candidate.name), country: t(candidate.country) })}
                 onClick={() => onSelect(candidate.id)}
               >
                 <span className="moon-pin__marker"><BasePin /></span>
                 <span className="moon-pin__label">
-                  {candidate.name}
-                  <small>{candidate.country}</small>
+                  {t(candidate.name)}
+                  <small>{t(candidate.country)}</small>
                 </span>
               </button>
             )
@@ -370,7 +370,10 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
     + (angleBetween((DEG_PER_DAY_MOON * daysFromAnchor * Math.PI) / 180, arrivalLook.moonLongitude) * 180) / Math.PI
   const sunTurnDeg = DEG_PER_DAY_SUN * daysFromAnchor
     + (angleBetween((DEG_PER_DAY_SUN * daysFromAnchor * Math.PI) / 180, arrivalLook.sunLongitude) * 180) / Math.PI
-  const moonPlace = `${Math.round(arrivalLook.distanceKm).toLocaleString('en-US')} km away · in front of ${constellationAt(arrivalLook.moonLongitude)}`
+  const moonPlace = t('{{km}} km away · in front of {{stars}}', {
+    km: formatNumber(Math.round(arrivalLook.distanceKm)),
+    stars: t(constellationAt(arrivalLook.moonLongitude)),
+  })
 
   // The way home, worked out with real gravity once the aim stops changing.
   const arrived = prediction?.outcome.type === TRANSFER_OUTCOMES.ARRIVED
@@ -824,7 +827,16 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
       tripDays,
       reason: success
         ? ''
-        : `The crew came home, but the maps scored ${pct}%. The mission needs ${mission.passPct}%.${dark ? ` The Moon was only ${Math.round(arrivalLook.illumination * 100)}% lit, so the cameras saw mostly shadow.` : ''}`,
+        : dark
+          ? t('The crew came home, but the maps scored {{pct}}%. The mission needs {{need}}%. The Moon was only {{lit}}% lit, so the cameras saw mostly shadow.', {
+            pct,
+            need: mission.passPct,
+            lit: Math.round(arrivalLook.illumination * 100),
+          })
+          : t('The crew came home, but the maps scored {{pct}}%. The mission needs {{need}}%.', {
+            pct,
+            need: mission.passPct,
+          }),
       hint: success
         ? ''
         : dark
@@ -924,16 +936,16 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
     setHelpMessage('')
     setCycleHours(Math.min(CYCLE_HOURS, Math.max(0, day * 24 + hourOfDay)))
   }
-  const launchDayLabel = DAY_FORMAT.format(date)
+  const launchDayLabel = formatDate(date, DATE_OPTIONS)
 
   const hud = (
     <header className="game__hud orbit-level__hud">
-      <button type="button" className="game__back" onClick={onExit}>Missions</button>
+      <button type="button" className="game__back" onClick={onExit}>{t('Missions')}</button>
       <div className="game__mission">
-        <div className="game__num">Level {stageInfo.levelNumber} · {stageInfo.title}</div>
-        <h1>{mission.title}</h1>
+        <div className="game__num">{t('Level {{number}} · {{title}}', { number: stageInfo.levelNumber, title: t(stageInfo.title) })}</div>
+        <h1>{t(mission.title)}</h1>
       </div>
-      <div className="game__place">{mission.place}</div>
+      <div className="game__place">{t(mission.place)}</div>
     </header>
   )
 
@@ -954,7 +966,9 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
           mission={mission}
           result={result}
           design={design}
-          lead={`Your crew mapped the Moon and came home${result.tripDays ? ` after ${result.tripDays.toFixed(1)} days` : ''}.`}
+          lead={result.tripDays
+            ? t('Your crew mapped the Moon and came home after {{days}} days.', { days: result.tripDays.toFixed(1) })
+            : t('Your crew mapped the Moon and came home.')}
           onContinue={onNextMission ?? onExit}
           onFlyAgain={retry}
         />
@@ -963,7 +977,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
         <MissionFailedScreen
           mission={mission}
           result={result}
-          reason={sayTo(playerName, result.reason)}
+          reason={sayTo(playerName, t(result.reason))}
           hint={result.hint}
           onHangar={onBackToHangar}
           onRetry={retry}
@@ -980,15 +994,19 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
             <MoonTips step={step} onClose={() => setTipsOpen(false)} />
           )}
           {(step === 'site' || step === 'aim' || step === 'orbit') && !tipsOpen && (
-            <button type="button" className="moon-tips-open" onClick={() => setTipsOpen(true)} aria-label="Show tips">?</button>
+            <button type="button" className="moon-tips-open" onClick={() => setTipsOpen(true)} aria-label={t('Show tips')}>?</button>
           )}
           <FunFactToast paused={!(step === 'aim' || step === 'flight' || step === 'return') || tipsOpen || liftingOff} />
           {telemetry && (step === 'flight' || step === 'orbit' || step === 'return') && (
             <div className="moon-clock" aria-live="off">
               <span className="moon-clock__face" aria-hidden="true">🕒</span>
               <span>
-                <b>{CLOCK_FORMAT.format(new Date(date.getTime() + telemetry.seconds * 1000))}</b>
-                <small>Day {(telemetry.seconds / 86400).toFixed(1)} of the mission · ⏩ time ×{shortNumber(telemetry.speedUp)} faster (1 s = {(telemetry.speedUp / 3600).toFixed(1)} h)</small>
+                <b>{formatDate(new Date(date.getTime() + telemetry.seconds * 1000), CLOCK_OPTIONS)}</b>
+                <small>{t('Day {{day}} of the mission · ⏩ time ×{{times}} faster (1 s = {{hours}} h)', {
+                  day: (telemetry.seconds / 86400).toFixed(1),
+                  times: shortNumber(telemetry.speedUp),
+                  hours: (telemetry.speedUp / 3600).toFixed(1),
+                })}</small>
               </span>
             </div>
           )}
@@ -999,7 +1017,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
               <canvas
                 ref={canvasRef}
                 className={`orbit-canvas orbit-canvas--${step}`}
-                aria-label="Earth and Moon in space, with satellites, space junk and the predicted path"
+                aria-label={t('Earth and Moon in space, with satellites, space junk and the predicted path')}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
@@ -1008,7 +1026,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
               <MoonPhaseCard
                 look={arrivalLook}
                 rating={arrivalRating}
-                dateLabel={DAY_FORMAT.format(arrivalDate)}
+                dateLabel={formatDate(arrivalDate, DATE_OPTIONS)}
                 moonTurnDeg={moonTurnDeg}
                 sunTurnDeg={sunTurnDeg}
                 place={moonPlace}
@@ -1019,20 +1037,20 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
                     <>
                       <span className="moon-spot__icon" aria-hidden="true">{hovered.kind === 'debris' ? '💥' : '🛰️'}</span>
                       <span>
-                        <b>{hovered.shortName}</b> · {hovered.type}
-                        <small>{hovered.summary}</small>
+                        <b>{t(hovered.shortName)}</b> · {t(hovered.type)}
+                        <small>{t(hovered.summary)}</small>
                       </span>
                     </>
                   ) : (
                     <span className="moon-spot__legend">
-                      <span><i className="moon-spot__sat" aria-hidden="true">🛰️</i> Satellite</span>
-                      <span><i className="moon-spot__junk" aria-hidden="true">✦✧</i> Space junk</span>
-                      <small>Point at one to see what it is</small>
+                      <span><i className="moon-spot__sat" aria-hidden="true">🛰️</i> {t('Satellite')}</span>
+                      <span><i className="moon-spot__junk" aria-hidden="true">✦✧</i> {t('Space junk')}</span>
+                      <small>{t('Point at one to see what it is')}</small>
                     </span>
                   )}
                 </div>
               )}
-              <p className="orbit-note">Simulation · distances squeezed to fit</p>
+              <p className="orbit-note">{t('Simulation · distances squeezed to fit')}</p>
             </>
           )}
         </div>
@@ -1040,41 +1058,41 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
         <aside className="orbit-panel" aria-live="polite">
           {step === 'site' && (
             <>
-              <h2 className="orbit-panel__title">1. Pick a launch base</h2>
+              <h2 className="orbit-panel__title">{t('1. Pick a launch base')}</h2>
               <p className="orbit-panel__hint">
-                {sayTo(playerName, 'This is Earth seen from above the North Pole. Each base sits where it really is. Tap one.')}
+                {sayTo(playerName, t('This is Earth seen from above the North Pole. Each base sits where it really is. Tap one.'))}
               </p>
               {site ? (
                 <div className="orbit-detail">
-                  <p className="orbit-detail__name">{site.name}, {site.country}</p>
-                  <p><b>Spaceport:</b> {site.spaceport}</p>
-                  <p><b>Where:</b> {Math.abs(site.latitudeDeg).toFixed(1)}° {site.latitudeDeg >= 0 ? 'N' : 'S'}, {Math.abs(site.longitudeDeg).toFixed(1)}° {site.longitudeDeg >= 0 ? 'E' : 'W'}</p>
-                  <p><b>Why here?</b> {site.why}</p>
+                  <p className="orbit-detail__name">{t(site.name)}, {t(site.country)}</p>
+                  <p><b>{t('Spaceport:')}</b> {t(site.spaceport)}</p>
+                  <p><b>{t('Where:')}</b> {Math.abs(site.latitudeDeg).toFixed(1)}° {t(site.latitudeDeg >= 0 ? 'N' : 'S')}, {Math.abs(site.longitudeDeg).toFixed(1)}° {t(site.longitudeDeg >= 0 ? 'E' : 'W')}</p>
+                  <p><b>{t('Why here?')}</b> {t(site.why)}</p>
                 </div>
               ) : (
-                <p className="orbit-detail">{sayTo(playerName, 'Pick any base. Then you choose the day and aim at the Moon.')}</p>
+                <p className="orbit-detail">{sayTo(playerName, t('Pick any base. Then you choose the day and aim at the Moon.'))}</p>
               )}
               <div className="orbit-panel__actions">
-                <button type="button" className="game__back" onClick={onBackToHangar}>Hangar</button>
-                <button type="button" className="ms-btn" disabled={!site} onClick={acceptSite}>Accept</button>
+                <button type="button" className="game__back" onClick={onBackToHangar}>{t('Hangar')}</button>
+                <button type="button" className="ms-btn" disabled={!site} onClick={acceptSite}>{t('Accept')}</button>
               </div>
             </>
           )}
 
           {step === 'aim' && site && (
             <>
-              <h2 className="orbit-panel__title">2. Aim at the Moon</h2>
+              <h2 className="orbit-panel__title">{t('2. Aim at the Moon')}</h2>
               <ol className="moon-steps">
-                <li>Pick a bright Moon</li>
-                <li>Drag from your base</li>
-                <li>Launch</li>
+                <li>{t('Pick a bright Moon')}</li>
+                <li>{t('Drag from your base')}</li>
+                <li>{t('Launch')}</li>
               </ol>
               <div className="moon-days">
                 <p className="moon-days__title">
-                  <b>Launch day</b> · {launchDayLabel}
+                  <b>{t('Launch day')}</b> · {launchDayLabel}
                 </p>
                 <div className="moon-days__row">
-                  <button type="button" className="moon-days__step" onClick={() => pickDay(launchDay - 1)} disabled={launchDay === 0} aria-label="One day earlier">◀</button>
+                  <button type="button" className="moon-days__step" onClick={() => pickDay(launchDay - 1)} disabled={launchDay === 0} aria-label={t('One day earlier')}>◀</button>
                   <div className="moon-days__track">
                     <div className="moon-days__moons" aria-hidden="true">
                       {dayLooks.map((dayLook, day) => (
@@ -1091,47 +1109,47 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
                       step="1"
                       value={launchDay}
                       onChange={(event) => pickDay(Number(event.target.value))}
-                      aria-label="Launch day"
-                      aria-valuetext={`Day ${launchDay + 1}, ${launchDayLabel}`}
+                      aria-label={t('Launch day')}
+                      aria-valuetext={t('Day {{day}}, {{date}}', { day: launchDay + 1, date: launchDayLabel })}
                     />
                   </div>
-                  <button type="button" className="moon-days__step" onClick={() => pickDay(launchDay + 1)} disabled={launchDay === MAX_DAY} aria-label="One day later">▶</button>
+                  <button type="button" className="moon-days__step" onClick={() => pickDay(launchDay + 1)} disabled={launchDay === MAX_DAY} aria-label={t('One day later')}>▶</button>
                 </div>
-                <p className="moon-days__hint">Each little Moon is how it looks the day you arrive. Slide to a bright one.</p>
+                <p className="moon-days__hint">{t('Each little Moon is how it looks the day you arrive. Slide to a bright one.')}</p>
                 <p className={`moon-light is-${arrivalRating.tone}`}>
                   <span aria-hidden="true">{'☀'.repeat(arrivalRating.level)}</span>
-                  {arrivalRating.label} for the cameras · {Math.round(arrivalLook.illumination * 100)}% lit
+                  {t('{{label}} for the cameras · {{percent}}% lit', { label: t(arrivalRating.label), percent: Math.round(arrivalLook.illumination * 100) })}
                 </p>
               </div>
-              <div className="moon-picker" role="group" aria-label="Launch hour">
-                <button type="button" onClick={() => shiftHours(-1)} disabled={cycleHours === 0} aria-label="One hour earlier">◀</button>
-                <p><span className="moon-picker__icon" aria-hidden="true">🕒</span> {launchClock}<small>Earth turns</small></p>
-                <button type="button" onClick={() => shiftHours(1)} disabled={cycleHours === CYCLE_HOURS} aria-label="One hour later">▶</button>
+              <div className="moon-picker" role="group" aria-label={t('Launch hour')}>
+                <button type="button" onClick={() => shiftHours(-1)} disabled={cycleHours === 0} aria-label={t('One hour earlier')}>◀</button>
+                <p><span className="moon-picker__icon" aria-hidden="true">🕒</span> {launchClock}<small>{t('Earth turns')}</small></p>
+                <button type="button" onClick={() => shiftHours(1)} disabled={cycleHours === CYCLE_HOURS} aria-label={t('One hour later')}>▶</button>
               </div>
-              {summary && <p className={`orbit-prediction is-${summary.tone}`}>{summary.icon} {sayTo(playerName, summary.text)}</p>}
+              {summary && <p className={`orbit-prediction is-${summary.tone}`}>{summary.icon} {sayTo(playerName, t(summary.text))}</p>}
               {prediction?.outcome.type === TRANSFER_OUTCOMES.ARRIVED && !hasLander && (
-                <p className="orbit-prediction is-warn">No lunar lander packed: nothing can slow the ship at the Moon.</p>
+                <p className="orbit-prediction is-warn">{t('No lunar lander packed: nothing can slow the ship at the Moon.')}</p>
               )}
               {hits.length > 0 ? (
                 <div className="moon-hazards__warn">
-                  <b>⚠ The dots hit: {hits.map((hit) => hit.object.shortName).join(', ')}</b>
-                  <span>Both ships get hurt. Try another hour.</span>
+                  <b>⚠ {t('The dots hit: {{names}}', { names: hits.map((hit) => t(hit.object.shortName)).join(', ') })}</b>
+                  <span>{t('Both ships get hurt. Try another hour.')}</span>
                 </div>
               ) : (
-                prediction && <p className="moon-hazards__clear">✓ No satellites or junk in the way.</p>
+                prediction && <p className="moon-hazards__clear">✓ {t('No satellites or junk in the way.')}</p>
               )}
-              <button type="button" className="moon-help" onClick={helpAim}>✨ Help me aim</button>
-              {helpMessage && <p className="moon-help__note">{helpMessage}</p>}
+              <button type="button" className="moon-help" onClick={helpAim}>✨ {t('Help me aim')}</button>
+              {helpMessage && <p className="moon-help__note">{t(helpMessage)}</p>}
               <div className="orbit-panel__actions">
-                <button type="button" className="game__back" onClick={goBack}>Back</button>
-                <button type="button" className="ms-btn" onClick={launch}>Launch</button>
+                <button type="button" className="game__back" onClick={goBack}>{t('Back')}</button>
+                <button type="button" className="ms-btn" onClick={launch}>{t('Launch')}</button>
               </div>
             </>
           )}
 
           {step === 'flight' && (
             <>
-              <h2 className="orbit-panel__title">{sayTo(playerName, 'On the way!')}</h2>
+              <h2 className="orbit-panel__title">{sayTo(playerName, t('On the way!'))}</h2>
               <div className="moon-trip" aria-hidden="true">
                 <span className="moon-trip__end">🌍</span>
                 <span className="moon-trip__track">
@@ -1142,20 +1160,20 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
               </div>
               {telemetry && (
                 <dl className="orbit-stats">
-                  <div><dt>Day</dt><dd>{telemetry.day.toFixed(1)}</dd></div>
-                  <div><dt>From Earth</dt><dd>{formatKm(Math.max(0, telemetry.earthKm))}</dd></div>
-                  <div><dt>To the Moon</dt><dd>{formatKm(telemetry.moonKm)}</dd></div>
+                  <div><dt>{t('Day')}</dt><dd>{telemetry.day.toFixed(1)}</dd></div>
+                  <div><dt>{t('From Earth')}</dt><dd>{formatKm(Math.max(0, telemetry.earthKm))}</dd></div>
+                  <div><dt>{t('To the Moon')}</dt><dd>{formatKm(telemetry.moonKm)}</dd></div>
                 </dl>
               )}
               {hits.slice(0, seenHits).map((hit) => (
-                <p key={hit.object.id} className="orbit-prediction is-bad">💥 {hit.object.shortName}: {hit.object.damage}</p>
+                <p key={hit.object.id} className="orbit-prediction is-bad">💥 {t(hit.object.shortName)}: {t(hit.object.damage)}</p>
               ))}
             </>
           )}
 
           {step === 'return' && (
             <>
-              <h2 className="orbit-panel__title">{sayTo(playerName, 'Coming home!')}</h2>
+              <h2 className="orbit-panel__title">{sayTo(playerName, t('Coming home!'))}</h2>
               <div className="moon-trip" aria-hidden="true">
                 <span className="moon-trip__end">🌕</span>
                 <span className="moon-trip__track">
@@ -1164,29 +1182,39 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
                 </span>
                 <span className="moon-trip__end">🌍</span>
               </div>
-              <p className="orbit-panel__hint">One engine burn behind the Moon, then gravity does the rest: the Moon flings the ship out and Earth pulls it home.</p>
+              <p className="orbit-panel__hint">{t('One engine burn behind the Moon, then gravity does the rest: the Moon flings the ship out and Earth pulls it home.')}</p>
               {returnPrediction && (
-                <p className="orbit-detail">🔥 Burn: {(returnPrediction.burn * 1000).toFixed(0)} m/s · lowest point {Math.round(returnPrediction.perigeeAltitudeKm)} km up{returnPrediction.perigeeAltitudeKm > 20 && returnPrediction.perigeeAltitudeKm < 70 ? ', inside the safe corridor' : ''}.</p>
+                <p className="orbit-detail">🔥 {t(
+                  returnPrediction.perigeeAltitudeKm > 20 && returnPrediction.perigeeAltitudeKm < 70
+                    ? 'Burn: {{speed}} m/s · lowest point {{km}} km up, inside the safe corridor.'
+                    : 'Burn: {{speed}} m/s · lowest point {{km}} km up.',
+                  { speed: (returnPrediction.burn * 1000).toFixed(0), km: Math.round(returnPrediction.perigeeAltitudeKm) },
+                )}</p>
               )}
-              <p className="orbit-detail">🛡️ The heat shield keeps the crew safe when the ship hits the air at about 40,000 km/h.</p>
+              <p className="orbit-detail">🛡️ {t('The heat shield keeps the crew safe when the ship hits the air at about 40,000 km/h.')}</p>
             </>
           )}
 
           {(step === 'orbit' || (step === 'result' && result?.success)) && (
             <>
-              <h2 className="orbit-panel__title">{sayTo(playerName, 'Mapping the Moon')}</h2>
-              <p className="orbit-panel__hint">The lander slowed the ship into orbit. Watch for surprises.</p>
+              <h2 className="orbit-panel__title">{sayTo(playerName, t('Mapping the Moon'))}</h2>
+              <p className="orbit-panel__hint">{t('The lander slowed the ship into orbit. Watch for surprises.')}</p>
               <p className={`moon-light is-${arrivalRating.tone}`}>
                 <span aria-hidden="true">{'☀'.repeat(arrivalRating.level)}</span>
-                {arrivalLook.name}: {arrivalRating.label.toLowerCase()} for the cameras
+                {t('{{phase}}: {{label}} for the cameras', { phase: t(arrivalLook.name), label: t(arrivalRating.label).toLowerCase() })}
               </p>
               {hits.length > 0 && (
-                <p className="orbit-detail">Damage from the trip: {hits.map((hit) => hit.object.shortName).join(', ')}.</p>
+                <p className="orbit-detail">{t('Damage from the trip: {{names}}.', { names: hits.map((hit) => t(hit.object.shortName)).join(', ') })}</p>
               )}
               <ul className="moon-hazards">
-                {landing && <li className="moon-hazards__item"><b>🛬 {landing.name}</b><span>{landing.note}</span></li>}
+                {landing && (
+                  <li className="moon-hazards__item">
+                    <b>🛬 {landingCopy(landing).title}</b>
+                    <span>{landingCopy(landing).note}</span>
+                  </li>
+                )}
                 {eventLog.map((entry) => (
-                  <li key={entry.id} className="moon-hazards__item"><b>{entry.name}</b><span>{entry.note}</span></li>
+                  <li key={entry.id} className="moon-hazards__item"><b>{t(entry.name)}</b><span>{t(entry.note)}</span></li>
                 ))}
               </ul>
             </>

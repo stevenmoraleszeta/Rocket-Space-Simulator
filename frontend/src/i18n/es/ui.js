@@ -211,6 +211,7 @@ export const ui = {
   'W': 'O',
   'Altitude': 'Altitud',
   'Speed': 'Velocidad',
+  'Engine': 'Motor',
   'Day': 'Día',
   'From Earth': 'Desde la Tierra',
   'To the Moon': 'Hasta la Luna',

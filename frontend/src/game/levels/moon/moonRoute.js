@@ -28,6 +28,8 @@
  * Space on the way to the Moon is almost empty.
  */
 
+import { t } from '../../../i18n/index.js'
+
 /** Pointing short of this never reaches the Moon. */
 export const POWER_SHORT = 0.82
 /** Reaches the Moon, but too slow to be captured. Extra fuel loosens this. */

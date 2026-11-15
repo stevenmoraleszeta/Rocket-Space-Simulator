@@ -74,11 +74,11 @@ npm run dev:web
 
 ## Datos del jugador
 
-Con Firebase configurado, el juego entra con una sesión anónima y guarda en Firestore. En Ajustes, el botón de Google pide la cuenta en esta misma página, para que una llave de acceso o la contraseña puedan terminar. Si esa cuenta se enlaza a la sesión anónima, se conservan las estrellas. El punto rojo del botón de ajustes avisa cuando falta el nombre o la sesión de Google.
+Con Firebase configurado, el juego entra con una sesión anónima y guarda en Firestore. En Ajustes, el botón de Google pide la cuenta en esta misma página, para que una llave de acceso o la contraseña puedan terminar. Si esa cuenta se enlaza a la sesión anónima, se conservan las estrellas. El punto rojo del botón de ajustes avisa cuando falta el nombre o la sesión de Google. En el mismo panel se cambia el idioma: inglés por defecto, o español.
 
 - `progress/{uid}`: misiones completadas, estrellas, mejor puntaje e intentos
 - `progress/{uid}/flights/{id}`: cada viaje, aunque se repita, con lo empacado y las elecciones (base, órbita, ventana, lugar)
-- `settings/{uid}`: nombre del jugador y volumen de la música y del ambiente
+- `settings/{uid}`: nombre del jugador, idioma (inglés por defecto o español) y volumen de la música y del ambiente
 
 Cada documento solo lo puede leer y escribir ese jugador. También queda una copia en el navegador por si la red falla. El hangar en curso no se guarda hasta que el viaje termina.
 

@@ -1,5 +1,6 @@
 import earthUrl from '../../../assets/images/planets/earth.svg'
 import sunUrl from '../../../assets/images/planets/sun.svg'
+import { t } from '../../../i18n/index.js'
 import { PixelMoon } from './PixelMoon.jsx'
 
 /**
@@ -70,31 +71,33 @@ function FromAbove({ moonTurnDeg, sunTurnDeg }) {
 }
 
 export function MoonPhaseCard({ look, dateLabel, title = 'Moon when you arrive', rating, moonTurnDeg = 0, sunTurnDeg = 0, place }) {
+  const shownTitle = t(title)
+  const phase = t(look.name)
   const percent = Math.round(look.illumination * 100)
   return (
-    <figure className="moon-phase-card" aria-label={`${title}: ${look.name}, ${percent}% lit, ${dateLabel}`}>
-      <figcaption className="moon-phase-card__title">{title}</figcaption>
+    <figure className="moon-phase-card" aria-label={t('{{title}}: {{phase}}, {{percent}}% lit, {{date}}', { title: shownTitle, phase, percent, date: dateLabel })}>
+      <figcaption className="moon-phase-card__title">{shownTitle}</figcaption>
       <p className="moon-phase-card__date">{dateLabel}</p>
       <div className="moon-phase-card__pair">
         <div>
           <FromAbove moonTurnDeg={moonTurnDeg} sunTurnDeg={sunTurnDeg} />
-          <small>From above</small>
+          <small>{t('From above')}</small>
         </div>
         <span className="moon-phase-card__arrow" aria-hidden="true">→</span>
         <div>
           <div className="moon-phase-card__disk">
             <PixelMoon look={look} className="pixel-moon" />
           </div>
-          <small>From Earth</small>
+          <small>{t('From Earth')}</small>
         </div>
       </div>
       <p className="moon-phase-card__name">
-        <PixelMoon look={look} className="pixel-moon pixel-moon--icon" /> {look.name}
+        <PixelMoon look={look} className="pixel-moon pixel-moon--icon" /> {phase}
       </p>
-      <p className="moon-phase-card__lit">{percent}% of the side we see is lit</p>
+      <p className="moon-phase-card__lit">{t('{{percent}}% of the side we see is lit', { percent })}</p>
       {rating && (
         <p className={`moon-phase-card__light is-${rating.tone}`}>
-          <span aria-hidden="true">{'☀'.repeat(rating.level)}</span> {rating.label} for the cameras
+          <span aria-hidden="true">{'☀'.repeat(rating.level)}</span> {t('{{label}} for the cameras', { label: t(rating.label) })}
         </p>
       )}
       {place && <p className="moon-phase-card__place">📍 {place}</p>}

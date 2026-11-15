@@ -3,6 +3,7 @@
  * the hazards on the road, the dotted path and the rocket. Sizes are not to scale (planets and
  * hazards are drawn big so they can be seen); distances from the Sun are.
  */
+import { t } from '../../../i18n/index.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import {
   ANGLE_WINDOW,
@@ -109,14 +110,15 @@ function dottedRing(ctx, view, radiusAu, color) {
 }
 
 function label(ctx, text, x, y, color = COLORS.label, align = 'center', size = 13) {
+  const shown = t(text)
   ctx.font = `700 ${size}px "Pixelify Sans", monospace`
   ctx.textAlign = align
   ctx.textBaseline = 'middle'
   ctx.lineWidth = 4
   ctx.strokeStyle = 'rgba(5, 6, 26, 0.9)'
-  ctx.strokeText(text, x, y)
+  ctx.strokeText(shown, x, y)
   ctx.fillStyle = color
-  ctx.fillText(text, x, y)
+  ctx.fillText(shown, x, y)
 }
 
 /**
@@ -386,7 +388,11 @@ export function drawMarsScene(ctx, view, scene) {
     drawPath(ctx, view, trip.samples, site, color)
     drawProtractor(ctx, view, scene.aim, site)
     if (scene.tapHint) drawTapHint(ctx, view, scene.tapHint, 0, scene.clockSeconds)
-    label(ctx, `Aim: ${TARGET_ANGLE_DEG}° (from ${ANGLE_WINDOW.min}° to ${ANGLE_WINDOW.max}° still works)`, view.width / 2, 22, '#ffd23f', 'center', 15)
+    label(ctx, t('Aim: {{best}}° (from {{min}}° to {{max}}° still works)', {
+      best: TARGET_ANGLE_DEG,
+      min: ANGLE_WINDOW.min,
+      max: ANGLE_WINDOW.max,
+    }), view.width / 2, 22, '#ffd23f', 'center', 15)
     return
   }
   drawPath(ctx, view, trip.samples, site, color, Infinity, 0.25)

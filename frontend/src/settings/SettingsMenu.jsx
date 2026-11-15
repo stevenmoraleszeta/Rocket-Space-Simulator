@@ -20,16 +20,20 @@ function GoogleSignInButton({ onError }) {
 
   useEffect(() => {
     let active = true;
+    const host = hostRef.current;
     loadGoogleSignIn()
       .then(() => {
         requestAnimationFrame(() => {
-          if (active && hostRef.current) renderGoogleButton(hostRef.current);
+          if (active && host) renderGoogleButton(host);
         });
       })
       .catch((error) => {
         if (active) onError(googleSignInMessage(error));
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+      host?.replaceChildren();
+    };
   }, [onError]);
 
   return <div ref={hostRef} className="st-google-host" />;

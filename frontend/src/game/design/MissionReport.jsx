@@ -2,6 +2,9 @@
  * End-of-mission stamps, plus one NASA picture and, on the Moon, today's distance.
  */
 import { useEffect, useState } from 'react'
+import { formatNumber, t } from '../../i18n/index.js'
+import { JOBS, missionStamps, photoReport } from './missionPlan.js'
+import { findNasaPhoto, moonDistanceFact } from './nasaFacts.js'
 
 function photoLine(photos, translate) {
   if (!photos) return ''
@@ -22,9 +25,6 @@ function stampLine(stamp, photos, translate) {
     ? 'A scientist can learn from the photos that got home.'
     : 'No photos got home to study.')
 }
-import { formatNumber, t } from '../../i18n/index.js'
-import { JOBS, missionStamps, photoReport } from './missionPlan.js'
-import { findNasaPhoto, moonDistanceFact } from './nasaFacts.js'
 
 export function MissionReport({ design, success }) {
   const stamps = design ? missionStamps(design, success) : []

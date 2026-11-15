@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { t } from '../../../i18n/index.js'
 import { SYNTH, playSynth } from '../../../audio'
 import { PixelMoon } from './PixelMoon.jsx'
 import sunUrl from '../../../assets/images/planets/sun_animated.svg'
@@ -45,10 +46,10 @@ function TapAction({ action, onDone }) {
   }
   return (
     <div className="moon-action">
-      <p>{action.label}</p>
+      <p>{t(action.label)}</p>
       <div className="moon-action__bar" aria-hidden="true"><span style={{ width: `${(taps / goal) * 100}%` }} /></div>
       <button type="button" className="moon-button moon-button--primary moon-action__tap" onClick={tap} autoFocus>
-        <ButtonIcon src={handUrl} />Tap! {taps} / {goal}
+        <ButtonIcon src={handUrl} />{t('Tap! {{taps}} / {{goal}}', { taps, goal })}
       </button>
     </div>
   )
@@ -61,7 +62,7 @@ function AimAction({ action, onDone }) {
   const inside = value >= zone && value <= zone + 16
   return (
     <div className="moon-action">
-      <p>{action.label}</p>
+      <p>{t(action.label)}</p>
       <div className="moon-action__dial">
         <span className="moon-action__zone" style={{ left: `${zone}%`, width: '16%' }} aria-hidden="true" />
         <input
@@ -69,7 +70,7 @@ function AimAction({ action, onDone }) {
           min="0"
           max="100"
           value={value}
-          aria-label="Turn the dial"
+          aria-label={t('Turn the dial')}
           onChange={(event) => {
             setValue(Number(event.target.value))
             playSynth(SYNTH.tick)
@@ -79,7 +80,7 @@ function AimAction({ action, onDone }) {
         <span className={`moon-action__pointer${inside ? ' is-in' : ''}`} style={{ left: `${value}%` }} aria-hidden="true">▲</span>
       </div>
       <button type="button" className={`moon-button moon-button--primary${inside ? ' is-ready' : ''}`} onClick={() => onDone(inside)}>
-        <ButtonIcon src={lockUrl} />Lock it {inside ? '✓' : ''}
+        <ButtonIcon src={lockUrl} />{t('Lock it')} {inside ? '✓' : ''}
       </button>
     </div>
   )
@@ -129,9 +130,9 @@ export function MoonEventCard({ activeEvent, blockedReason, onChoose, onAct, onC
   return (
     <div className="moon-event-shade">
       <section className="moon-event moon-panel" role="dialog" aria-modal="true" aria-labelledby="moon-event-title">
-        <p className="moon-kicker">SPACE EVENT</p>
+        <p className="moon-kicker">{t('SPACE EVENT')}</p>
         {!resolvedText && (
-          <div className="moon-event__clock" aria-label={`${activeEvent.secondsLeft} seconds left`}>
+          <div className="moon-event__clock" aria-label={t('{{seconds}} seconds left', { seconds: activeEvent.secondsLeft })}>
             <span key={activeEvent.deadline} style={{ animationDuration: `${activeEvent.total}s` }} />
             <b>{activeEvent.secondsLeft}s</b>
           </div>
@@ -140,11 +141,11 @@ export function MoonEventCard({ activeEvent, blockedReason, onChoose, onAct, onC
           <span className="moon-event__icon"><EventSprite id={event.id} /></span>
           <span className="moon-event__fx" />
         </div>
-        <h2 id="moon-event-title">{event.name}</h2>
+        <h2 id="moon-event-title">{t(event.name)}</h2>
         {resolvedText ? (
           <>
-            <p className="moon-event__result" aria-live="polite">{resolvedText}</p>
-            <button type="button" className="moon-button moon-button--primary" onClick={onContinue}>Continue</button>
+            <p className="moon-event__result" aria-live="polite">{t(resolvedText)}</p>
+            <button type="button" className="moon-button moon-button--primary" onClick={onContinue}>{t('Continue')}</button>
           </>
         ) : actingChoice ? (
           actingChoice.action.kind === 'tap' ? (
@@ -154,12 +155,12 @@ export function MoonEventCard({ activeEvent, blockedReason, onChoose, onAct, onC
           )
         ) : (
           <>
-            <p>{event.text}</p>
-            <p className="moon-event__note">Think, then choose. If the clock runs out, the risky thing happens.</p>
+            <p>{t(event.text)}</p>
+            <p className="moon-event__note">{t('Think, then choose. If the clock runs out, the risky thing happens.')}</p>
             {event.timing ? (
               <div className="moon-timing">
-                <p>Hold the button. Release in the green zone.</p>
-                <div className="moon-timing__track" aria-label="Timing bar, green area is safe">
+                <p>{t('Hold the button. Release in the green zone.')}</p>
+                <div className="moon-timing__track" aria-label={t('Timing bar, green area is safe')}>
                   <span className="moon-timing__safe" />
                   <span className="moon-timing__needle" style={{ left: `${pulse}%` }} />
                 </div>
@@ -183,7 +184,7 @@ export function MoonEventCard({ activeEvent, blockedReason, onChoose, onAct, onC
                     }
                   }}
                 >
-                  {holding ? 'Release now!' : 'Hold to catch the green'}
+                  {holding ? t('Release now!') : t('Hold to catch the green')}
                 </button>
               </div>
             ) : (
@@ -196,11 +197,11 @@ export function MoonEventCard({ activeEvent, blockedReason, onChoose, onAct, onC
                       key={choice.id}
                       className={`moon-button${choice.risky ? ' moon-button--risky' : ''}`}
                       disabled={Boolean(reason)}
-                      title={reason}
+                      title={reason ? t(reason) : undefined}
                       onClick={() => pick(choice)}
                     >
-                      <ButtonIcon src={choice.risky ? warningUrl : choice.action ? gamepadUrl : sparkleUrl} />{choice.label}
-                      {reason && <small>{reason}</small>}
+                      <ButtonIcon src={choice.risky ? warningUrl : choice.action ? gamepadUrl : sparkleUrl} />{t(choice.label)}
+                      {reason && <small>{t(reason)}</small>}
                     </button>
                   )
                 })}
