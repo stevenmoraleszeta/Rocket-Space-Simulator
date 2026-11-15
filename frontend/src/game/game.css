@@ -47,6 +47,29 @@
   image-rendering: pixelated;
 }
 
+/* The sun's glow over the pad picture, on its own layer: fading it only changes its opacity,
+   so the big pad picture is never redrawn (that made scrolling the hangar panels lag). */
+.stage__glow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+  opacity: 0.3;
+  will-change: opacity;
+  animation: sun-glow 4s ease-in-out infinite alternate;
+}
+
+@keyframes sun-glow {
+  from { opacity: 0.2; }
+  to { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage__glow { animation: none; }
+}
+
 /* Clouds drift across the pad sky. Each lane is as wide as the frame, so
    translateX(100%) carries its cloud from just off the left edge to past the right. */
 /* Waving flag on its pole beside the communications station (see PadFlag.jsx). */
@@ -225,8 +248,40 @@
   padding: 4px 16px 12px;
   justify-content: safe center;
   overflow: auto;
+  overscroll-behavior: contain;
   pointer-events: auto;
+  /* Own layer, so the browser scrolls it on the GPU instead of redrawing it every frame */
+  will-change: transform;
 }
+
+/* Wide screens: the panel is only as wide as its column on the right, so it never covers
+   the rocket and its cargo bubble (both stay scrollable and clickable). */
+@media (min-width: 721px) {
+  .bay {
+    align-self: flex-end;
+    width: min(100%, 348px);
+    scrollbar-gutter: stable;
+  }
+}
+
+/* Wide screens: the panel starts at the top of the screen, beside the mission title, so more
+   of it fits before it has to scroll. The place name moves left to stay out of its way. */
+@media (min-width: 1100px) {
+  .game--pad .bay {
+    margin-top: -64px;
+    padding-top: 0;
+  }
+
+  .game--pad .game__place {
+    margin-right: 340px;
+  }
+}
+
+/* Blocky pixel scrollbar for the panel, in the SUPPLIES frame colors */
+.bay::-webkit-scrollbar { width: 9px; }
+.bay::-webkit-scrollbar-track { background: rgba(7, 10, 32, 0.6); }
+.bay::-webkit-scrollbar-thumb { background: #7d9cf0; box-shadow: inset -3px -3px 0 #3f5fb8; border-radius: 0; }
+.bay::-webkit-scrollbar-button { display: none; }
 
 .pad-story {
   position: relative;
@@ -813,6 +868,12 @@
   position: relative;
   width: calc(32px * var(--scale));
   height: calc(32px * var(--scale));
+}
+
+/* Sprite stack with the ground shadow (the cargo bubble sits outside it) */
+.rocket__body {
+  position: absolute;
+  inset: 0;
   filter: drop-shadow(0 12px 0 rgba(0, 0, 0, 0.35));
 }
 
@@ -1010,45 +1071,117 @@
 }
 
 /* Speech bubble beside the upper hull (column 21 of the 32 grid) listing what rides inside.
-   The tail on its left edge points at the rocket. */
+   Pixel-art like the SUPPLIES panel: stepped corners and a 3-layer bevel, with a stepped
+   pixel tail on its left pointing at the rocket. The list scrolls down when many things
+   ride along, so it never runs over the rocket. */
 .rocket__bubble {
+  --px: 3px;
+  --outline: #070a20;
+  --frame: #3f5fb8;
+  --frame-light: #7d9cf0;
+  --frame-dark: #1c2a66;
+  --panel: #0c1236;
+  --panel-line: #0f1740;
   position: absolute;
   z-index: 4;
   left: calc(100% * 22 / 32);
   top: calc(100% * 4 / 32);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  background: #fff;
-  color: #04213a;
-  border: 3px solid #14182a;
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  padding: 0 var(--px) var(--px) calc(var(--px) * 4);
+  pointer-events: auto;
+  color: #f2f4ff;
   white-space: nowrap;
+  /* Hard pixel shadow drawn as a flat block behind the box (a filter here would repaint
+     the whole bubble on every scroll and every astronaut frame, which made it lag) */
+  background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)) no-repeat
+    calc(var(--px) * 5) var(--px) / calc(100% - var(--px) * 5) calc(100% - var(--px));
 }
 
+/* Tail: stair-stepped pixel triangle, outline color with the frame color inside */
 .rocket__bubble::before,
 .rocket__bubble::after {
   content: '';
   position: absolute;
+  left: 0;
   top: 18px;
-  border-style: solid;
-  border-color: transparent;
-}
-
-/* Tail: dark outline triangle with a white one on top */
-.rocket__bubble::before {
-  left: -18px;
-  border-width: 9px 15px 9px 0;
-  border-right-color: #14182a;
+  width: calc(var(--px) * 5);
+  height: calc(var(--px) * 7);
+  background: var(--outline);
+  clip-path: polygon(
+    100% 0, 60% 0, 60% calc(var(--px) * 1), 40% calc(var(--px) * 1), 40% calc(var(--px) * 2),
+    20% calc(var(--px) * 2), 20% calc(var(--px) * 3), 0 calc(var(--px) * 3), 0 calc(var(--px) * 4),
+    20% calc(var(--px) * 4), 20% calc(var(--px) * 5), 40% calc(var(--px) * 5), 40% calc(var(--px) * 6),
+    60% calc(var(--px) * 6), 60% 100%, 100% 100%
+  );
 }
 
 .rocket__bubble::after {
-  left: -12px;
-  top: 21px;
-  border-width: 6px 10px 6px 0;
-  border-right-color: #fff;
+  left: var(--px);
+  top: calc(18px + var(--px));
+  width: calc(var(--px) * 4);
+  height: calc(var(--px) * 5);
+  background: var(--frame);
+  clip-path: polygon(
+    100% 0, 50% 0, 50% calc(var(--px) * 1), 25% calc(var(--px) * 1), 25% calc(var(--px) * 2),
+    0 calc(var(--px) * 2), 0 calc(var(--px) * 3), 25% calc(var(--px) * 3), 25% calc(var(--px) * 4),
+    50% calc(var(--px) * 4), 50% 100%, 100% 100%
+  );
 }
+
+/* The framed box (does not scroll, so rows never slide over the frame). The frame is drawn
+   on a layer behind, so the scrolling list is not inside a clip-path (that made it lag). */
+.rocket__bubble-box {
+  position: relative;
+  isolation: isolate;
+  padding: 15px 12px 15px 15px;
+}
+
+.rocket__bubble-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: repeating-linear-gradient(180deg, var(--panel) 0 3px, var(--panel-line) 3px 6px);
+  box-shadow:
+    inset 0 0 0 var(--px) var(--outline),
+    inset var(--px) var(--px) 0 var(--px) var(--frame-light),
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px) var(--frame-dark),
+    inset 0 0 0 calc(var(--px) * 3) var(--frame),
+    inset 0 0 0 calc(var(--px) * 4) var(--outline);
+  clip-path: polygon(
+    0 calc(var(--px) * 2), var(--px) calc(var(--px) * 2), var(--px) var(--px), calc(var(--px) * 2) var(--px), calc(var(--px) * 2) 0,
+    calc(100% - var(--px) * 2) 0, calc(100% - var(--px) * 2) var(--px), calc(100% - var(--px)) var(--px), calc(100% - var(--px)) calc(var(--px) * 2), 100% calc(var(--px) * 2),
+    100% calc(100% - var(--px) * 2), calc(100% - var(--px)) calc(100% - var(--px) * 2), calc(100% - var(--px)) calc(100% - var(--px)), calc(100% - var(--px) * 2) calc(100% - var(--px)), calc(100% - var(--px) * 2) 100%,
+    calc(var(--px) * 2) 100%, calc(var(--px) * 2) calc(100% - var(--px)), var(--px) calc(100% - var(--px)), var(--px) calc(100% - var(--px) * 2), 0 calc(100% - var(--px) * 2)
+  );
+}
+
+/* The list: about four rows tall, then it scrolls. Blocky pixel scrollbar. */
+.rocket__bubble-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 156px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+}
+
+/* Firefox: thin bar in the frame colors */
+@supports not selector(::-webkit-scrollbar) {
+  .rocket__bubble-list {
+    scrollbar-width: thin;
+    scrollbar-color: var(--frame-light) var(--outline);
+  }
+}
+
+.rocket__bubble-list::-webkit-scrollbar { width: 9px; }
+.rocket__bubble-list::-webkit-scrollbar-track { background: var(--outline); }
+.rocket__bubble-list::-webkit-scrollbar-thumb {
+  background: var(--frame-light);
+  box-shadow: inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--frame);
+  border-radius: 0;
+}
+.rocket__bubble-list::-webkit-scrollbar-button { display: none; }
 
 .rocket__cargo-row {
   display: flex;
@@ -1078,6 +1211,8 @@
 .rocket__cargo-name {
   font-family: var(--ms-font-pixel);
   font-size: 12px;
+  color: #ffffff;
+  text-shadow: 2px 2px 0 var(--outline, #070a20);
 }
 
 .rocket__qty {
@@ -1162,7 +1297,8 @@
   to { background-position: -256px 0; }
 }
 
-.rocket.is-exploding { filter: none; }
+.rocket.is-exploding,
+.rocket.is-exploding .rocket__body { filter: none; }
 
 /* On the pad every rocket uses the pad scale (.prep): standing still after a called-off
    launch, straining, or blowing up, it stays the same size and in the same place. */
@@ -1475,6 +1611,64 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+/* The tapped part's icon at the start of the card's title row */
+.part-dialog__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: #1c2458;
+  clip-path: var(--px-clip);
+  overflow: hidden;
+}
+
+.part-dialog__icon .part__icon {
+  --scale: 1.3;
+  width: 42px;
+  height: 42px;
+}
+
+.part-dialog__icon .part__photo {
+  width: 34px;
+  height: 34px;
+}
+
+.part-dialog__head .part-dialog__title {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Wide screens: the card pops out beside the panel, level with the tapped part, and its
+   pixel tail on the right points at it. Placed by usePopoutPlace in GameScreen.jsx. */
+.part-dialog--popout {
+  --px-edge-dim: #10162f;
+  position: fixed;
+  z-index: 30;
+  width: 300px;
+  filter: none;
+  animation: part-pop 0.18s steps(3) both;
+}
+
+.part-dialog--popout::after {
+  content: "";
+  position: absolute;
+  top: var(--tail-y, 20px);
+  right: -12px;
+  width: 12px;
+  height: 18px;
+  background: #5c6894;
+  clip-path: polygon(
+    0 0, 33% 0, 33% 17%, 66% 17%, 66% 33%, 100% 33%,
+    100% 66%, 66% 66%, 66% 83%, 33% 83%, 33% 100%, 0 100%
+  );
+}
+
+@keyframes part-pop {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: none; }
 }
 
 .part-dialog__title {

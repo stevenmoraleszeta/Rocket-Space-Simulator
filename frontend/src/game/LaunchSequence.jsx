@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react';
 import { SFX, playSfx } from '../audio';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
+import sunGlow from '../assets/images/backgrounds/sun_glow.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
 import { ASCENT_MS, AscentScene, FALL_BACK_EXPLODE_AT_MS, OVERHEAT_EXPLODE_AT_MS } from './AscentScene.jsx';
 import { PadClouds } from './PadClouds.jsx';
@@ -81,6 +82,7 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
       <div className="stage">
         <div className="stage__frame">
           <img className="stage__bg" src={launchPad} alt="" />
+          <img className="stage__glow" src={sunGlow} alt="" />
           <PadClouds />
           <div className="stage__mount">
             <div className="prep">

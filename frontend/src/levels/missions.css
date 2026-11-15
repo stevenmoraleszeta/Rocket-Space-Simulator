@@ -230,3 +230,10 @@ img.ms-planet { object-fit: contain; user-select: none; }
   .ms-stop:not(:last-child)::after { content: ""; display: block; height: 26px; margin-top: 14px; border-left: 4px dashed var(--ms-line); }
 }
 @media (prefers-reduced-motion: reduce) { .ms-select *, .ms-modal *, .ms-bg__layer { animation: none !important; transition: none !important; } }
+
+/* Big screens: the whole menu grows with the window (--ui-zoom from lib/uiZoom.js).
+   Heights tied to the window are divided back so they still fit exactly. */
+.ms-select { zoom: var(--ui-zoom, 1); min-height: calc(100svh / var(--ui-zoom, 1)); max-width: min(1320px, calc(100vw / var(--ui-zoom, 1))); }
+.ms-path { gap: 20px clamp(20px, 6vw, 120px); }
+.ms-modal { height: calc(100dvh / var(--ui-zoom, 1)); max-height: calc(100dvh / var(--ui-zoom, 1)); }
+.ms-card--wide { max-height: calc(100dvh / var(--ui-zoom, 1) - 24px); }
