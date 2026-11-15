@@ -270,3 +270,8 @@ img.ms-planet { object-fit: contain; user-select: none; }
 
 /* Start screen: TON 618-style black hole drawn small and scaled up as pixel art (BlackHoleBackground.jsx). */
 .ms-bg__layer.bh-canvas { width: 100%; height: 100%; object-fit: cover; object-position: center; pointer-events: none; background: #04030e; }
+
+/* Start screen: everything sits near the top so the black hole below can be seen. */
+.ms-bg:has(.bh-canvas) .ms-select { padding-top: 0.75rem; }
+.ms-bg:has(.bh-canvas) .ms-stage { justify-content: flex-start; padding-top: 0.5rem; }
+.ms-bg:has(.bh-canvas) .ms-head { gap: 0.5rem; margin-bottom: 1rem; }

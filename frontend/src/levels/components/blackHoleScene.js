@@ -5,7 +5,8 @@
 export const PIXEL_W = 320
 export const PIXEL_H = 180
 const CENTER_X = 160
-const CENTER_Y = 84
+/** Low on the screen, so the menu above it does not cover it. */
+const CENTER_Y = 126
 /** How flat the disk looks (we see it almost edge-on). */
 const TILT = 0.27
 const SHADOW_R = 13
