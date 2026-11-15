@@ -441,7 +441,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
                 return (
                   <span key={candidate.id} className={className} style={style}>
                     <span className="orbit-site__dot" />
-                    <span className="orbit-site__name">{candidate.name}</span>
+                    <span className="orbit-site__name">
+                    {candidate.name}
+                    <span className="orbit-site__country">{candidate.country}</span>
+                  </span>
                   </span>
                 )
               }
@@ -455,7 +458,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
                   onClick={() => selectSite(candidate.id)}
                 >
                   <span className="orbit-site__dot" />
-                  <span className="orbit-site__name">{candidate.name}</span>
+                  <span className="orbit-site__name">
+                    {candidate.name}
+                    <span className="orbit-site__country">{candidate.country}</span>
+                  </span>
                 </button>
               )
             })}
