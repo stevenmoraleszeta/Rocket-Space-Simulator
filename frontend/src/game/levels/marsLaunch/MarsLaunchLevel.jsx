@@ -1,7 +1,7 @@
 /**
  * MISSION 3 — LAUNCH TO MARS, after the hangar. Same mechanics as mission 1 (OrbitalLaunchLevel):
  *
- *   site     pick the launch base, from the same real cities as mission 1
+ *   site     pick the launch base on the Earth, exactly like mission 1 (same map, same buttons)
  *   aim      hold and drag from the base: the direction is the launch angle, the distance the power.
  *            The dotted line shows the real path, leaving from the base. 135.55° is the best angle;
  *            anything from 134° to 138° still meets Mars (marsLaunchRoute.js).
@@ -23,6 +23,9 @@ import { flightNotes } from '../../flightSummary.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
 import { LAUNCH_SITES } from '../orbit/launchSites.js'
+import { REAL_SATELLITES } from '../orbit/realSatellites.js'
+import { createView as createEarthView, drawOrbitScene, siteScreenPosition } from '../orbit/orbitRenderer.js'
+import { useUiScale } from '../../../lib/uiScale.js'
 import {
   ANGLE_WINDOW,
   IDEAL_TRIP_DAYS,
@@ -38,7 +41,6 @@ import {
 import { aimFromPointer, createMarsView, drawMarsScene, pathColor, toScreen } from './marsLaunchRenderer.js'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
-import './marsLaunch.css'
 
 /** The whole cruise plays in this many real seconds. */
 const FLIGHT_PLAYBACK_SECONDS = 7
@@ -142,6 +144,12 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   }))
 
   const view = useMemo(() => createMarsView(canvasSize.width, canvasSize.height), [canvasSize])
+  // Picking the base: mission 1's Earth map, in its design pixels (scaled by the UI factor).
+  const uiScale = useUiScale()
+  const earthView = useMemo(
+    () => createEarthView(canvasSize.width / uiScale, canvasSize.height / uiScale),
+    [canvasSize, uiScale],
+  )
   const trip = useMemo(() => simulateMarsTrip(aim.angleDeg, aim.power), [aim])
 
   // ------------------------------------------------------------ missing parts and supplies
@@ -208,7 +216,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
 
   // ------------------------------------------------------------ drawing loop
   useLayoutEffect(() => {
-    sceneRef.current = { step, view, trip, aim, site, images, canvasSize, finishCruise }
+    sceneRef.current = { step, view, earthView, uiScale, trip, aim, site, images, canvasSize, finishCruise }
   })
 
   useEffect(() => {
@@ -233,6 +241,25 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
       const current = sceneRef.current
       if (canvas && current) {
         const ctx = canvas.getContext('2d')
+        if (current.step === 'site') {
+          // Same Earth as mission 1: the planet, the satellites as dots, the bases on top (HTML).
+          const ratio = current.canvasSize.pixelRatio * current.uiScale
+          ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
+          drawOrbitScene(ctx, current.earthView, {
+            step: 'site',
+            orbits: [],
+            selectedOrbitId: null,
+            arrival: null,
+            satellites: REAL_SATELLITES,
+            prediction: null,
+            aimPoint: null,
+            flight: null,
+            images: current.images,
+            clockSeconds: now / 1000,
+          })
+          frameId = requestAnimationFrame(draw)
+          return
+        }
         ctx.setTransform(current.canvasSize.pixelRatio, 0, 0, current.canvasSize.pixelRatio, 0, 0)
         let flight = null
         const clock = flightRef.current
@@ -297,6 +324,8 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   }
 
   const handlePointerDown = (event) => {
+    // Picking the base: the map shows mission 1's Earth, the bases are their own buttons.
+    if (step === 'site') return
     const point = pointerPosition(event)
     const tapped = hazardAt(point)
     if (tapped) {
@@ -316,7 +345,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
       aimAt(pointerPosition(event))
       return
     }
-    event.currentTarget.style.cursor = hazardAt(pointerPosition(event)) ? 'pointer' : ''
+    event.currentTarget.style.cursor = step !== 'site' && hazardAt(pointerPosition(event)) ? 'pointer' : ''
   }
 
   const handlePointerUp = () => {
@@ -424,6 +453,32 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
 
       <div className="orbit-level__body">
         <div className="orbit-stage">
+          {/* Launch bases on the Earth, like mission 1: tap one to choose it. */}
+          {step === 'site' && (
+            <div className="orbit-sites">
+              {LAUNCH_SITES.map((candidate) => {
+                const position = siteScreenPosition(earthView, candidate)
+                const side = position.x >= earthView.centerX ? 'right' : 'left'
+                const selected = candidate.id === siteId
+                return (
+                  <button
+                    key={candidate.id}
+                    type="button"
+                    className={`orbit-site orbit-site--${side}${selected ? ' is-selected' : ''}`}
+                    style={{ left: position.x * uiScale, top: position.y * uiScale }}
+                    aria-pressed={selected}
+                    onClick={() => selectSite(candidate.id)}
+                  >
+                    <span className="orbit-site__dot" />
+                    <span className="orbit-site__name">
+                      {candidate.name}
+                      <span className="orbit-site__country">{candidate.country}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
           <canvas
             ref={canvasRef}
             className={`orbit-canvas orbit-canvas--${step === 'aim' ? 'aim' : step}`}
@@ -456,23 +511,15 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
           {step === 'site' && (
             <>
               <h2 className="orbit-panel__title">1. Pick a launch base</h2>
-              <p className="orbit-panel__hint">The rocket leaves from this city. It shows in yellow on the Earth.</p>
-              <ul className="mars-sites">
-                {LAUNCH_SITES.map((candidate) => (
-                  <li key={candidate.id}>
-                    <button
-                      type="button"
-                      className={candidate.id === siteId ? 'mars-site is-selected' : 'mars-site'}
-                      aria-pressed={candidate.id === siteId}
-                      onClick={() => selectSite(candidate.id)}
-                    >
-                      <span className="mars-site__name">{candidate.name}, {candidate.country}</span>
-                      <span className="mars-site__port">{candidate.spaceport}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              {site && <p className="orbit-panel__hint">{site.why}</p>}
+              {site ? (
+                <div className="orbit-detail">
+                  <p className="orbit-detail__name">{site.name}, {site.country}</p>
+                  <p><b>Spaceport:</b> {site.spaceport}</p>
+                  <p><b>Why here?</b> {site.why}</p>
+                </div>
+              ) : (
+                <p className="orbit-panel__hint">Tap a launch base on the Earth. The rocket leaves from that city.</p>
+              )}
               <div className="orbit-panel__actions">
                 <button type="button" className="game__back" onClick={onBackToHangar}>Hangar</button>
                 <button type="button" className="ms-btn" disabled={!site} onClick={goToAim}>Next</button>
@@ -483,7 +530,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
             <>
               <h2 className="orbit-panel__title">2. Aim at Mars from {site?.name}</h2>
               <p className="orbit-panel__hint">
-                Hold the click on the map and move: the direction from the base is your launch angle, farther away is
+                Hold the click on the map and move, starting near the yellow base: the direction is your launch angle, farther away is
                 more power. Mars moves, so aim <b>{WINDOW_TEXT}</b> (best: {TARGET_ANGLE_DEG}°). Arrow keys fine-tune
                 (Shift: faster).
               </p>
