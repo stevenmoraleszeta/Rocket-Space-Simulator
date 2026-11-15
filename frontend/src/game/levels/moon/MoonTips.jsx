@@ -15,6 +15,7 @@ import satelliteUrl from '../../../assets/images/satellites/comms_satellite.png'
 import rocketUrl from '../../../assets/images/rockets/rocket_32x32.png'
 import handUrl from '../../../assets/images/icons/hand_pointer.svg'
 import junkUrl from '../../../assets/images/icons/space_junk.svg'
+import pinUrl from '../../../assets/images/icons/pin.svg'
 
 /** Pixel sprite sized like the emoji it replaced (1em), so the tip layouts stay the same. */
 function Sprite({ src }) {
@@ -28,7 +29,7 @@ const ART = {
   pin: (
     <div className="moon-tut-art moon-tut-art--pin" aria-hidden="true">
       <span className="moon-tut-globe"><Sprite src={earthUrl} /></span>
-      <span className="moon-tut-pin">📍</span>
+      <span className="moon-tut-pin"><Sprite src={pinUrl} /></span>
     </div>
   ),
   orbit: (
@@ -95,7 +96,7 @@ const ART = {
 
 const MOON_TIPS = {
   site: [
-    { art: 'pin', title: 'Pick a base', text: 'Tap a pin, then press Accept.' },
+    { art: 'pin', title: 'Pick a base', text: 'Tap a pin, then press Next.' },
   ],
   aim: [
     { art: 'light', title: 'Pick a bright Moon', text: 'The Sun lights half the Moon. Pick a day when the side we see is bright.' },

@@ -32,6 +32,9 @@ import { flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { partCount } from '../../parts.js'
 import { goldRocketImage, isUpgraded } from '../../rendering/upgradedRocket.js'
 import { LAUNCH_SITES } from '../orbit/launchSites.js'
+import { REAL_SATELLITES } from '../orbit/realSatellites.js'
+import { createView as createEarthView, drawOrbitScene, siteScreenPosition } from '../orbit/orbitRenderer.js'
+import { SitePin } from '../orbit/SitePin.jsx'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
 import { formatLaunchDate, MOON_SYNODIC_MONTH_DAYS } from './moonLaunchPlanning.js'
@@ -69,7 +72,6 @@ import { MoonLanding } from './MoonLanding.jsx'
 import { tipsTurnedOff } from './moonTipsStorage.js'
 import { FunFactToast } from '../../FunFactToast.jsx'
 import { choiceBlockedReason, pickOrbitEvents, resolveOrbitEvent } from './moonOrbitEvents.js'
-import earthMapUrl from '../../../assets/images/planets/earth.svg'
 import handPointerUrl from '../../../assets/images/icons/hand_pointer.svg'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
@@ -213,70 +215,6 @@ function damageFrom(hits, equipped) {
   return total
 }
 
-/** Pin with a little rocket: marks a launch base on the big map. */
-function BasePin() {
-  return (
-    <svg viewBox="0 0 24 32" className="moon-pin__svg" aria-hidden="true" shapeRendering="crispEdges">
-      <path d="M12 31 L4 19 Q1 15 1 11 A11 11 0 0 1 23 11 Q23 15 20 19 Z" className="moon-pin__shape" />
-      <circle cx="12" cy="11" r="7.5" className="moon-pin__hole" />
-      <g className="moon-pin__rocket">
-        <rect x="10.5" y="5" width="3" height="9" fill="#f4f6ff" />
-        <rect x="11" y="4" width="2" height="1" fill="#f4f6ff" />
-        <rect x="11" y="7" width="2" height="2" fill="#4fc3ff" />
-        <rect x="9" y="12" width="1.5" height="3" fill="#ff5d73" />
-        <rect x="13.5" y="12" width="1.5" height="3" fill="#ff5d73" />
-        <rect x="11" y="14" width="2" height="2" fill="#ffb347" className="moon-pin__flame" />
-      </g>
-    </svg>
-  )
-}
-
-/** Big polar Earth: the same map as mission 1, North Pole in the middle. */
-function BaseMap({ siteId, onSelect, leaving }) {
-  return (
-    <div className={`moon-base-map${leaving ? ' is-leaving' : ''}`}>
-      <div className="moon-base-map__globe">
-        <span className="moon-base-map__halo" aria-hidden="true" />
-        <svg viewBox="16 16 224 224" className="moon-base-map__earth" role="img" aria-label="Earth seen from above the North Pole">
-          <defs>
-            <clipPath id="moon-base-map-clip"><circle cx="128" cy="128" r="112" /></clipPath>
-          </defs>
-          <circle cx="128" cy="128" r="114" fill="rgba(79, 195, 255, 0.3)" />
-          <image href={earthMapUrl} x="0" y="0" width="256" height="256" clipPath="url(#moon-base-map-clip)" style={{ imageRendering: 'pixelated' }} />
-        </svg>
-        <div className="orbit-sites">
-          {LAUNCH_SITES.map((candidate, order) => {
-            // Same projection as mission 1: radius grows from the North Pole (center) to the South Pole (rim).
-            const fraction = (90 - candidate.latitudeDeg) / 180
-            const angle = candidate.longitudeDeg * DEG
-            const left = 50 + 50 * fraction * Math.cos(angle)
-            const top = 50 - 50 * fraction * Math.sin(angle)
-            const side = left >= 50 ? 'right' : 'left'
-            const selected = candidate.id === siteId
-            return (
-              <button
-                key={candidate.id}
-                type="button"
-                className={`moon-pin moon-pin--${side}${selected ? ' is-selected' : ''}`}
-                style={{ left: `${left}%`, top: `${top}%`, '--order': order }}
-                aria-pressed={selected}
-                aria-label={`${candidate.name}, ${candidate.country}`}
-                onClick={() => onSelect(candidate.id)}
-              >
-                <span className="moon-pin__marker"><BasePin /></span>
-                <span className="moon-pin__label">
-                  {candidate.name}
-                  <small>{candidate.country}</small>
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 /** One sound for each lunar orbit event when it starts. */
 const EVENT_SOUNDS = {
   shadow: SYNTH.static,
@@ -329,7 +267,6 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   const [landing, setLanding] = useState(null) // landing result, once the lander is down
 
   const site = LAUNCH_SITES.find((candidate) => candidate.id === siteId) ?? null
-  const showCanvas = step !== 'site'
   const [openedAt] = useState(() => new Date())
   // The calendar starts at the next whole hour after the level opens.
   const anchorMs = Math.ceil(openedAt.getTime() / HOUR_MS) * HOUR_MS
@@ -403,6 +340,11 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     () => createMoonView(canvasSize.width / uiScale, canvasSize.height / uiScale),
     [canvasSize, uiScale],
   )
+  // Picking the base: mission 1's Earth map, like the Mars mission (orbitRenderer.js).
+  const earthView = useMemo(
+    () => createEarthView(canvasSize.width / uiScale, canvasSize.height / uiScale),
+    [canvasSize, uiScale],
+  )
 
   // ---------------------------------------------------------------- canvas
   const canvasRef = useRef(null)
@@ -425,7 +367,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   const sceneRef = useRef(null)
   useLayoutEffect(() => {
     sceneRef.current = {
-      step, view, images, uiScale, canvasSize,
+      step, view, earthView, images, uiScale, canvasSize,
       launchDate: date, earthTurn, sunLongitude: look.sunLongitude, siteAngle, aim, moonTable,
       prediction, hits, hitIds, traffic: MOON_TRAFFIC, captureKm, hoverId, returnPrediction,
       arrivalSense: prediction && arrived ? arrivalSense(prediction.samples, moonTable) : 1,
@@ -445,7 +387,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     })
     observer.observe(canvas)
     return () => observer.disconnect()
-  }, [showCanvas])
+  }, [])
 
   useEffect(() => {
     let frameId = 0
@@ -455,7 +397,24 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     const draw = (now) => {
       const canvas = canvasRef.current
       const current = sceneRef.current
-      if (canvas && current && current.step !== 'site') {
+      if (canvas && current && current.step === 'site') {
+        // Same Earth as mission 1 and Mars: the planet, the satellites as dots, the bases on top (HTML).
+        const ctx = canvas.getContext('2d')
+        const ratio = current.canvasSize.pixelRatio * current.uiScale
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
+        drawOrbitScene(ctx, current.earthView, {
+          step: 'site',
+          orbits: [],
+          selectedOrbitId: null,
+          arrival: null,
+          satellites: REAL_SATELLITES,
+          prediction: null,
+          aimPoint: null,
+          flight: null,
+          images: current.images,
+          clockSeconds: now / 1000,
+        })
+      } else if (canvas && current) {
         const ctx = canvas.getContext('2d')
         const ratio = current.canvasSize.pixelRatio * current.uiScale
         ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
@@ -987,19 +946,43 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
               </span>
             </div>
           )}
-          {step === 'site' ? (
-            <BaseMap siteId={siteId} onSelect={selectSite} leaving={leavingMap} />
-          ) : (
+          <canvas
+            ref={canvasRef}
+            className={`orbit-canvas orbit-canvas--${step}${leavingMap ? ' is-leaving' : ''}`}
+            aria-label={step === 'site' ? 'Earth seen from above the North Pole, with the launch bases' : 'Earth and Moon in space, with satellites, space junk and the predicted path'}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+          />
+          {/* Launch bases on the Earth, like mission 1 and Mars: tap one to choose it. */}
+          {step === 'site' && (
+            <div className={`orbit-sites${leavingMap ? ' is-leaving' : ''}`}>
+              {LAUNCH_SITES.map((candidate) => {
+                const position = siteScreenPosition(earthView, candidate)
+                const side = position.x >= earthView.centerX ? 'right' : 'left'
+                const selected = candidate.id === siteId
+                return (
+                  <button
+                    key={candidate.id}
+                    type="button"
+                    className={`orbit-site orbit-site--${side}${selected ? ' is-selected' : ''}`}
+                    style={{ left: position.x * uiScale, top: position.y * uiScale }}
+                    aria-pressed={selected}
+                    onClick={() => selectSite(candidate.id)}
+                  >
+                    <SitePin selected={selected} />
+                    <span className="orbit-site__name">
+                      {candidate.name}
+                      <span className="orbit-site__country">{candidate.country}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {step !== 'site' && (
             <>
-              <canvas
-                ref={canvasRef}
-                className={`orbit-canvas orbit-canvas--${step}`}
-                aria-label="Earth and Moon in space, with satellites, space junk and the predicted path"
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
-              />
               <MoonPhaseCard
                 look={arrivalLook}
                 rating={arrivalRating}
@@ -1036,22 +1019,18 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
           {step === 'site' && (
             <>
               <h2 className="orbit-panel__title">1. Pick a launch base</h2>
-              <p className="orbit-panel__hint">
-                {sayTo(playerName, 'This is Earth seen from above the North Pole. Each base sits where it really is. Tap one.')}
-              </p>
               {site ? (
                 <div className="orbit-detail">
                   <p className="orbit-detail__name">{site.name}, {site.country}</p>
                   <p><b>Spaceport:</b> {site.spaceport}</p>
-                  <p><b>Where:</b> {Math.abs(site.latitudeDeg).toFixed(1)}° {site.latitudeDeg >= 0 ? 'N' : 'S'}, {Math.abs(site.longitudeDeg).toFixed(1)}° {site.longitudeDeg >= 0 ? 'E' : 'W'}</p>
                   <p><b>Why here?</b> {site.why}</p>
                 </div>
               ) : (
-                <p className="orbit-detail">{sayTo(playerName, 'Pick any base. Then you choose the day and aim at the Moon.')}</p>
+                <p className="orbit-panel__hint">{sayTo(playerName, 'Tap a launch base on the Earth. The rocket leaves from that city.')}</p>
               )}
               <div className="orbit-panel__actions">
                 <button type="button" className="game__back" onClick={onBackToHangar}>Hangar</button>
-                <button type="button" className="ms-btn" disabled={!site} onClick={acceptSite}>Accept</button>
+                <button type="button" className="ms-btn" disabled={!site} onClick={acceptSite}>Next</button>
               </div>
             </>
           )}

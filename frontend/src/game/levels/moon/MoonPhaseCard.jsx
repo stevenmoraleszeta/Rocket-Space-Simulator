@@ -1,5 +1,6 @@
 import earthUrl from '../../../assets/images/planets/earth.svg'
 import sunUrl from '../../../assets/images/planets/sun.svg'
+import pinUrl from '../../../assets/images/icons/pin.svg'
 import { PixelMoon } from './PixelMoon.jsx'
 
 /**
@@ -97,7 +98,7 @@ export function MoonPhaseCard({ look, dateLabel, title = 'Moon when you arrive',
           <span aria-hidden="true">{'☀'.repeat(rating.level)}</span> {rating.label} for the cameras
         </p>
       )}
-      {place && <p className="moon-phase-card__place">📍 {place}</p>}
+      {place && <p className="moon-phase-card__place"><img className="moon-phase-card__pin" src={pinUrl} alt="" /> {place}</p>}
     </figure>
   )
 }

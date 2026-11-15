@@ -14,6 +14,7 @@ import sunGlow from '../assets/images/backgrounds/sun_glow.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
 import { ASCENT_MS, AscentScene, FALL_BACK_EXPLODE_AT_MS, OVERHEAT_EXPLODE_AT_MS } from './AscentScene.jsx';
 import { PadClouds } from './PadClouds.jsx';
+import { PadFlag } from './PadFlag.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
 import { Rocket } from './Rocket.jsx';
@@ -98,6 +99,8 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
           <img className="stage__bg" src={launchPad} alt="" />
           <img className="stage__glow" src={sunGlow} alt="" />
           <PadClouds />
+          {/* The flag on its pole, same place as in the hangar (PadFlag.jsx). */}
+          <PadFlag />
           <div className="stage__mount">
             <div className="prep">
               <LaunchTower launching={phase !== 'scrubbed' && phase !== 'landedBack'} />

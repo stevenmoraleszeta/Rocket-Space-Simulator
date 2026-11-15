@@ -48,6 +48,7 @@ import {
 } from './orbitTargets.js'
 import { REAL_SATELLITES, SATELLITE_KIND_COLORS } from './realSatellites.js'
 import { useUiScale } from '../../../lib/uiScale.js'
+import { SitePin } from './SitePin.jsx'
 import '../../game.css'
 import './orbitalLaunch.css'
 
@@ -652,7 +653,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
               if (step !== 'site') {
                 return (
                   <span key={candidate.id} className={className} style={style}>
-                    <span className="orbit-site__dot" />
+                    <SitePin selected={selected} />
                     <span className="orbit-site__name">
                     {candidate.name}
                     <span className="orbit-site__country">{candidate.country}</span>
@@ -669,7 +670,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
                   aria-pressed={selected}
                   onClick={() => selectSite(candidate.id)}
                 >
-                  <span className="orbit-site__dot" />
+                  <SitePin selected={selected} />
                   <span className="orbit-site__name">
                     {candidate.name}
                     <span className="orbit-site__country">{candidate.country}</span>

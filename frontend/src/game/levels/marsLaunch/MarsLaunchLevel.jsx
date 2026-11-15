@@ -40,6 +40,7 @@ import {
   simulateMarsTrip,
 } from './marsLaunchRoute.js'
 import { aimFromPointer, createMarsView, drawMarsScene, pathColor, toScreen } from './marsLaunchRenderer.js'
+import { SitePin } from '../orbit/SitePin.jsx'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
 
@@ -479,7 +480,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
                     aria-pressed={selected}
                     onClick={() => selectSite(candidate.id)}
                   >
-                    <span className="orbit-site__dot" />
+                    <SitePin selected={selected} />
                     <span className="orbit-site__name">
                       {candidate.name}
                       <span className="orbit-site__country">{candidate.country}</span>
