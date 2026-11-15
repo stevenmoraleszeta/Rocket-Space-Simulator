@@ -104,8 +104,8 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
 }
 
 .game__back {
@@ -114,10 +114,10 @@
   z-index: 0;
   justify-self: start;
   font-family: var(--ms-font-pixel);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.6;
-  min-height: 48px;
-  padding: 12px 16px 16px;
+  min-height: 3rem;
+  padding: 0.75rem 1rem 1rem;
   border-radius: 0;
   border: 0;
   background: transparent;
@@ -179,7 +179,7 @@
 .game__num {
   font-family: var(--ms-font-pixel);
   color: var(--ms-accent);
-  font-size: 10px;
+  font-size: 0.625rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -193,10 +193,10 @@
 }
 
 .game__mission h1 {
-  margin: 8px 0 0;
+  margin: 0.5rem 0 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
-  font-size: clamp(14px, 2vw, 22px);
+  font-size: clamp(0.875rem, 2vw, 1.375rem);
   line-height: 1.4;
   text-shadow: var(--px) var(--px) 0 var(--px-ink);
 }
@@ -204,7 +204,7 @@
 .game__place {
   justify-self: end;
   font-family: var(--ms-font-pixel);
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--ms-muted);
 }
 
@@ -217,12 +217,12 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: 0.5rem;
   flex: 1;
   min-height: 0;
   box-sizing: border-box;
   margin: 0;
-  padding: 4px 16px 12px;
+  padding: 0.25rem 1rem 0.75rem;
   justify-content: safe center;
   overflow: auto;
   pointer-events: auto;
@@ -231,11 +231,11 @@
 .pad-story {
   position: relative;
   z-index: 3;
-  width: min(480px, 100%);
+  width: min(30rem, 100%);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 0.5rem;
   pointer-events: none;
 }
 
@@ -248,11 +248,11 @@
   isolation: isolate;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   width: auto;
-  min-height: 52px;
+  min-height: 3.25rem;
   flex: none;
-  padding: 0 14px var(--px) 10px;
+  padding: 0 0.875rem var(--px) 0.625rem;
   border: 0;
   background: transparent;
   color: var(--ms-yellow);
@@ -312,8 +312,8 @@
 .bulb__icon {
   position: relative;
   z-index: 1;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   flex: none;
   display: block;
 }
@@ -334,14 +334,14 @@
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  padding: 24px;
+  padding: 1.5rem;
   background: rgba(5, 8, 25, 0.78);
 }
 
 .brief-shell {
   display: flex;
   flex-direction: column;
-  width: min(860px, 100%);
+  width: min(53.75rem, 100%);
   min-height: 0;
   max-height: 100%;
   filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink));
@@ -356,7 +356,7 @@
   min-height: 0;
   max-height: 100%;
   margin: 0;
-  padding: 22px 26px 24px;
+  padding: 1.375rem 1.625rem 1.5rem;
   box-sizing: border-box;
   overflow: hidden;
   background: rgba(11, 16, 48, 0.97);
@@ -370,14 +370,14 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 1rem;
   flex: none;
 }
 
 .brief__kicker {
   margin: 0;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 0.625rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ms-accent);
@@ -385,10 +385,10 @@
 
 .brief__title,
 .brief__hints h3 {
-  margin: 8px 0 0;
+  margin: 0.5rem 0 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.4;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -397,7 +397,7 @@
 
 .brief__hints h3 {
   margin: 0;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .brief__close {
@@ -405,14 +405,14 @@
   isolation: isolate;
   z-index: 0;
   flex: none;
-  min-height: 36px;
+  min-height: 2.25rem;
   margin: 0;
-  padding: 8px 12px 12px;
+  padding: 0.5rem 0.75rem 0.75rem;
   border: 0;
   background: transparent;
   color: var(--ms-text);
   font-family: var(--ms-font-pixel);
-  font-size: 9px;
+  font-size: 0.5625rem;
   line-height: 1.4;
   cursor: pointer;
 }
@@ -454,27 +454,27 @@
 
 .brief__intro {
   flex: none;
-  margin: 14px 0 0;
-  font-size: 22px;
+  margin: 0.875rem 0 0;
+  font-size: 1.375rem;
   line-height: 1.35;
   color: #d7f4ff;
 }
 
 .brief__body {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.85fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(13.75rem, 0.85fr);
+  gap: 1.125rem;
   align-items: stretch;
   flex: 1 1 auto;
   min-height: 0;
-  margin-top: 16px;
+  margin-top: 1rem;
   overflow: auto;
   scrollbar-width: thin;
   scrollbar-color: #5c6894 transparent;
 }
 
 .brief__body::-webkit-scrollbar {
-  width: 8px;
+  width: 0.5rem;
 }
 
 .brief__body::-webkit-scrollbar-thumb {
@@ -484,7 +484,7 @@
 .brief__story {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
   min-width: 0;
 }
 
@@ -494,9 +494,9 @@
 
 .brief__story p {
   margin: 0;
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem;
   background: rgba(255, 255, 255, 0.04);
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1.45;
 }
 
@@ -506,7 +506,7 @@
   display: flex;
   flex-direction: column;
   margin: 0;
-  padding: 14px 16px 16px;
+  padding: 0.875rem 1rem 1rem;
   min-width: 0;
 }
 
@@ -523,23 +523,23 @@
 }
 
 .brief__hints ol {
-  margin: 12px 0 0;
+  margin: 0.75rem 0 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
   counter-reset: clue;
 }
 
 .brief__hints li {
   counter-increment: clue;
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.625rem;
   align-items: start;
   margin: 0;
-  font-size: 17px;
+  font-size: 1.0625rem;
   line-height: 1.4;
 }
 
@@ -547,12 +547,12 @@
   content: counter(clue);
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   background: var(--ms-yellow);
   color: #2a2000;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1;
 }
 
@@ -562,13 +562,13 @@
   z-index: 0;
   pointer-events: auto;
   width: 100%;
-  min-height: 40px;
-  padding: 8px 12px 12px;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem 0.75rem;
   border: 0;
   background: transparent;
   color: #e7f3ee;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1.6;
   cursor: pointer;
 }
@@ -629,9 +629,9 @@
   position: relative;
   isolation: isolate;
   pointer-events: auto;
-  width: min(480px, 100%);
+  width: min(30rem, 100%);
   box-sizing: border-box;
-  padding: 10px 12px 12px;
+  padding: 0.625rem 0.75rem 0.75rem;
   border-radius: 0;
   border: 0;
   background: transparent;
@@ -653,24 +653,24 @@
   margin: 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
-  font-size: 8px;
+  font-size: 0.5rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #9eb0d4;
 }
 
 .meters__hint {
-  margin: 6px 0 0;
+  margin: 0.375rem 0 0;
   color: #9aa3c4;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.3;
 }
 
 .meters__grid {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
 }
 
 .meter__top {
@@ -681,14 +681,14 @@
   --meter: #6eae90;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 /* Pixel icon on the left so younger players can tell the meters apart. */
 .meter__icon {
   flex: none;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   image-rendering: pixelated;
 }
 
@@ -696,9 +696,9 @@
   flex: 1;
   min-width: 0;
   display: grid;
-  grid-template-columns: 68px 1fr auto;
+  grid-template-columns: 4.25rem 1fr auto;
   align-items: center;
-  column-gap: 8px;
+  column-gap: 0.5rem;
 }
 
 .meter.is-warn,
@@ -714,7 +714,7 @@
   grid-column: 1;
   grid-row: 1;
   font-family: var(--ms-font-pixel);
-  font-size: 8px;
+  font-size: 0.5rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #9aa3c4;
@@ -724,7 +724,7 @@
   grid-column: 3;
   grid-row: 1;
   font-family: var(--ms-font-pixel);
-  font-size: 8px;
+  font-size: 0.5rem;
   line-height: 1.4;
   text-align: right;
   white-space: nowrap;
@@ -746,10 +746,10 @@
   grid-row: 1;
   position: relative;
   box-sizing: border-box;
-  height: 16px;
+  height: 1rem;
   margin: 0;
   border-radius: 0;
-  border: 4px solid #3a4468;
+  border: 0.25rem solid #3a4468;
   background: var(--px-ink);
   overflow: hidden;
 }
@@ -766,8 +766,8 @@
   background-color: transparent;
   background-image: repeating-linear-gradient(
     90deg,
-    var(--cell, #3a4468) 0 4px,
-    transparent 4px 8px
+    var(--cell, #3a4468) 0 0.25rem,
+    transparent 0.25rem 0.5rem
   );
 }
 
@@ -778,11 +778,11 @@
 }
 
 .rocket {
-  --scale: 7;
+  --scale: calc(7 * var(--ui, 1));
   position: relative;
   width: calc(32px * var(--scale));
   height: calc(32px * var(--scale));
-  filter: drop-shadow(0 12px 0 rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 0.75rem 0 rgba(0, 0, 0, 0.35));
 }
 
 /* Preparation shows a larger rocket with the payload bay cut open. The scale is kept small
@@ -790,7 +790,7 @@
    on screen; shorter screens step it down further (see the max-height queries below). */
 .rocket--open,
 .prep {
-  --scale: 20;
+  --scale: calc(20 * var(--ui, 1));
 }
 
 .prep {
@@ -987,12 +987,12 @@
   top: calc(100% * 4 / 32);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
+  gap: 0.375rem;
+  padding: 0.625rem 0.75rem;
   background: #fff;
   color: #04213a;
-  border: 3px solid #14182a;
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  border: 0.1875rem solid #14182a;
+  box-shadow: 0.25rem 0.25rem 0 rgba(0, 0, 0, 0.35);
   white-space: nowrap;
 }
 
@@ -1000,34 +1000,34 @@
 .rocket__bubble::after {
   content: '';
   position: absolute;
-  top: 18px;
+  top: 1.125rem;
   border-style: solid;
   border-color: transparent;
 }
 
 /* Tail: dark outline triangle with a white one on top */
 .rocket__bubble::before {
-  left: -18px;
-  border-width: 9px 15px 9px 0;
+  left: -1.125rem;
+  border-width: 0.5625rem 0.9375rem 0.5625rem 0;
   border-right-color: #14182a;
 }
 
 .rocket__bubble::after {
-  left: -12px;
-  top: 21px;
-  border-width: 6px 10px 6px 0;
+  left: -0.75rem;
+  top: 1.3125rem;
+  border-width: 0.375rem 0.625rem 0.375rem 0;
   border-right-color: #fff;
 }
 
 .rocket__cargo-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .rocket__cargo {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   object-fit: contain;
   image-rendering: pixelated;
 }
@@ -1046,17 +1046,17 @@
 
 .rocket__cargo-name {
   font-family: var(--ms-font-pixel);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .rocket__qty {
   margin-left: auto;
   font-family: var(--ms-font-pixel);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.4;
   color: #04213a;
   background: var(--ms-yellow);
-  padding: 1px 4px;
+  padding: 0.0625rem 0.25rem;
 }
 
 /* Launch: the rocket rises from below the screen to its spot, then hovers. */
@@ -1073,7 +1073,7 @@
 
 @keyframes hover {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-0.5rem); }
 }
 
 /* Liftoff from the pad: the engine lights and shakes, then the rocket climbs
@@ -1103,7 +1103,7 @@
 
 .bay[inert] {
   opacity: 0;
-  transform: translateX(40px);
+  transform: translateX(2.5rem);
 }
 
 /* Sprite-sheet loop: steps through --frames cells of one 32px row, from cell --first. */
@@ -1254,11 +1254,11 @@
 }
 
 .dock {
-  width: min(480px, 100%);
+  width: min(30rem, 100%);
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 8px;
+  gap: 0.5rem;
   pointer-events: auto;
 }
 
@@ -1268,7 +1268,7 @@
   padding: 0;
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 0.625rem;
   width: 100%;
 }
 
@@ -1325,8 +1325,8 @@
 .part-btn {
   display: grid;
   place-items: center;
-  width: 68px;
-  height: 72px;
+  width: 4.25rem;
+  height: 4.5rem;
   padding: 0 0 var(--px);
 }
 
@@ -1361,14 +1361,14 @@
 .part-btn__qty {
   position: absolute;
   z-index: 2;
-  right: 2px;
-  bottom: 8px;
-  min-width: 14px;
-  padding: 0 3px;
+  right: 0.125rem;
+  bottom: 0.5rem;
+  min-width: 0.875rem;
+  padding: 0 0.1875rem;
   background: #c6b36a;
   color: #241c08;
   font-family: var(--ms-font-pixel);
-  font-size: 9px;
+  font-size: 0.5625rem;
   line-height: 1.4;
   text-align: center;
 }
@@ -1377,7 +1377,7 @@
   position: relative;
   isolation: isolate;
   box-sizing: border-box;
-  padding: 10px 12px 12px;
+  padding: 0.625rem 0.75rem 0.75rem;
 }
 
 .part-dialog::before {
@@ -1396,49 +1396,49 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .part-dialog__title {
   margin: 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1.5;
 }
 
 .part-dialog__close {
   flex: none;
-  min-height: 28px;
-  padding: 4px 8px 8px;
-  font-size: 8px;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.5rem 0.5rem;
+  font-size: 0.5rem;
   line-height: 1.4;
 }
 
 .part-dialog__blurb {
-  margin: 8px 0 0;
+  margin: 0.5rem 0 0;
   color: #b7bedd;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.3;
 }
 
 .part-dialog .part__tags {
-  margin-top: 6px;
+  margin-top: 0.375rem;
 }
 
 .part-dialog__stepper {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 0.625rem;
+  margin-top: 0.625rem;
 }
 
 .step-btn {
-  width: 36px;
-  height: 40px;
+  width: 2.25rem;
+  height: 2.5rem;
   padding: 0 0 var(--px);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1;
 }
 
@@ -1479,16 +1479,16 @@
 .part-dialog__count {
   min-width: 3.2em;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 0.625rem;
   text-align: center;
 }
 
 .part__icon {
-  --scale: 1.6;
+  --scale: calc(1.6 * var(--ui, 1));
   position: relative;
   z-index: 1;
-  width: 52px;
-  height: 52px;
+  width: 3.25rem;
+  height: 3.25rem;
   flex: none;
   overflow: hidden;
   background: transparent;
@@ -1497,8 +1497,8 @@
 .part__photo {
   position: relative;
   z-index: 1;
-  width: 48px;
-  height: 48px;
+  width: 3rem;
+  height: 3rem;
   padding: 0;
   box-sizing: border-box;
   object-fit: contain;
@@ -1512,39 +1512,39 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
   min-width: 0;
   flex: 1;
 }
 
 .part__name {
   font-family: var(--ms-font-pixel);
-  font-size: 11px;
+  font-size: 0.6875rem;
   line-height: 1.4;
 }
 
 .part__blurb {
   color: var(--ms-muted);
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .part__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 0;
-  margin-top: 2px;
+  gap: 0.125rem 0;
+  margin-top: 0.125rem;
 }
 
 .part__tag {
   font-family: var(--ms-font);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.2;
   color: #b7bedd;
 }
 
 .part__tag + .part__tag::before {
   content: "·";
-  margin: 0 6px;
+  margin: 0 0.375rem;
   color: var(--ms-line);
 }
 
@@ -1559,8 +1559,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  padding: 12px 16px 32px;
+  gap: 1.125rem;
+  padding: 0.75rem 1rem 2rem;
 }
 
 /* The rocket keeps its full size and rises in front of the supplies panel. */
@@ -1577,7 +1577,7 @@
     grid-template-rows: auto 1fr auto;
     align-items: center;
     justify-items: center;
-    column-gap: 48px;
+    column-gap: 3rem;
   }
 
   .flight__status {
@@ -1616,7 +1616,7 @@
   }
 
   .flight .rocket {
-    --scale: 4;
+    --scale: calc(4 * var(--ui, 1));
   }
 }
 
@@ -1658,7 +1658,7 @@
 .flight__status {
   margin: 0;
   font-family: var(--ms-font-pixel);
-  font-size: clamp(12px, 2vw, 16px);
+  font-size: clamp(0.75rem, 2vw, 1rem);
   line-height: 1.6;
   text-align: center;
   text-shadow: var(--px) var(--px) 0 var(--px-ink);
@@ -1688,15 +1688,15 @@
   .meters,
   .pad-story,
   .parts--wrap {
-    width: min(320px, 100%);
+    width: min(20rem, 100%);
   }
 
   .brief-modal {
-    padding: 12px;
+    padding: 0.75rem;
   }
 
   .brief {
-    padding: 16px 16px 18px;
+    padding: 1rem 1rem 1.125rem;
   }
 
   .brief__body {
@@ -1704,44 +1704,23 @@
   }
 
   .brief__intro {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 
   .rocket {
-    --scale: 5;
+    --scale: calc(5 * var(--ui, 1));
   }
 
   .rocket--open,
   .prep {
-    --scale: 11;
-  }
-}
-
-@media (max-height: 1100px) and (min-width: 721px) {
-  .rocket--open,
-  .prep {
-    --scale: 16;
+    --scale: calc(11 * var(--ui, 1));
   }
 }
 
 @media (max-height: 900px) and (min-width: 721px) {
   .rocket--open,
   .prep {
-    --scale: 14;
-  }
-}
-
-@media (max-height: 760px) and (min-width: 721px) {
-  .rocket--open,
-  .prep {
-    --scale: 12;
-  }
-}
-
-@media (max-height: 620px) and (min-width: 721px) {
-  .rocket--open,
-  .prep {
-    --scale: 10;
+    --scale: calc(16 * var(--ui, 1));
   }
 }
 

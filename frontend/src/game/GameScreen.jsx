@@ -484,7 +484,7 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose }) {
 }
 
 /** Budget, mass, energy, and the supplies the mission asks for. */
-function Meters({ meters }) {
+export function Meters({ meters }) {
   return (
     <section className="meters" aria-label="Rocket supplies">
       <h2 className="meters__title">Supplies</h2>
@@ -496,9 +496,12 @@ function Meters({ meters }) {
             {METER_ICONS[meter.id] && (
               <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />
             )}
+            {!METER_ICONS[meter.id] && meter.icon && (
+              <span className="meter__icon meter__icon--emoji" aria-hidden="true">{meter.icon}</span>
+            )}
             <div className="meter__body">
               <div className="meter__top">
-                <span className="meter__label">{meter.label}</span>
+                <span className="meter__label" title={meter.tooltip}>{meter.label}</span>
                 <span className="meter__value">{meter.text}</span>
               </div>
               <div
