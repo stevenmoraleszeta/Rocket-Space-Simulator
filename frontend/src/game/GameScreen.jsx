@@ -2,7 +2,7 @@
  * After a mission is launched the player fits the rocket on Earth,
  * then presses Launch and the flight begins.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SpaceBackground } from '../levels';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
@@ -11,7 +11,6 @@ import { METER_ICONS } from './meterIcons.js';
 import { PadClouds } from './PadClouds.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { ASCENT_MS, AscentScene } from './AscentScene.jsx';
-import { OrbitArrival } from './OrbitArrival.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../audio';
@@ -29,14 +28,12 @@ const TIMED_PHASES = {
 /**
  * Optional props used by MissionFlow:
  *   onLaunch(equipped)  when given, Launch hands the built rocket to the next stage
- *                       instead of playing the liftoff below
+ *                       (the orbit trajectory plays the liftoff itself, see LaunchSequence.jsx)
  *   initialEquipped     loadout to start with (keeps the parts when coming back to the hangar)
- *   orbitSummary        when given, plays the launch cinematic right away (pad liftoff → ascent)
- *                       and ends on the rocket orbiting the Earth with the flight summary
  */
-export function GameScreen({ mission, onExit, onLaunch, initialEquipped, orbitSummary }) {
-  const [phase, setPhase] = useState(orbitSummary ? 'launching' : 'assemble');
-  const [storyOpen, setStoryOpen] = useState(!orbitSummary);
+export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
+  const [phase, setPhase] = useState('assemble');
+  const [storyOpen, setStoryOpen] = useState(true);
   const [openPart, setOpenPart] = useState(null);
   const [equipped, setEquipped] = useState(initialEquipped ?? EMPTY_LOADOUT);
 
@@ -56,19 +53,9 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, orbitSu
     const step = TIMED_PHASES[phase];
     if (!step) return undefined;
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const next = phase === 'ascent' && orbitSummary ? 'orbit' : step.next;
-    const timer = setTimeout(() => setPhase(next), reduceMotion ? 500 : step.ms);
+    const timer = setTimeout(() => setPhase(step.next), reduceMotion ? 500 : step.ms);
     return () => clearTimeout(timer);
-  }, [phase, orbitSummary]);
-
-  // The cinematic starts already launching, so the liftoff sound plays on arrival (once,
-  // even when React runs effects twice in development)
-  const liftoffPlayedRef = useRef(false);
-  useEffect(() => {
-    if (!orbitSummary || liftoffPlayedRef.current) return;
-    liftoffPlayedRef.current = true;
-    playSfx(SFX.liftoff);
-  }, [orbitSummary]);
+  }, [phase]);
 
   function startLaunch() {
     if (onLaunch) {
@@ -84,7 +71,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, orbitSu
   const launching = phase === 'launching';
 
   useSoundtrack(
-    phase === 'flight' || phase === 'orbit'
+    phase === 'flight'
       ? { music: MUSIC.flight, ambient: AMBIENCE.space }
       : phase === 'ascent'
         ? { music: MUSIC.flight }
@@ -105,8 +92,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, orbitSu
     });
   }
 
-  const { meters, problems } = rocketStatus(equipped, mission);
-  const ready = problems.length === 0;
+  const { meters } = rocketStatus(equipped, mission);
 
   const hud = (
     <header className="game__hud">
@@ -120,10 +106,6 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, orbitSu
       <div className="game__place">{mission.place}</div>
     </header>
   );
-
-  if (phase === 'orbit' && orbitSummary) {
-    return <OrbitArrival mission={mission} equipped={equipped} summary={orbitSummary} hud={hud} onExit={onExit} />;
-  }
 
   if (phase === 'ascent') {
     return <AscentScene equipped={equipped} hud={hud} />;
@@ -174,7 +156,6 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, orbitSu
           >
             <BulbIcon />
           </button>
-          {storyOpen && <Briefing mission={mission} />}
         </div>
         <Meters meters={meters} />
         <div className="dock">
@@ -214,41 +195,68 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, orbitSu
           <button
             type="button"
             className="bay__launch"
-            disabled={!ready}
-            aria-label={ready ? 'Launch' : `Launch. ${problems.join('. ')}`}
+            aria-label="Launch"
             onClick={startLaunch}
           >
             Launch
           </button>
         </div>
       </div>
+      {storyOpen && (
+        <Briefing mission={mission} onClose={() => setStoryOpen(false)} />
+      )}
     </div>
   );
 }
 
-/** Story and clues, opened over the rocket with the light bulb. */
-function Briefing({ mission }) {
+/** Story and clues. Opens from the light bulb and stays inside the screen. */
+function Briefing({ mission, onClose }) {
+  const hints = mission.hints ?? [];
+
   return (
-    <section className="brief" role="dialog" aria-labelledby="brief-title">
-      {/* The frame keeps its background still; only this inner part scrolls */}
-      <div className="brief__scroll">
-      <h2 id="brief-title" className="brief__title">Story</h2>
-      {mission.intro && <p className="brief__intro">{mission.intro}</p>}
-      <div className="brief__story">
-        {(mission.story ?? []).map((line) => (
-          <p key={line}>{line}</p>
-        ))}
+    <div
+      className="brief-modal"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="brief-shell">
+        <section
+          className="brief"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="brief-title"
+        >
+          <header className="brief__head">
+            <div className="brief__heading">
+              <p className="brief__kicker">Mission {mission.number} · {mission.place}</p>
+              <h2 id="brief-title" className="brief__title">Story</h2>
+            </div>
+            <button type="button" className="brief__close" onClick={onClose}>
+              Close
+            </button>
+          </header>
+          {mission.intro && <p className="brief__intro">{mission.intro}</p>}
+          <div className="brief__body">
+            <div className="brief__story">
+              {(mission.story ?? []).map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+            </div>
+            {hints.length > 0 && (
+              <aside className="brief__hints">
+                <h3>Clues</h3>
+                <ol>
+                  {hints.map((hint) => (
+                    <li key={hint}>{hint}</li>
+                  ))}
+                </ol>
+              </aside>
+            )}
+          </div>
+        </section>
       </div>
-      <div className="brief__hints">
-        <h3>Clues</h3>
-        <ol>
-          {(mission.hints ?? []).map((hint) => (
-            <li key={hint}>{hint}</li>
-          ))}
-        </ol>
-      </div>
-      </div>
-    </section>
+    </div>
   );
 }
 

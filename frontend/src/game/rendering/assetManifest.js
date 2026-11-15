@@ -1,9 +1,8 @@
 /**
  * ASSET MANIFEST — the only place where the image paths of our levels are declared.
  *
- * Every entry describes a pixel-art sprite. An entry set to `null` is a PLACEHOLDER:
- * the scene draws a temporary shape with CSS until the real art is provided.
- * To plug in new art, import the file here and replace the `null`. No scene needs to change.
+ * Every entry describes a pixel-art sprite. To swap the art, import the new file here;
+ * no scene needs to change.
  *
  * The rocket and the launch base are the same sprites the hangar uses (game/parts.js,
  * GameScreen.jsx), so the rocket looks the same in both screens.
@@ -31,10 +30,4 @@ export const ASSETS = Object.freeze({
   explosion: { src: explosionSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
   earthPlanet: { src: earthPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
   spaceBackground: { src: spaceBackgroundUrl, frameWidth: 320, frameHeight: 180, frames: 1 },
-
-  // PLACEHOLDER entries: no art provided yet.
-  launchTower: null,
-  missionControlBuilding: null,
-  groundTiles: null,
-  skyBackground: null,
 })

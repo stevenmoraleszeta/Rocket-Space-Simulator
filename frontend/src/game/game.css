@@ -159,7 +159,8 @@
 .step-btn:focus-visible,
 .part-dialog__close:focus-visible,
 .bay__launch:focus-visible,
-.bulb:focus-visible {
+.bulb:focus-visible,
+.brief__close:focus-visible {
   outline: var(--px) solid var(--ms-yellow);
   outline-offset: var(--px);
 }
@@ -300,71 +301,233 @@
   display: block;
 }
 
-/* The frame does not scroll, so its pixel background (::before) always covers the text.
-   The text scrolls inside .brief__scroll. */
+.brief-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 24px;
+  background: rgba(5, 8, 25, 0.78);
+}
+
+.brief-shell {
+  display: flex;
+  flex-direction: column;
+  width: min(860px, 100%);
+  min-height: 0;
+  max-height: 100%;
+  filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink));
+}
+
 .brief {
   position: relative;
   isolation: isolate;
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-height: min(38vh, 320px);
+  min-height: 0;
+  max-height: 100%;
   margin: 0;
+  padding: 22px 26px 24px;
   box-sizing: border-box;
   overflow: hidden;
-}
-
-.brief__scroll {
-  min-height: 0;
-  overflow: auto;
-  padding: 16px 16px 20px;
-  box-sizing: border-box;
-}
-
-.brief::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: rgba(11, 16, 48, 0.94);
+  background: rgba(11, 16, 48, 0.97);
   clip-path: var(--px-clip);
   box-shadow:
     inset var(--px) var(--px) 0 var(--px-edge),
     inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
-  filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink));
+}
+
+.brief__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex: none;
+}
+
+.brief__kicker {
+  margin: 0;
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ms-accent);
 }
 
 .brief__title,
 .brief__hints h3 {
-  margin: 0;
+  margin: 8px 0 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
-  font-size: 11px;
-  letter-spacing: 0.06em;
+  font-size: 16px;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ms-yellow);
 }
 
-.brief__intro {
-  margin: 12px 0 0;
-  font-size: 22px;
-  line-height: 1.3;
+.brief__hints h3 {
+  margin: 0;
+  font-size: 11px;
 }
 
-.brief__story p,
-.brief__hints li {
-  margin: 10px 0 0;
-  font-size: 20px;
+.brief__close {
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+  flex: none;
+  min-height: 36px;
+  margin: 0;
+  padding: 8px 12px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ms-text);
+  font-family: var(--ms-font-pixel);
+  font-size: 9px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.brief__close::before,
+.brief__close::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  clip-path: var(--px-clip);
+}
+
+.brief__close::before {
+  z-index: -2;
+  inset: var(--px) 0 calc(var(--px) * -1);
+  background: var(--px-ink);
+}
+
+.brief__close::after {
+  z-index: -1;
+  inset: 0 0 var(--px);
+  background: rgba(16, 22, 48, 0.94);
+  box-shadow:
+    inset var(--px) var(--px) 0 #5c6894,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+}
+
+.brief__close:active {
+  transform: translateY(var(--px));
+}
+
+.brief__close:active::before {
+  inset: 0;
+}
+
+.brief__close:active::after {
+  bottom: 0;
+}
+
+.brief__intro {
+  flex: none;
+  margin: 14px 0 0;
+  font-size: 22px;
   line-height: 1.35;
+  color: #d7f4ff;
+}
+
+.brief__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.85fr);
+  gap: 18px;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 16px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #5c6894 transparent;
+}
+
+.brief__body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.brief__body::-webkit-scrollbar-thumb {
+  background: #5c6894;
+}
+
+.brief__story {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.brief__story:only-child {
+  grid-column: 1 / -1;
+}
+
+.brief__story p {
+  margin: 0;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 18px;
+  line-height: 1.45;
 }
 
 .brief__hints {
-  margin-top: 16px;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 14px 16px 16px;
+  min-width: 0;
+}
+
+.brief__hints::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #2a2408;
+  clip-path: var(--px-clip);
+  box-shadow:
+    inset var(--px) var(--px) 0 #ffe38a,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #6a5410;
 }
 
 .brief__hints ol {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  counter-reset: clue;
+}
+
+.brief__hints li {
+  counter-increment: clue;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
   margin: 0;
-  padding-left: 1.3em;
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+.brief__hints li::before {
+  content: counter(clue);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: var(--ms-yellow);
+  color: #2a2000;
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  line-height: 1;
 }
 
 .bay__launch {
@@ -1174,8 +1337,20 @@
     width: min(320px, 100%);
   }
 
+  .brief-modal {
+    padding: 12px;
+  }
+
   .brief {
-    max-height: min(34vh, 280px);
+    padding: 16px 16px 18px;
+  }
+
+  .brief__body {
+    grid-template-columns: 1fr;
+  }
+
+  .brief__intro {
+    font-size: 18px;
   }
 
   .rocket {
