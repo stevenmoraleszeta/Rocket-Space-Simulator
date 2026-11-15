@@ -49,22 +49,47 @@ test('too little power never reaches Mars orbit', () => {
   assert.equal(simulateMarsTrip(TARGET_ANGLE_DEG, 0.68).outcome.type, MARS_OUTCOMES.SHORT)
 })
 
-test('the right path stops for 1 to 3 crew choices, each with one good, one mild and one bad answer', async () => {
-  const { CHOICE, MAX_ENCOUNTERS, SPACE_FACTS, tripEncounters } = await import('./marsEncounters.js')
+test('the right path stops for crew choices: close passes plus the two runaway asteroids', async () => {
+  const { CHOICE, MAX_ENCOUNTERS, RUNAWAY_ASTEROIDS, SPACE_FACTS, tripEncounters } = await import('./marsEncounters.js')
   for (const angle of [ANGLE_WINDOW.min, TARGET_ANGLE_DEG, ANGLE_WINDOW.max]) {
     const trip = simulateMarsTrip(angle, IDEAL_POWER)
     const passes = tripEncounters(trip)
-    assert.ok(passes.length >= 1 && passes.length <= MAX_ENCOUNTERS, `${angle}°: ${passes.length} passes`)
+    const asteroids = passes.filter((pass) => pass.asteroid)
+    assert.equal(asteroids.length, RUNAWAY_ASTEROIDS.length, `${angle}°`)
+    assert.ok(passes.length - asteroids.length <= MAX_ENCOUNTERS)
     let lastDay = 0
     for (const pass of passes) {
       assert.ok(pass.day >= lastDay && pass.day < trip.outcome.day)
       lastDay = pass.day
+      if (pass.shower) continue // the asteroid shower is a dodging game, not a choice card
       const kinds = pass.situation.choices.map((choice) => choice.kind).sort()
       assert.deepEqual(kinds, [CHOICE.BAD, CHOICE.GOOD, CHOICE.MILD].sort())
       assert.ok(!pass.situation.question.includes('{name}'))
     }
   }
   assert.ok(SPACE_FACTS.length >= 10)
+})
+
+test('one runaway asteroid is made of ice and tells where Earth got its water', async () => {
+  const { RUNAWAY_ASTEROIDS, tripEncounters } = await import('./marsEncounters.js')
+  assert.equal(RUNAWAY_ASTEROIDS.filter((asteroid) => asteroid.icy).length, 1)
+  const ice = tripEncounters(simulateMarsTrip(TARGET_ANGLE_DEG, IDEAL_POWER)).find((pass) => pass.hazard.icy)
+  assert.match(ice.situation.story, /water/)
+})
+
+test('a bad aim never crashes into a satellite or debris, it only grazes them', () => {
+  let grazed = 0
+  for (let angle = 100; angle <= 170; angle += 1) {
+    for (let power = 0.4; power <= 1; power += 0.05) {
+      const trip = simulateMarsTrip(angle, power)
+      assert.notEqual(trip.outcome.type, MARS_OUTCOMES.HAZARD)
+      grazed += trip.grazes.length
+    }
+  }
+  assert.ok(grazed > 0, 'some bad aims graze something')
+  for (let angle = ANGLE_WINDOW.min; angle <= ANGLE_WINDOW.max + 1e-9; angle += 0.25) {
+    assert.equal(simulateMarsTrip(angle, IDEAL_POWER).grazes.length, 0, `${angle}°`)
+  }
 })
 
 test('every path leaves from Earth, even with a bad angle', async () => {
@@ -84,4 +109,53 @@ test('on launch day no hazard light sits on top of Earth or Mars', async () => {
       assert.ok(Math.hypot(spot.x - planet.x, spot.y - planet.y) > 0.15, hazard.id)
     }
   }
+})
+
+test('a well packed crew does not run out of air, push, food or water', async () => {
+  const { FOOD_BAR_ENOUGH, forgivenFailures, marsSupplyFacts } = await import('./marsSupplies.js')
+  const maxima = { food: 4, water: 4 }
+  const packed = marsSupplyFacts({ scrubber: 1, boosters: 1, food: 2, water: 4 }, maxima, 600, 1000)
+  const forgiven = forgivenFailures(packed)
+  for (const id of ['noAir', 'outOfAir', 'noBoosters', 'outOfFood', 'noFood', 'outOfWater', 'noWater']) {
+    assert.ok(forgiven.has(id), id)
+  }
+  assert.ok(!forgiven.has('spaceSick'))
+  // The food bar under half, no air parts, no boosters and not every water pack: nothing is forgiven.
+  const short = forgivenFailures(marsSupplyFacts({ food: 1, water: 2 }, maxima, (FOOD_BAR_ENOUGH - 0.1) * 1000, 1000))
+  assert.equal(short.size, 0)
+  // An air filter counts as much as the scrubber.
+  assert.ok(forgivenFailures(marsSupplyFacts({ filter: 1 }, maxima, 0, 1000)).has('outOfAir'))
+})
+
+test('the asteroid shower can be survived by dodging, and breaks the ship if you never move', async () => {
+  const S = await import('./asteroidShower.js')
+  const play = (seed, brain) => {
+    const game = S.createShower(seed)
+    while (!game.over) S.stepShower(game, 1 / 60, brain(game))
+    return game
+  }
+  const dodge = (game) => {
+    let best = game.shipX
+    let bestScore = -Infinity
+    for (let x = 6; x <= S.FIELD_W - 6; x += 2) {
+      let danger = 0
+      for (const rock of game.rocks) {
+        const time = (S.SHIP.y - rock.y) / rock.speed
+        if (time < -0.1 || time > 1.2) continue
+        const gap = Math.abs(rock.x + rock.drift * time - x) - rock.r - S.SHIP.halfWidth
+        if (gap < 3 || Math.abs(x - game.shipX) / S.SHIP.speed > time + 0.05) danger += (1.3 - time) * (gap < 3 ? 10 : 1)
+      }
+      const score = -danger - Math.abs(x - game.shipX) * 0.01
+      if (score > bestScore) { bestScore = score; best = x }
+    }
+    return best
+  }
+  let dodged = 0
+  let stood = 0
+  for (let seed = 1; seed <= 20; seed += 1) {
+    if (play(seed * 7919, dodge).survived) dodged += 1
+    if (play(seed * 7919, () => null).survived) stood += 1
+  }
+  assert.ok(dodged >= 19, `dodging survived ${dodged} of 20`)
+  assert.ok(stood <= 12, `standing still survived ${stood} of 20`)
 })

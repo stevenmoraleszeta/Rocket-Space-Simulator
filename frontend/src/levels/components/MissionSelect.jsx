@@ -153,8 +153,8 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
                 </span>
               )}
             </button>
-            <div className="ms-stop__num">Mission {m.number}</div>
-            <div className="ms-stop__title">{m.title}</div>
+            <div className="ms-stop__num">{t('Mission {{number}}', { number: m.number })}</div>
+            <div className="ms-stop__title">{t(m.title)}</div>
           </li>
         ))}
       </ol>

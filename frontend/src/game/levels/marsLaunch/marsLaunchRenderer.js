@@ -5,6 +5,7 @@
  */
 import { t } from '../../../i18n/index.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
+import { asteroidPosition } from './marsEncounters.js'
 import {
   ANGLE_WINDOW,
   EARTH_ORBIT_AU,
@@ -289,6 +290,63 @@ function drawHazard(ctx, view, images, day, launched, clockSeconds, hazard, inde
   label(ctx, hazard.name, spot.x, spot.y - HAZARD_PIXELS, color, 'center', 12)
 }
 
+/** The two runaway asteroids, coming in from the belt during the flight (marsEncounters.js). */
+const ASTEROID_PIXELS = 26
+/** The ice asteroid: 32 blocks drawn at exactly 1 pixel each, so the pixel art stays crisp. */
+const ICE_ASTEROID_PIXELS = 32
+
+/**
+ * Ice asteroids give off a faint trail of vapor when sunlight warms them. Pixel dots along the
+ * way it came from, fading out.
+ */
+function drawIceTrail(ctx, view, asteroid, meet, day) {
+  for (let k = 1; k <= 10; k += 1) {
+    const world = asteroidPosition(asteroid, meet, day - k * 2.5)
+    const spot = toScreen(view, world.x, world.y)
+    const size = k < 4 ? 3 : 2
+    ctx.globalAlpha = 0.55 * (1 - k / 11)
+    ctx.fillStyle = k % 3 === 0 ? '#ffffff' : '#9fe3ff'
+    ctx.fillRect(Math.round(spot.x) - 1, Math.round(spot.y) - 1, size, size)
+  }
+  ctx.globalAlpha = 1
+}
+
+/** Two crystal glints that blink on and off around the ice asteroid. */
+const ICE_GLINTS = [
+  { dx: -9, dy: -10, beat: 0.9 },
+  { dx: 10, dy: -4, beat: 1.3 },
+  { dx: -3, dy: 11, beat: 1.1 },
+]
+function drawIceSparkles(ctx, spot, clockSeconds) {
+  ctx.fillStyle = '#ffffff'
+  for (const glint of ICE_GLINTS) {
+    if ((clockSeconds / glint.beat) % 1 > 0.35) continue
+    const x = Math.round(spot.x + glint.dx)
+    const y = Math.round(spot.y + glint.dy)
+    ctx.fillRect(x - 1, y, 3, 1)
+    ctx.fillRect(x, y - 1, 1, 3)
+  }
+}
+function drawAsteroids(ctx, view, images, asteroids, trip, day, clockSeconds) {
+  for (const pass of asteroids ?? []) {
+    const asteroid = pass.hazard
+    if (day < asteroid.meetDay - 80 || day > asteroid.meetDay + 3) continue
+    const meet = tripPointAt(trip.samples, asteroid.meetDay)
+    const world = asteroidPosition(asteroid, meet, day)
+    const spot = toScreen(view, world.x, world.y)
+    if (asteroid.icy) {
+      drawIceTrail(ctx, view, asteroid, meet, day)
+      drawImageCentered(ctx, images.iceAsteroid, spot.x, spot.y, ICE_ASTEROID_PIXELS)
+      drawIceSparkles(ctx, spot, clockSeconds)
+    } else if (images.asteroid?.complete && images.asteroid.naturalWidth > 0) {
+      const frame = Math.floor(clockSeconds * 8) % ASSETS.asteroid.frames
+      ctx.imageSmoothingEnabled = false
+      ctx.drawImage(images.asteroid, frame * 32, 0, 32, 32, Math.round(spot.x - ASTEROID_PIXELS / 2), Math.round(spot.y - ASTEROID_PIXELS / 2), ASTEROID_PIXELS, ASTEROID_PIXELS)
+    }
+    label(ctx, asteroid.name, spot.x, spot.y - ASTEROID_PIXELS / 2 - 8, asteroid.icy ? '#bfe4ff' : '#d9c3a5', 'center', 12)
+  }
+}
+
 export function pathColor(outcome) {
   if (outcome.type === MARS_OUTCOMES.REACHED) return COLORS.pathGood
   if (outcome.type === MARS_OUTCOMES.HAZARD) return COLORS.pathCrash
@@ -397,6 +455,7 @@ export function drawMarsScene(ctx, view, scene) {
   }
   drawPath(ctx, view, trip.samples, site, color, Infinity, 0.25)
   drawPath(ctx, view, trip.samples, site, color, day)
+  drawAsteroids(ctx, view, scene.images, scene.asteroids, trip, day, scene.clockSeconds)
   const { outcome } = trip
   const crash = scene.flight?.crash
   if (crash) {

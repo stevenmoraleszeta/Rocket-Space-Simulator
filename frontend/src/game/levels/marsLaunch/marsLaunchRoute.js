@@ -16,8 +16,9 @@
  *     (in the real sky a few degrees barely move the arrival point).
  *   - Power (how far the player drags) sets how far out the ellipse reaches, and with Kepler's law
  *     how long the trip takes. Too little never reaches Mars's orbit; too much arrives early.
- *   - Space debris and satellites drift on their own orbits across the road: passing too close
- *     to one is a crash.
+ *   - Space debris and satellites drift on their own orbits across the road. The rocket never
+ *     crashes into them: passing too close (a bad aim) only grazes one, which warns the player
+ *     and costs GRAZE_PENALTY points.
  */
 
 export const MU_SUN = 2.959122e-4 // Sun's gravity, AU^3/day^2
@@ -127,33 +128,33 @@ export function marsPosition(day) {
  * are placed on this practice road, not on their real positions for one launch day.
  * kind 'debris' = an old rocket stage, kind 'satellite' = a spacecraft or a test payload.
  * dangerAu: passing closer than this is a crash (much bigger than the real thing, so it shows).
- * Each one is placed so every aim inside the 134°–138° window (with the right power) passes it
- * by more than its danger zone, while other aims and powers can run into one. On launch day none
- * of them sits on top of Earth, Mars or another hazard.
+ * On launch day they are spread around the Sun (at least 40° apart, none on Earth or Mars), and
+ * every aim inside the 134°–138° window (with the right power) passes each one outside its danger
+ * zone. Other aims and powers can graze one.
  */
 export const MARS_HAZARDS = [
   {
-    id: 'soho', kind: 'satellite', name: 'SOHO', radiusAu: 1.101, startDeg: 59.4, dangerAu: 0.035,
+    id: 'soho', kind: 'satellite', name: 'SOHO', radiusAu: 1.101, startDeg: 60, dangerAu: 0.035,
     summary: 'A NASA and ESA telescope that watches the Sun all day, every day.',
   },
   {
-    id: 'j002e3', kind: 'debris', name: 'Apollo 12 rocket stage', radiusAu: 1.198, startDeg: 67.8, dangerAu: 0.035,
+    id: 'j002e3', kind: 'debris', name: 'Apollo 12 rocket stage', radiusAu: 1.198, startDeg: 20, dangerAu: 0.035,
     summary: 'The top stage of the Saturn V that took Apollo 12 to the Moon in 1969. It still circles the Sun.',
   },
   {
-    id: 'jwst', kind: 'satellite', name: 'James Webb telescope', radiusAu: 1.282, startDeg: 75, dangerAu: 0.035,
+    id: 'jwst', kind: 'satellite', name: 'James Webb telescope', radiusAu: 1.282, startDeg: 100, dangerAu: 0.035,
     summary: 'The biggest space telescope. It looks at the first stars and galaxies with infrared light.',
   },
   {
-    id: 'surveyor-centaur', kind: 'debris', name: 'Surveyor 2 rocket stage', radiusAu: 1.36, startDeg: 81.8, dangerAu: 0.035,
+    id: 'surveyor-centaur', kind: 'debris', name: 'Surveyor 2 rocket stage', radiusAu: 1.36, startDeg: 340, dangerAu: 0.035,
     summary: 'The Centaur stage that launched Surveyor 2 in 1966. It was found again in 2020.',
   },
   {
-    id: 'roadster', kind: 'satellite', name: "Starman's Tesla Roadster", radiusAu: 1.428, startDeg: 78.4, dangerAu: 0.035,
+    id: 'roadster', kind: 'satellite', name: "Starman's Tesla Roadster", radiusAu: 1.428, startDeg: 140, dangerAu: 0.035,
     summary: 'A red sports car with a dummy driver, launched as a test payload in 2018. Its orbit crosses Mars’s.',
   },
   {
-    id: 'dscovr-stage', kind: 'debris', name: 'Falcon 9 rocket stage', radiusAu: 1.483, startDeg: 81.8, dangerAu: 0.035,
+    id: 'dscovr-stage', kind: 'debris', name: 'Falcon 9 rocket stage', radiusAu: 1.483, startDeg: 300, dangerAu: 0.035,
     summary: 'The upper stage that launched the DSCOVR weather satellite in 2015, now drifting around the Sun.',
   },
 ]
@@ -161,6 +162,9 @@ export const MARS_HAZARDS = [
 export function hazardPosition(hazard, day) {
   return circlePosition(hazard.radiusAu, hazard.startDeg, day)
 }
+
+/** Points lost each time the rocket grazes a satellite or a piece of debris. */
+export const GRAZE_PENALTY = 15
 
 export const MARS_OUTCOMES = Object.freeze({
   REACHED: 'marsReached',
@@ -197,25 +201,25 @@ export function simulateMarsTrip(aimDeg, power) {
   }
 
   const samples = []
+  // Close passes: each hazard is grazed at most once, at its closest moment inside its danger zone.
+  const grazes = new Map()
   for (let day = 0; ; day = Math.min(endDay, day + SAMPLE_EVERY_DAYS)) {
     const point = pointAt(day)
     samples.push({ day, x: point.x, y: point.y })
     for (const hazard of MARS_HAZARDS) {
       const spot = hazardPosition(hazard, day)
-      if (Math.hypot(spot.x - point.x, spot.y - point.y) < hazard.dangerAu) {
-        return {
-          outcome: { type: MARS_OUTCOMES.HAZARD, day, x: point.x, y: point.y, hazard },
-          samples,
-          angleErrorDeg,
-        }
+      const distance = Math.hypot(spot.x - point.x, spot.y - point.y)
+      if (distance < hazard.dangerAu && (!grazes.has(hazard.id) || distance < grazes.get(hazard.id).distance)) {
+        grazes.set(hazard.id, { hazard, day, distance, x: point.x, y: point.y })
       }
     }
     if (day >= endDay) break
   }
+  const grazeList = [...grazes.values()].sort((a, b) => a.day - b.day)
 
   const last = samples[samples.length - 1]
   if (crossDay == null) {
-    return { outcome: { type: MARS_OUTCOMES.SHORT, day: endDay, x: last.x, y: last.y }, samples, angleErrorDeg }
+    return { outcome: { type: MARS_OUTCOMES.SHORT, day: endDay, x: last.x, y: last.y }, samples, angleErrorDeg, grazes: grazeList }
   }
   const mars = marsPosition(crossDay)
   // How far Mars is from the arrival point, seen from the Sun (+ = Mars is already past it).
@@ -235,6 +239,7 @@ export function simulateMarsTrip(aimDeg, power) {
     },
     samples,
     angleErrorDeg,
+    grazes: grazeList,
   }
 }
 

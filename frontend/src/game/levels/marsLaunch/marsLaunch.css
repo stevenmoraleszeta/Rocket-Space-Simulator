@@ -105,3 +105,133 @@
   image-rendering: pixelated;
   pointer-events: none;
 }
+
+/* The ice asteroid tells where Earth's water came from. */
+.mars-encounter__story {
+  margin: 0 0 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid #7fc4ff;
+  background: rgba(127, 196, 255, 0.1);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  color: #d6ecff;
+}
+
+/* Grazing a satellite or debris: a short warning at the top of the map. */
+.mars-graze {
+  position: absolute;
+  z-index: 5;
+  top: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 0.875rem;
+  border: 2px solid #ffd23f;
+  border-radius: 0.5rem;
+  background: rgba(40, 30, 5, 0.92);
+  color: #ffe9a0;
+  font-family: var(--ms-font);
+  font-size: 1rem;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: mars-fact-in 0.3s ease-out;
+}
+
+/* The ice asteroid's picture in its decision card. */
+.mars-encounter__sprite {
+  float: right;
+  width: 4rem;
+  height: 4rem;
+  margin: -0.25rem -0.25rem 0.25rem 0.75rem;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 0.5rem rgba(159, 227, 255, 0.55));
+}
+
+/* Landing on Mars: the recon dome comes down (MarsLanding.jsx), full screen, pixel art. */
+.mars-landing {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #3b2230;
+}
+.mars-landing__scene {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+.mars-landing__panel {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  width: min(26rem, 36vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.mars-landing__caption {
+  color: #fff3e6;
+  text-shadow: 0.1875rem 0.1875rem 0 #2a1018;
+  pointer-events: none;
+}
+.mars-landing__title { margin: 0 0 0.375rem; font-family: var(--ms-font-pixel); font-size: 1.25rem; }
+.mars-landing__text { margin: 0; font-size: 1.125rem; }
+.mars-landing__skip { position: absolute; right: 1.25rem; bottom: 1.25rem; }
+
+/* Why we explore Mars: one short line at a time, in a pixel box near the bottom. */
+.mars-landing__why {
+  margin: 0;
+  padding: 0.875rem 1.125rem;
+  box-sizing: border-box;
+  border: 3px solid #e2b31f;
+  border-radius: 0.5rem;
+  background: rgba(42, 16, 24, 0.9);
+  color: #fff3e6;
+  font-family: var(--ms-font);
+  font-size: 1.125rem;
+  line-height: 1.4;
+  animation: mars-fact-in 0.5s ease-out;
+}
+/* Phones: no room beside the dome, so the panel spans the top. */
+@media (max-width: 720px) {
+  .mars-landing__panel { left: 0.75rem; right: 0.75rem; width: auto; top: 0.75rem; }
+  .mars-landing__why { font-size: 1rem; }
+}
+.mars-landing__why.is-landed { border-color: #3ddc97; color: #e6fff2; }
+.mars-landing__why-text { margin: 0 0 0.75rem; }
+.mars-landing__why-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.mars-landing__count { font-family: var(--ms-font-pixel); font-size: 0.6875rem; color: #e8c07a; }
+
+/* Asteroid shower: dodge the rocks with the mouse (AsteroidShower.jsx). */
+.mars-shower {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(3, 4, 16, 0.92);
+  font-family: var(--ms-font);
+  color: var(--ms-text, #fff);
+}
+.mars-shower__hud { width: min(48rem, 100%); text-align: center; }
+.mars-shower__title { margin: 0 0 0.25rem; font-family: var(--ms-font-pixel); font-size: 1.25rem; color: #ffb27a; }
+.mars-shower__hint { margin: 0 0 0.5rem; font-size: 1.0625rem; }
+.mars-shower__stats { display: flex; justify-content: center; align-items: center; gap: 1.25rem; flex-wrap: wrap; font-size: 1rem; }
+.mars-shower__shields { display: inline-flex; gap: 0.375rem; }
+.mars-shower__shields i { width: 1rem; height: 1rem; background: #2b3352; clip-path: polygon(50% 0, 100% 25%, 85% 85%, 50% 100%, 15% 85%, 0 25%); }
+.mars-shower__shields i.is-on { background: #4fc3ff; }
+.mars-shower__shields.is-hit i.is-on { background: #ff5d73; }
+.mars-shower__time { font-family: var(--ms-font-pixel); font-size: 0.75rem; color: #ffe066; }
+.mars-shower__penalty { color: var(--ms-muted, #b9c2ec); }
+.mars-shower__field {
+  width: min(48rem, 100%, calc((100vh - 9rem) * 4 / 3));
+  aspect-ratio: 4 / 3;
+  border: 3px solid #ffb27a;
+  border-radius: 0.5rem;
+  image-rendering: pixelated;
+  cursor: none;
+  touch-action: none;
+}
