@@ -473,8 +473,8 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   const goToAim = () => {
     if (!site) return
     playSfx(SFX.confirm)
-    // A pixel hand taps the first light for 3 seconds, to show the lights can be tapped.
-    tapHintRef.current = { startedAt: performance.now() / 1000, hazardIndex: 0 }
+    // A pixel hand taps the third light (James Webb) for 3 seconds, to show the lights can be tapped.
+    tapHintRef.current = { startedAt: performance.now() / 1000, hazardIndex: 2 }
     setStep('aim')
   }
   const backToSites = () => {
