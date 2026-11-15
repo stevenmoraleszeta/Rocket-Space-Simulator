@@ -10,6 +10,7 @@ import launchBase from '../assets/images/rockets/launch_base.png';
 import { ASCENT_MS, AscentScene } from './AscentScene.jsx';
 import { PadClouds } from './PadClouds.jsx';
 import { PadCrew } from './PadCrew.jsx';
+import { LaunchTower } from './LaunchTower.jsx';
 import { Rocket } from './Rocket.jsx';
 import './game.css';
 
@@ -37,6 +38,7 @@ export function LaunchSequence({ equipped, hud = null, onDone }) {
           <PadClouds />
           <div className="stage__mount">
             <div className="prep">
+              <LaunchTower launching />
               <img className="prep__base" src={launchBase} alt="" />
               <Rocket equipped={equipped} launching />
               <PadCrew />
