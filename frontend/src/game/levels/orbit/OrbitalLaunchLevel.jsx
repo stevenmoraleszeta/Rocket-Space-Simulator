@@ -27,12 +27,11 @@ import { flightReadout } from '../../lifeSupport.js'
 import { flightNotes } from '../../flightSummary.js'
 import { LAUNCH_FAILURES, flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { LAUNCH_SITES } from './launchSites.js'
-import { LaunchFact } from './LaunchFact.jsx'
 import { MissionCompleteScreen } from './MissionCompleteScreen.jsx'
+import { MissionFailedScreen } from './MissionFailedScreen.jsx'
 import { EXPLODING_OUTCOMES, OUTCOMES, arrivalPosition, degreesToRadians, satellitePositionAt, simulateLaunch } from './launchSimulation.js'
 import { buildLaunchVehicle } from './launchVehicle.js'
 import { aimFromPointer, initialAim, siteAngleOf } from './orbitAiming.js'
-import { launchGroundTrack, planeToScreen } from './groundTrack.js'
 import {
   createView,
   drawOrbitScene,
@@ -54,6 +53,11 @@ import './orbitalLaunch.css'
 /** Real seconds the climb and the coast take on screen, at most. Any flight lasts a few seconds. */
 const MAX_ASCENT_PLAYBACK_SECONDS = 4
 const MAX_COAST_PLAYBACK_SECONDS = 7
+/** Real seconds a rocket called home (no food on board) takes to come down and land. */
+const RETURN_HOME_SECONDS = 4.5
+/** Real seconds to watch an explosion on the map before the "You lose" screen. */
+const EXPLOSION_WATCH_MS = 1500
+
 /** Simulated seconds per real second for the satellite circling after a success. */
 const ORBIT_PLAYBACK_WARP = 150
 
@@ -144,10 +148,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const orbit = useMemo(() => hardestOrbit(), [])
   const siteCheck = site ? checkTargetFromSite(site, orbit) : null
   const rotationBoost = rotationBoostForInclination(orbit.inclinationDeg)
-  const track = useMemo(
-    () => (site ? launchGroundTrack(site, orbit.inclinationDeg) : null),
-    [site, orbit],
-  )
+  // Ring view: the path, the arrival orbit and the satellites are drawn around the Earth, not as
+  // a ground track on the map (groundTrack.js). The renderer still accepts a track if one is passed.
+  const track = null
   const arrival = useMemo(
     () => (orbit && arrivalAngle !== null ? arrivalPosition(orbit.altitudeKm, arrivalAngle) : null),
     [orbit, arrivalAngle],
@@ -178,7 +181,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const draggingRef = useRef(false)
   // Simulated time the satellites are drawn at (moves only during the flight), for tapping them.
   const simTimeRef = useRef(0)
-  const [satelliteInfo, setSatelliteInfo] = useState(null) // { satellite, x, y }
+  const [satelliteInfo, setSatelliteInfo] = useState(null) // tapped card: { satellite, x, y }
+  const [hoveredSatellite, setHoveredSatellite] = useState(null) // card under the cursor: { satellite, x, y }
+  // The hovered card wins; a tapped card (touch screens) stays until it is closed.
+  const shownSatellite = hoveredSatellite ?? satelliteInfo
   const [images] = useState(() => ({
     earth: loadImage(ASSETS.earthPlanet.src),
     rocketLit: loadImage(ASSETS.rocketLit.src),
@@ -195,7 +201,15 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const [liftingOff, setLiftingOff] = useState(false)
   // A rocket without boosters or heat shield blows up during the launch sequence.
   const failure = useMemo(() => launchFailure(equipped, mission), [equipped, mission])
-  const supplyFailure = useMemo(() => flightSupplyFailure(equipped, mission), [equipped, mission])
+  const tripSupplyFailure = useMemo(() => flightSupplyFailure(equipped, mission), [equipped, mission])
+  // A failure that calls the crew home (no food) happens in space, halfway through the coast
+  // after the engines stop, even on a perfect path.
+  const supplyFailure = useMemo(() => {
+    if (!tripSupplyFailure?.returnsHome || !prediction) return tripSupplyFailure
+    const burnout = prediction.burnoutTime
+    const end = prediction.outcome.t
+    return { ...tripSupplyFailure, atSeconds: end > burnout ? burnout + (end - burnout) * 0.5 : end }
+  }, [tripSupplyFailure, prediction])
   const tripNotes = useCallback((extra = {}) => flightNotes(equipped, {
     site: site ? `${site.name}, ${site.country}` : '',
     orbit: orbit?.name || '',
@@ -224,6 +238,11 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
         (outcome.type === OUTCOMES.ORBIT_REACHED && supplyFailure.atSeconds < mission.loadout.durationSeconds))
     ) {
       outcome = { type: supplyFailure.id, t: supplyFailure.atSeconds }
+      if (supplyFailure.returnsHome) {
+        // Where it turned back: its place on the path at that moment.
+        const pose = flightPoseAt(prediction.samples, supplyFailure.atSeconds)
+        outcome = { ...outcome, x: pose.x, y: pose.y, returnedHome: true }
+      }
       supply = supplyFailure
     }
     const success = outcome.type === OUTCOMES.ORBIT_REACHED
@@ -251,6 +270,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       // It got close to the arrival point, but too fast or too slow to stay in orbit there.
       reachedArrival: Boolean(prediction.bestInsertion),
       failure: supply,
+      exploded: crashed,
+      // Let the player see the landed rocket for a moment before the "You lose" screen.
+      landed: Boolean(outcome.returnedHome),
       supplies: flightReadout(equipped, mission, mission.loadout.durationSeconds, {
         altitudeMeters: orbit.altitudeKm * 1000,
         speedMetersPerSecond: 0,
@@ -258,6 +280,17 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     })
     setStep('result')
   }
+
+  // After a blast on the map, wait a moment so the player sees it before the "You lose" screen.
+  const [blastWatched, setBlastWatched] = useState(null) // the result whose blast was seen
+  useEffect(() => {
+    if (!(result?.exploded || result?.landed) || result.success) return undefined
+    const timer = setTimeout(() => setBlastWatched(result), EXPLOSION_WATCH_MS)
+    return () => clearTimeout(timer)
+  }, [result])
+  const failScreenReady = Boolean(
+    result && !result.success && ((!result.exploded && !result.landed) || blastWatched === result),
+  )
 
   // The draw loop is created once and reads the latest state through this ref.
   const sceneRef = useRef(null)
@@ -274,10 +307,12 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       images,
       finishFlight,
       canvasSize,
-      blewUp: Boolean(result?.failure),
+      // Only a launch that failed on the pad or in the climb never flew. Trip failures did fly.
+      blewUp: Boolean(result?.failure) && result.failure.at !== 'flight',
       equipped,
       mission,
       supplyFailure,
+      highlightSatelliteId: shownSatellite?.satellite.id ?? null,
     }
   })
 
@@ -315,11 +350,31 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           const supplyAt = current.supplyFailure?.atSeconds
           const trajectoryEnd = current.prediction.outcome.t
           const endTime = supplyAt != null && supplyAt < trajectoryEnd ? supplyAt : trajectoryEnd
-          if (simTime >= endTime && !flightClock.endedAt) {
+          // Called home (no food): the rocket turns back, comes down and lands upright.
+          const goesHome = Boolean(current.supplyFailure?.returnsHome) && endTime === supplyAt
+          let shownTime = simTime
+          let returnSeconds = null
+          if (goesHome && simTime >= endTime) {
+            if (!flightClock.returnStartedAt) flightClock.returnStartedAt = now
+            shownTime = endTime
+            returnSeconds = (now - flightClock.returnStartedAt) / 1000
+          }
+          const done = !goesHome || (returnSeconds != null && returnSeconds >= RETURN_HOME_SECONDS)
+          if (simTime >= endTime && done && !flightClock.endedAt) {
             flightClock.endedAt = now
             current.finishFlight()
           }
-          flight = { simTime, realSecondsSinceEnd: flightClock.endedAt ? (now - flightClock.endedAt) / 1000 : 0 }
+          flight = {
+            simTime: shownTime,
+            realSecondsSinceEnd: flightClock.endedAt ? (now - flightClock.endedAt) / 1000 : 0,
+            returnHome: goesHome
+              ? {
+                  t: endTime,
+                  progress: returnSeconds == null ? 0 : Math.min(1, returnSeconds / RETURN_HOME_SECONDS),
+                  landed: Boolean(flightClock.endedAt),
+                }
+              : null,
+          }
           if (simTime < endTime && now - lastTelemetryAt > 120) {
             lastTelemetryAt = now
             const pose = flightPoseAt(current.prediction.samples, simTime)
@@ -352,6 +407,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           flight,
           images: current.images,
           clockSeconds: now / 1000,
+          highlightSatelliteId: current.highlightSatelliteId,
         })
       }
       frameId = requestAnimationFrame(draw)
@@ -375,7 +431,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   }
 
   const aimAt = (point) => {
-    const nextAim = aimFromPointer(site, siteScreenPosition(view, site), point.x, point.y, view.aimMaxPixels)
+    const nextAim = aimFromPointer(site, siteScreenPosition(view, site, true), point.x, point.y, view.aimMaxPixels)
     if (nextAim) {
       setAim(nextAim)
       setAimPoint(point)
@@ -387,9 +443,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     let closest = null
     for (const satellite of REAL_SATELLITES) {
       const world = satellitePositionAt(satellite, simTimeRef.current)
-      const screen = track
-        ? planeToScreen(view, track, world.x, world.y)
-        : worldToScreen(view, world.x, world.y)
+      const screen = worldToScreen(view, world.x, world.y)
       const gap = Math.hypot(point.x - screen.x, point.y - screen.y)
       if (gap < SATELLITE_TAP_PIXELS && (!closest || gap < closest.gap)) closest = { satellite, gap, screen }
     }
@@ -417,8 +471,19 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       aimAt(pointerPosition(event))
       return
     }
-    // Hand cursor over a satellite, so players know they can tap it.
-    event.currentTarget.style.cursor = satelliteAt(pointerPosition(event)) ? 'pointer' : ''
+    // Hovering a satellite shows it and its card; the hand cursor says it can be tapped too.
+    const hovered = satelliteAt(pointerPosition(event))
+    event.currentTarget.style.cursor = hovered ? 'pointer' : ''
+    if (event.pointerType !== 'mouse') return
+    setHoveredSatellite((previous) => {
+      if (!hovered) return null
+      if (previous?.satellite.id === hovered.satellite.id) return previous
+      return { satellite: hovered.satellite, x: hovered.screen.x, y: hovered.screen.y }
+    })
+  }
+
+  const handlePointerLeave = () => {
+    setHoveredSatellite(null)
   }
 
   const handlePointerUp = () => {
@@ -489,6 +554,24 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           onFlyAgain={retry}
         />
       )}
+      {step === 'result' && result && !result.success && failScreenReady && (
+        <MissionFailedScreen
+          mission={mission}
+          result={result}
+          reason={sayTo(
+            playerName,
+            result.outcome.type === OUTCOMES.SATELLITE_COLLISION
+              ? `The rocket hit ${result.outcome.satelliteName}.`
+              : OUTCOME_MESSAGES[result.outcome.type],
+          )}
+          hint={
+            result.failure?.hint ??
+            (result.outcome.type === OUTCOMES.NO_LIFTOFF ? 'Go back to the hangar. Add boosters or carry less.' : null)
+          }
+          onHangar={onBackToHangar}
+          onRetry={retry}
+        />
+      )}
 
       <div className="orbit-level__body">
         <div className="orbit-stage">
@@ -500,36 +583,41 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
+            onPointerLeave={handlePointerLeave}
           />
-          {satelliteInfo && (
+          {shownSatellite && (
             <div
-              className={`satellite-card${satelliteInfo.y < 150 ? ' is-below' : ''}`}
+              className={`satellite-card${shownSatellite.y < 150 ? ' is-below' : ''}${hoveredSatellite ? ' is-hover' : ''}`}
               style={{
-                left: Math.min(Math.max(satelliteInfo.x, 130), canvasSize.width - 130),
-                top: satelliteInfo.y,
+                left: Math.min(Math.max(shownSatellite.x, 130), canvasSize.width - 130),
+                top: shownSatellite.y,
               }}
-              role="dialog"
-              aria-label={satelliteInfo.satellite.shortName}
+              role={hoveredSatellite ? 'tooltip' : 'dialog'}
+              aria-label={shownSatellite.satellite.shortName}
             >
-              <button type="button" className="satellite-card__close" aria-label="Close" onClick={() => setSatelliteInfo(null)}>
-                ✕
-              </button>
-              <h3 className="satellite-card__name">{satelliteInfo.satellite.shortName}</h3>
+              {!hoveredSatellite && (
+                <button type="button" className="satellite-card__close" aria-label="Close" onClick={() => setSatelliteInfo(null)}>
+                  ✕
+                </button>
+              )}
+              <h3 className="satellite-card__name">{shownSatellite.satellite.shortName}</h3>
               <p className="satellite-card__kind">
                 <span
                   className="satellite-card__dot"
-                  style={{ background: SATELLITE_KIND_COLORS[satelliteInfo.satellite.kind] }}
+                  style={{ background: SATELLITE_KIND_COLORS[shownSatellite.satellite.kind] }}
                   aria-hidden="true"
                 />
-                {satelliteInfo.satellite.kind} · {satelliteInfo.satellite.altitudeKm} km
+                {shownSatellite.satellite.kind} · {shownSatellite.satellite.altitudeKm} km
               </p>
-              <p className="satellite-card__summary">{satelliteInfo.satellite.summary}</p>
+              <p className="satellite-card__summary">{shownSatellite.satellite.summary}</p>
             </div>
           )}
           {/* Launch bases: real buttons on top of the planet, big enough to tap and read. */}
           <div className="orbit-sites">
             {visibleSites.map((candidate) => {
-              const position = siteScreenPosition(view, candidate)
+              // Picking: the base sits on its real place on the map. After that it moves to the rim,
+              // where the rocket leaves in the ring view.
+              const position = siteScreenPosition(view, candidate, step !== 'site')
               const side = position.x >= view.centerX ? 'right' : 'left'
               const selected = candidate.id === siteId
               const className = `orbit-site orbit-site--${side}${selected ? ' is-selected' : ''}`
@@ -625,52 +713,28 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
             </>
           )}
 
-          {step === 'result' && result && (
+          {/* A failed mission is told on the "You lose" screen (MissionFailedScreen), not here. */}
+          {step === 'result' && result?.success && (
             <>
-              <h2 className="orbit-panel__title">
-                {result.success ? sayTo(playerName, 'Mission complete!') : sayTo(playerName, 'Not this time')}
-              </h2>
-              <p className={`orbit-prediction is-${result.success ? 'good' : 'bad'}`}>
-                {sayTo(
-                  playerName,
-                  result.outcome.type === OUTCOMES.SATELLITE_COLLISION
-                    ? `The rocket hit ${result.outcome.satelliteName}.`
-                    : OUTCOME_MESSAGES[result.outcome.type],
-                )}
-              </p>
-              {result.success && (
-                <>
-                  <div className="orbit-result__stars"><StarRating stars={result.stars} size={36} /></div>
-                  <dl className="orbit-stats">
-                    <div><dt>Score</dt><dd>{result.pct}%</dd></div>
-                    <div><dt>Off target</dt><dd>{Math.round(result.outcome.missKm)} km</dd></div>
-                  </dl>
-                  {result.supplies && (
-                    <FlightReadout
-                      rows={result.supplies.filter((row) => ['time', 'cabin', 'food', 'air', 'power'].includes(row.id))}
-                    />
-                  )}
-                  {result.unlockedMissionId && (
-                    <p className="orbit-panel__hint">
-                      {sayTo(playerName, `New mission unlocked: ${getMission(result.unlockedMissionId)?.title}!`)}
-                    </p>
-                  )}
-                </>
+              <h2 className="orbit-panel__title">{sayTo(playerName, 'Mission complete!')}</h2>
+              <p className="orbit-prediction is-good">{sayTo(playerName, OUTCOME_MESSAGES[result.outcome.type])}</p>
+              <div className="orbit-result__stars"><StarRating stars={result.stars} size={36} /></div>
+              <dl className="orbit-stats">
+                <div><dt>Score</dt><dd>{result.pct}%</dd></div>
+                <div><dt>Off target</dt><dd>{Math.round(result.outcome.missKm)} km</dd></div>
+              </dl>
+              {result.supplies && (
+                <FlightReadout
+                  rows={result.supplies.filter((row) => ['time', 'cabin', 'food', 'air', 'power'].includes(row.id))}
+                />
               )}
-              {result.failure && <p className="orbit-panel__hint">{sayTo(playerName, result.failure.hint)}</p>}
-              {result.outcome.type === OUTCOMES.NO_LIFTOFF && (
-                <p className="orbit-panel__hint">{sayTo(playerName, 'Go back to the hangar. Add boosters or carry less.')}</p>
+              {result.unlockedMissionId && (
+                <p className="orbit-panel__hint">
+                  {sayTo(playerName, `New mission unlocked: ${getMission(result.unlockedMissionId)?.title}!`)}
+                </p>
               )}
-              {!result.success && <LaunchFact result={result} />}
               <div className="orbit-panel__actions">
-                {result.success ? (
-                  <button type="button" className="ms-btn" onClick={onExit}>Missions</button>
-                ) : (
-                  <>
-                    <button type="button" className="game__back" onClick={onBackToHangar}>Hangar</button>
-                    <button type="button" className="ms-btn" onClick={retry}>Try again</button>
-                  </>
-                )}
+                <button type="button" className="ms-btn" onClick={onExit}>Missions</button>
               </div>
             </>
           )}

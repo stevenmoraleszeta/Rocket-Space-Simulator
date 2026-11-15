@@ -117,9 +117,11 @@ export function screenToWorldAngle(view, screenX, screenY) {
  * The sprite puts the North Pole at the center and the South Pole on the rim,
  * with the same angle as the orbit view (0° east to the right, 90° east up).
  */
-export function siteScreenPosition(view, site) {
+/** Screen spot of a launch base: its real place on the polar map, or on the rim (onRimOnly). */
+export function siteScreenPosition(view, site, onRimOnly = false) {
   const point = pointOnCircle(EARTH_RADIUS_METERS, degreesToRadians(site.longitudeDeg))
   const onRim = worldToScreen(view, point.x, point.y)
+  if (onRimOnly) return onRim
   const radiusFraction = (90 - site.latitudeDeg) / 180
   return {
     x: view.centerX + (onRim.x - view.centerX) * radiusFraction,
@@ -244,8 +246,18 @@ function drawSatelliteSprite(ctx, screen, type, image, clockSeconds, index) {
 }
 
 /** Before the launch: each satellite is only a small dot in the color of its type. */
-function drawSatelliteDots(ctx, view, satellites, timeSeconds, track) {
-  for (const satellite of satellites) {
+/**
+ * Before the route is aimed every satellite is a colored dot. The one under the cursor
+ * (highlightId) is drawn as its real satellite, with its orbit ring, so only that one shows up.
+ */
+function drawSatelliteDots(ctx, view, satellites, timeSeconds, track, highlightId = null, images = null, clockSeconds = 0) {
+  const types = satelliteTypes(satellites)
+  satellites.forEach((satellite, index) => {
+    if (satellite.id === highlightId) {
+      if (!track) drawDottedRing(ctx, view, orbitRingRadius(view, satellite.altitudeKm), COLORS.satelliteOrbit, 2, 9)
+      drawSatellite(ctx, view, satellite, types[index], index, timeSeconds, images, clockSeconds, track)
+      return
+    }
     const world = satellitePositionAt(satellite, timeSeconds)
     const screen = project(view, world.x, world.y, track)
     const color = SATELLITE_KIND_COLORS[satellite.kind] ?? COLORS.satellite
@@ -256,7 +268,7 @@ function drawSatelliteDots(ctx, view, satellites, timeSeconds, track) {
     drawCircle(ctx, screen.x, screen.y, SATELLITE_DOT_RADIUS_PIXELS, color)
     ctx.restore()
     drawCircle(ctx, screen.x, screen.y, SATELLITE_DOT_RADIUS_PIXELS / 2.5, 'rgba(255, 255, 255, 0.85)')
-  }
+  })
 }
 
 function drawSatellites(ctx, view, satellites, timeSeconds, images, clockSeconds, track) {
@@ -270,24 +282,28 @@ function drawSatellites(ctx, view, satellites, timeSeconds, images, clockSeconds
   }
   const types = satelliteTypes(satellites)
   satellites.forEach((satellite, index) => {
-    const world = satellitePositionAt(satellite, timeSeconds)
-    const screen = project(view, world.x, world.y, track)
-    // Danger zone around the satellite
-    drawCircle(ctx, screen.x, screen.y, SATELLITE_SIZE_PIXELS, COLORS.danger)
-    const type = types[index]
-    const image = images?.[type.image]
-    if (image?.complete && image.naturalWidth > 0) {
-      drawSatelliteSprite(ctx, screen, type, image, clockSeconds ?? 0, index)
-    } else {
-      // Fallback while the sprite loads: a plain pixel square.
-      ctx.fillStyle = COLORS.satellite
-      ctx.fillRect(Math.round(screen.x - SATELLITE_SIZE_PIXELS / 2), Math.round(screen.y - SATELLITE_SIZE_PIXELS / 2), SATELLITE_SIZE_PIXELS, SATELLITE_SIZE_PIXELS)
-    }
-    if (satellite.shortName) {
-      const outward = Math.atan2(-(screen.y - view.centerY), screen.x - view.centerX)
-      drawLabel(ctx, satellite.shortName, screen.x + Math.cos(outward) * 20, screen.y - Math.sin(outward) * 18, Math.cos(outward) >= 0 ? 'left' : 'right', COLORS.satellite, 13)
-    }
+    drawSatellite(ctx, view, satellite, types[index], index, timeSeconds, images, clockSeconds, track)
   })
+}
+
+/** One satellite with its sprite, danger zone and name. */
+function drawSatellite(ctx, view, satellite, type, index, timeSeconds, images, clockSeconds, track) {
+  const world = satellitePositionAt(satellite, timeSeconds)
+  const screen = project(view, world.x, world.y, track)
+  // Danger zone around the satellite
+  drawCircle(ctx, screen.x, screen.y, SATELLITE_SIZE_PIXELS, COLORS.danger)
+  const image = images?.[type.image]
+  if (image?.complete && image.naturalWidth > 0) {
+    drawSatelliteSprite(ctx, screen, type, image, clockSeconds ?? 0, index)
+  } else {
+    // Fallback while the sprite loads: a plain pixel square.
+    ctx.fillStyle = COLORS.satellite
+    ctx.fillRect(Math.round(screen.x - SATELLITE_SIZE_PIXELS / 2), Math.round(screen.y - SATELLITE_SIZE_PIXELS / 2), SATELLITE_SIZE_PIXELS, SATELLITE_SIZE_PIXELS)
+  }
+  if (satellite.shortName) {
+    const outward = Math.atan2(-(screen.y - view.centerY), screen.x - view.centerX)
+    drawLabel(ctx, satellite.shortName, screen.x + Math.cos(outward) * 20, screen.y - Math.sin(outward) * 18, Math.cos(outward) >= 0 ? 'left' : 'right', COLORS.satellite, 13)
+  }
 }
 
 /**
@@ -304,10 +320,11 @@ function drawOrbitRings(ctx, view, orbits, selectedOrbitId, step, track) {
     ctx.globalAlpha = choosing ? 1 : 0.35
     if (track) {
       drawGroundTrack(ctx, view, track, color, selected && choosing ? 5 : 4, 10)
-    } else if (choosing) {
+    } else {
+      // Ring view: the arrival orbit as a ring around the Earth (faint while aiming)
       const radius = orbitRingRadius(view, orbit.altitudeKm)
-      drawDottedRing(ctx, view, radius, color, selected ? 5 : 4, 10)
-      if (selected) {
+      drawDottedRing(ctx, view, radius, color, selected && choosing ? 5 : 4, 10)
+      if (selected && choosing) {
         drawLabel(ctx, `${orbit.altitudeKm} km`, view.centerX, view.centerY - radius - 16, 'center', color, 16)
       }
     }
@@ -395,7 +412,8 @@ export function flightPoseAt(samples, timeSeconds) {
   }
 }
 
-function drawRocket(ctx, view, pose, headingPoint, images, track) {
+/** spin: extra turn in radians, for a rocket out of control. */
+function drawRocket(ctx, view, pose, headingPoint, images, track, spin = 0) {
   const screen = project(view, pose.x, pose.y, track)
   let ahead = project(view, headingPoint.x, headingPoint.y, track)
   if (track && Math.hypot(ahead.x - screen.x, ahead.y - screen.y) < 2) {
@@ -410,7 +428,7 @@ function drawRocket(ctx, view, pose, headingPoint, images, track) {
   const half = ROCKET_DRAW_SIZE / 2
   ctx.save()
   ctx.translate(Math.round(screen.x), Math.round(screen.y))
-  ctx.rotate(heading + Math.PI / 2)
+  ctx.rotate(heading + Math.PI / 2 + spin)
   if (image === upper) {
     // Short upper stage: flickering flame while burning, hull only (no flame) when coasting.
     const sprite = ASSETS.rocketUpperStage
@@ -435,6 +453,66 @@ function drawExplosion(ctx, view, outcome, secondsSinceEnd, images, track) {
   )
 }
 
+/**
+ * A rocket called home comes back to Earth along a smooth curve: it keeps moving forward a
+ * little while it gently loses height, then slows down and lands upright on its engine,
+ * like modern reusable rockets. progress 0 = where it turned back, 1 = on the ground.
+ */
+const RETURN_FORWARD_RADIANS = 0.5
+/** From here on the engine is lit for the landing burn and the rocket stands up. */
+const LANDING_BURN_FROM = 0.72
+
+const easeInOut = (t) => t * t * (3 - 2 * t)
+
+function returnPoint(start, progress) {
+  const startRadius = Math.hypot(start.x, start.y)
+  const startAngle = Math.atan2(start.y, start.x)
+  const ahead = start.next ?? start
+  // Which way it was going around the Earth
+  const direction = Math.sign(start.x * (ahead.y - start.y) - start.y * (ahead.x - start.x)) || 1
+  const angle = startAngle + direction * RETURN_FORWARD_RADIANS * Math.sin((progress * Math.PI) / 2)
+  const radius = startRadius - (startRadius - EARTH_RADIUS_METERS) * easeInOut(progress)
+  return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius }
+}
+
+/** Thin dotted line of the way home. */
+function drawReturnTrail(ctx, view, start, progress) {
+  ctx.fillStyle = 'rgba(158, 212, 255, 0.6)'
+  const steps = Math.floor(progress * 40)
+  for (let index = 0; index <= steps; index += 2) {
+    const spot = returnPoint(start, index / 40)
+    const point = worldToScreen(view, spot.x, spot.y)
+    ctx.fillRect(Math.round(point.x - 2), Math.round(point.y - 2), 4, 4)
+  }
+}
+
+/**
+ * The rocket on its way home: nose first while it glides down, then it turns upright
+ * (engine to the ground) and fires its engine for a soft landing.
+ */
+function drawReturningRocket(ctx, view, start, progress, images, track) {
+  const here = returnPoint(start, progress)
+  const ahead = returnPoint(start, Math.min(1, progress + 0.02))
+  // "Up" at this spot: straight away from the center of the Earth
+  const upward = { x: here.x * 1.01, y: here.y * 1.01 }
+  if (progress < LANDING_BURN_FROM) {
+    drawRocket(ctx, view, { ...here, burning: false }, ahead, images, track)
+    return
+  }
+  // Landing burn: turn from the glide direction to upright, engine on until it touches down.
+  const turn = Math.min(1, (progress - LANDING_BURN_FROM) / 0.12)
+  const screen = worldToScreen(view, here.x, here.y)
+  const glide = worldToScreen(view, ahead.x, ahead.y)
+  const up = worldToScreen(view, upward.x, upward.y)
+  const glideAngle = Math.atan2(glide.y - screen.y, glide.x - screen.x)
+  const upAngle = Math.atan2(up.y - screen.y, up.x - screen.x)
+  let delta = upAngle - glideAngle
+  while (delta > Math.PI) delta -= Math.PI * 2
+  while (delta < -Math.PI) delta += Math.PI * 2
+  // drawRocket points the nose along the glide; the extra turn stands it up for landing.
+  drawRocket(ctx, view, { ...here, burning: progress < 1 }, ahead, images, track, delta * turn)
+}
+
 /** Satellite going round its new orbit after a successful insertion. */
 function orbitingPoint(outcome, secondsAfterInsertion) {
   const angle = Math.atan2(outcome.y, outcome.x) + outcome.turning * circularOrbitAngularSpeed(outcome.orbitRadius) * secondsAfterInsertion
@@ -445,7 +523,9 @@ function orbitingPoint(outcome, secondsAfterInsertion) {
  * Draws one frame.
  * scene: { step, orbits, selectedOrbitId, arrival, satellites, prediction, aimPoint, flight, images, clockSeconds }
  *   clockSeconds: real time in seconds, drives sprite animations (animated satellites)
- *   flight: { simTime, realSecondsSinceEnd } while flying or after the end
+ *   flight: { simTime, realSecondsSinceEnd, controlLoss } while flying or after the end
+ *     returnHome: { t, progress (0..1), landed } when mission control calls the crew home (no food)
+ *   highlightSatelliteId: the satellite under the cursor while picking a base
  */
 export function drawOrbitScene(ctx, view, scene) {
   ctx.clearRect(0, 0, view.width, view.height)
@@ -456,10 +536,11 @@ export function drawOrbitScene(ctx, view, scene) {
   // Earth first, then the ground track and satellites, so a path across the map stays visible.
   drawEarth(ctx, view, scene.images, scene.clockSeconds)
   drawOrbitRings(ctx, view, scene.orbits, scene.selectedOrbitId, scene.step, track)
-  // The satellites show up for real once the rocket is launched; before that they are colored dots.
-  const launched = scene.step === 'flight' || scene.step === 'result'
-  if (launched) drawSatellites(ctx, view, scene.satellites, simTime, scene.images, scene.clockSeconds, track)
-  else drawSatelliteDots(ctx, view, scene.satellites, simTime, track)
+  // The satellites show up for real from the moment the route is aimed. While picking a base
+  // they are colored dots, and only the one under the cursor shows up.
+  const showSatellites = scene.step === 'aim' || scene.step === 'flight' || scene.step === 'result'
+  if (showSatellites) drawSatellites(ctx, view, scene.satellites, simTime, scene.images, scene.clockSeconds, track)
+  else drawSatelliteDots(ctx, view, scene.satellites, simTime, track, scene.highlightSatelliteId, scene.images, scene.clockSeconds)
   if (scene.step !== 'site') drawArrivalMarker(ctx, view, scene.arrival, scene.images, track)
 
   if (scene.step === 'aim') {
@@ -476,7 +557,14 @@ export function drawOrbitScene(ctx, view, scene) {
     const { outcome, samples } = scene.prediction
     drawPrediction(ctx, view, scene.prediction, 0.3, track)
     drawDottedPath(ctx, view, samples, pathColor(outcome.type), simTime, track)
-    if (simTime <= outcome.t) {
+    const home = scene.flight?.returnHome
+    if (home && simTime >= home.t) {
+      // Called home (no food): it comes back down along a smooth curve and lands upright.
+      const start = flightPoseAt(samples, home.t)
+      const progress = home.landed ? 1 : home.progress
+      drawReturnTrail(ctx, view, start, progress)
+      drawReturningRocket(ctx, view, start, progress, scene.images, track)
+    } else if (simTime <= outcome.t) {
       const pose = flightPoseAt(samples, simTime)
       drawRocket(ctx, view, pose, pose.next ?? pose, scene.images, track)
     } else if (outcome.type === OUTCOMES.ORBIT_REACHED) {

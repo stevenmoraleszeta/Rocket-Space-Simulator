@@ -33,7 +33,7 @@ const CLOUDS = [
  * overheating: no heat shield. The rocket glows red hot and blows up at OVERHEAT_EXPLODE_AT_MS,
  * before it leaves the atmosphere (the parent ends the scene after that).
  */
-export function AscentScene({ equipped, hud, overheating = false }) {
+export function AscentScene({ equipped, hud, overheating = false, failureMessage = null }) {
   const [progress, setProgress] = useState(0);
   const [exploded, setExploded] = useState(false);
   // The climb is animated, so altitude and speed here follow the picture.
@@ -100,6 +100,12 @@ export function AscentScene({ equipped, hud, overheating = false }) {
       <div className={overheating && !exploded ? 'ascent__rocket is-overheating' : 'ascent__rocket'}>
         <Rocket equipped={equipped} ascending stage={stage} exploding={exploded} />
       </div>
+      {exploded && failureMessage && (
+        <div className="launch-boom" role="alert">
+          <p className="launch-boom__title">Boom!</p>
+          <p className="launch-boom__text">{failureMessage}</p>
+        </div>
+      )}
       <div className="ascent__content">
         {hud}
         <p className="flight__status ascent__status">

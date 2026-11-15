@@ -49,6 +49,8 @@ export const MARS_OUTCOMES = Object.freeze({
   NO_PARACHUTE: 'noParachute',
   NO_ROVER: 'noRover',
   OUT_OF_FOOD: 'outOfFood',
+  // No food at all: the crew gets too weak, so mission control turns the ship back home.
+  NO_FOOD: 'noFood',
   OUT_OF_WATER: 'outOfWater',
   SPACE_SICK: 'spaceSick',
   OUT_OF_AIR: 'outOfAir',
@@ -156,6 +158,7 @@ function outcome(type, t, extra = {}) {
 /**
  * Fly one aimed cruise.
  * `foodAt`, `waterAt`, `airAt`, and `sickAt` are fractions of this window (0..1), or null if that store lasts.
+ * `noFoodAt`: no food was packed; the ship turns back home at that fraction.
  * Flags are the Mars parts: shelter, antenna, parachute, rover.
  */
 export function simulateCruise({
@@ -168,6 +171,7 @@ export function simulateCruise({
   hasParachute = false,
   hasRover = false,
   foodAt = null,
+  noFoodAt = null,
   waterAt = null,
   airAt = null,
   sickAt = null,
@@ -191,6 +195,7 @@ export function simulateCruise({
       consider(STORM_T, outcome(MARS_OUTCOMES.STORM, STORM_T))
     }
     if (foodAt != null) consider(foodAt, outcome(MARS_OUTCOMES.OUT_OF_FOOD, foodAt))
+    if (noFoodAt != null) consider(noFoodAt, outcome(MARS_OUTCOMES.NO_FOOD, noFoodAt))
     if (waterAt != null) consider(waterAt, outcome(MARS_OUTCOMES.OUT_OF_WATER, waterAt))
     if (sickAt != null) consider(sickAt, outcome(MARS_OUTCOMES.SPACE_SICK, sickAt))
     if (airAt != null) consider(airAt, outcome(MARS_OUTCOMES.OUT_OF_AIR, airAt))
@@ -282,6 +287,10 @@ const EXPLAIN = {
   [MARS_OUTCOMES.NO_ROVER]: {
     tone: 'warn',
     text: 'The ship can land, but nothing rolls out to look at the rocks.',
+  },
+  [MARS_OUTCOMES.NO_FOOD]: {
+    tone: 'bad',
+    text: 'There is no food on board. The crew gets too weak, so mission control turns the ship back home.',
   },
   [MARS_OUTCOMES.OUT_OF_FOOD]: {
     tone: 'bad',

@@ -14,6 +14,7 @@ import { PadCrew } from './PadCrew.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
 import { LaunchSequence } from './LaunchSequence.jsx';
 import { flightNotes } from './flightSummary.js';
+import { MissionFailedScreen } from './levels/orbit/MissionFailedScreen.jsx';
 import { flightSupplyFailure, launchFailure } from './launchFailure.js';
 import { FlightReadout } from './FlightReadout.jsx';
 import { flightReadout, supplyReport } from './lifeSupport.js';
@@ -33,6 +34,8 @@ import './game.css';
 const TIMED_PHASES = {
   launching: { ms: 3600, next: 'ascent' },
   ascent: { ms: ASCENT_MS, next: 'flight' },
+  // Called home (no food): the rocket comes back down and lands, then the "You lose" screen
+  returning: { ms: 3200, next: 'failed' },
 };
 
 /**
@@ -126,10 +129,15 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       const elapsed = Math.min(duration, ((now - started) / watchMs) * duration);
       setFlightSeconds(elapsed);
       if (supplyFailure && elapsed >= supplyFailure.atSeconds) {
-        playSfx(SFX.lose);
         setFailure(supplyFailure);
         recordTrip(false);
-        setPhase('failed');
+        if (supplyFailure.returnsHome) {
+          playSfx(SFX.lose);
+          setPhase('returning');
+        } else {
+          playSfx(SFX.lose);
+          setPhase('failed');
+        }
         return;
       }
       if (elapsed >= duration) {
@@ -206,14 +214,13 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       <SpaceBackground>
         <div className="game">
           {hud}
-          <div className="flight launch-failed" role="alert">
-            <h2 className="launch-failed__title">{playerName ? sayTo(playerName, 'Try again') : 'Try again'}</h2>
-            <p className="flight__status">{failure?.message}</p>
-            <p className="launch-failed__hint">{failure?.hint}</p>
-            <button type="button" className="ms-btn" onClick={returnToHangar}>
-              Back to the hangar
-            </button>
-          </div>
+          <MissionFailedScreen
+            mission={mission}
+            result={{ outcome: { type: failure?.id }, success: false }}
+            reason={sayTo(playerName, failure?.message ?? '')}
+            hint={failure?.hint}
+            onHangar={returnToHangar}
+          />
         </div>
       </SpaceBackground>
     );
@@ -223,18 +230,26 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
     return <AscentScene equipped={equipped} hud={hud} />;
   }
 
-  if (phase === 'flight') {
+  if (phase === 'flight' || phase === 'returning') {
+    const goingHome = phase === 'returning';
     return (
       <SpaceBackground>
         <div className="game">
           {hud}
           <div className="flight">
             <p className="flight__status">
-              {flightHeld
-                ? sayTo(playerName, 'The crew made it. Food, air, and power held for the whole trip.')
-                : sayTo(playerName, `Liftoff! Heading to ${mission.place}.`)}
+              {goingHome
+                ? sayTo(playerName, 'The crew is too weak to go on. Mission control is bringing them home.')
+                : flightHeld
+                  ? sayTo(playerName, 'The crew made it. Food, air, and power held for the whole trip.')
+                  : sayTo(playerName, `Liftoff! Heading to ${mission.place}.`)}
             </p>
-            <Rocket equipped={equipped} flying stage="upper" />
+            <Rocket
+              equipped={equipped}
+              flying
+              stage="upper"
+              returning={goingHome}
+            />
             <FlightReadout
               rows={flightReadout(equipped, mission, flightSeconds, { altitudeMeters: 400000, speedMetersPerSecond: 0 })}
             />

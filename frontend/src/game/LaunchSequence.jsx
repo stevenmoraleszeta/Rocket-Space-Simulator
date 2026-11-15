@@ -21,19 +21,26 @@ import './game.css';
 export const LIFTOFF_MS = 3600;
 /** No boosters: how long the rocket strains on the pad before it blows up. */
 const STRAIN_MS = 1600;
-/** Time to watch the explosion before the failure screen. */
-const EXPLOSION_MS = 1200;
+/** Time to watch the explosion and read why before the failure screen. */
+const EXPLOSION_MS = 2600;
+/** Called off on the pad (no astronaut): the crew walks away and one says "no". */
+const SCRUB_MS = 3800;
 
 export function LaunchSequence({ equipped, hud = null, onDone, failure = null, onFail }) {
   const padFailure = failure?.at === 'pad';
-  // liftoff -> ascent -> space, or straining -> padExplosion, or liftoff -> ascent (overheating)
-  const [phase, setPhase] = useState(padFailure ? 'straining' : 'liftoff');
+  const scrubbed = failure?.at === 'scrub';
+  // liftoff -> ascent -> space, or straining -> padExplosion, or liftoff -> ascent (overheating),
+  // or scrubbed (called off on the ground: nothing lights, nothing blows up)
+  const [phase, setPhase] = useState(scrubbed ? 'scrubbed' : padFailure ? 'straining' : 'liftoff');
 
   useEffect(() => {
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     let ms;
     let next;
-    if (phase === 'straining') {
+    if (phase === 'scrubbed') {
+      ms = SCRUB_MS;
+      next = onFail;
+    } else if (phase === 'straining') {
       ms = STRAIN_MS;
       next = () => {
         playSfx(SFX.explosion);
@@ -58,7 +65,7 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
   }, [phase, onDone, onFail, failure]);
 
   if (phase === 'ascent') {
-    return <AscentScene equipped={equipped} hud={hud} overheating={Boolean(failure)} />;
+    return <AscentScene equipped={equipped} hud={hud} overheating={Boolean(failure)} failureMessage={failure?.message} />;
   }
 
   return (
@@ -69,7 +76,7 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
           <PadClouds />
           <div className="stage__mount">
             <div className="prep">
-              <LaunchTower launching />
+              <LaunchTower launching={phase !== 'scrubbed'} />
               <img className="prep__base" src={launchBase} alt="" />
               <Rocket
                 equipped={equipped}
@@ -77,11 +84,17 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
                 straining={phase === 'straining'}
                 exploding={phase === 'padExplosion'}
               />
-              <PadCrew />
+              <PadCrew scrub={phase === 'scrubbed'} />
             </div>
           </div>
         </div>
       </div>
+      {phase === 'padExplosion' && failure && (
+        <div className="launch-boom" role="alert">
+          <p className="launch-boom__title">Boom!</p>
+          <p className="launch-boom__text">{failure.message}</p>
+        </div>
+      )}
       {hud}
     </div>
   );

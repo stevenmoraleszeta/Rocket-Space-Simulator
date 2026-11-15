@@ -24,6 +24,7 @@ import { flightNotes } from '../../flightSummary.js'
 import { launchFailure } from '../../launchFailure.js'
 import { partCount } from '../../parts.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
+import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
 import {
   CRUISE_BODIES,
   MARS_OUTCOMES,
@@ -41,9 +42,13 @@ import '../orbit/orbitalLaunch.css'
 const PLAY_SECONDS = 9
 const TAP_PIXELS = 22
 
+/** How far along the cruise a crew with no food loses control (0..1). */
+const NO_FOOD_CRUISE_FRACTION = 0.3
+
 const FIX_HINT = {
   [MARS_OUTCOMES.STORM]: 'Go back to the hangar. The crew needs a safe room when the Sun storms.',
   [MARS_OUTCOMES.BLACKOUT]: 'Pack a way to call home, or pick a path where the Sun is not in the way.',
+  [MARS_OUTCOMES.NO_FOOD]: 'Go back to the hangar and pack food. A crew with nothing to eat cannot fly the ship.',
   [MARS_OUTCOMES.OUT_OF_FOOD]: 'This path is longer than the meals. Pack more, or take the shorter path.',
   [MARS_OUTCOMES.OUT_OF_WATER]: 'Go back to the hangar. Months of drinking have to be cleaned, not only bottled.',
   [MARS_OUTCOMES.SPACE_SICK]: 'Go back to the hangar. A flight this long can make someone sick.',
@@ -124,7 +129,10 @@ export function MarsTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
       ...mission,
       loadout: { ...mission.loadout, durationSeconds },
     })
-    const end = earliestSupplyEnd(report)
+    // No food at all: the ship still flies, then loses control in space (NO_FOOD).
+    // The other stores are timed as usual, so an earlier problem still comes first.
+    const noFood = report.foodKg <= 0
+    const end = earliestSupplyEnd(noFood ? { ...report, foodSeconds: Infinity } : report)
     return simulateCruise({
       lane: aim.lane,
       power: aim.power,
@@ -135,6 +143,7 @@ export function MarsTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
       hasParachute: partCount(equipped, 'parachute') > 0,
       hasRover: partCount(equipped, 'rover') > 0,
       foodAt: end?.id === 'outOfFood' ? supplyFraction(end.atSeconds, durationSeconds) : null,
+      noFoodAt: noFood ? NO_FOOD_CRUISE_FRACTION : null,
       waterAt: end?.id === 'outOfWater' ? supplyFraction(end.atSeconds, durationSeconds) : null,
       airAt: end?.id === 'outOfAir' ? supplyFraction(end.atSeconds, durationSeconds) : null,
       sickAt: end?.id === 'spaceSick' ? supplyFraction(end.atSeconds, durationSeconds) : null,
@@ -203,10 +212,20 @@ export function MarsTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
       pct,
       stars: progressOutcome?.stars ?? 0,
       unlockedMissionId: progressOutcome?.unlockedMissionId ?? null,
+      exploded,
       supplies: flightReadout(equipped, { ...mission, loadout: { ...mission.loadout, durationSeconds } }, durationSeconds),
     })
     setStep('result')
   }, [prediction, cruise, completeMission, mission, equipped, tripNotes])
+
+  // After a blast on the map, wait a moment so the player sees it before the "You lose" screen.
+  const [blastWatched, setBlastWatched] = useState(null) // the result whose blast was seen
+  useEffect(() => {
+    if (!result?.exploded || result.success) return undefined
+    const timer = setTimeout(() => setBlastWatched(result), 1500)
+    return () => clearTimeout(timer)
+  }, [result])
+  const failScreenReady = Boolean(result && !result.success && (!result.exploded || blastWatched === result))
 
   useLayoutEffect(() => {
     sceneRef.current = {
@@ -413,6 +432,16 @@ export function MarsTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
           onFlyAgain={retry}
         />
       )}
+      {step === 'result' && result && !result.success && failScreenReady && (
+        <MissionFailedScreen
+          mission={mission}
+          result={result}
+          reason={sayTo(playerName, result.failure?.message ?? describeCruise({ outcome: result.outcome }).text)}
+          hint={sayTo(playerName, result.failure?.hint ?? FIX_HINT[result.outcome.type] ?? 'Try another path.')}
+          onHangar={onBackToHangar}
+          onRetry={retry}
+        />
+      )}
 
       <div className="orbit-level__body">
         <div className="orbit-stage">
@@ -531,7 +560,8 @@ export function MarsTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
             </>
           )}
 
-          {step === 'result' && result && (
+          {/* A failed mission is told on the "You lose" screen (MissionFailedScreen), not here. */}
+          {step === 'result' && result?.success && (
             <>
               <h2 className="orbit-panel__title">
                 {result.success ? sayTo(playerName, 'The rover is down') : sayTo(playerName, 'Not this time')}

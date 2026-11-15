@@ -25,8 +25,9 @@ export function partTags(part) {
 }
 
 /**
- * Bars for the hangar. Budget, mass, and energy start full and shrink as parts
- * are added. Heat, thrust, food, air, and crew fill toward what the mission needs.
+ * Bars for the hangar. Every bar grows as parts are added: budget, mass, and energy
+ * fill with what is used (full = the limit), heat, thrust, food, air, and crew fill
+ * toward what the mission needs.
  * Food and oxygen needs follow NASA rates for this trip and this crew.
  * @returns {{ meters: object[], problems: string[] }}
  */
@@ -39,13 +40,13 @@ export function rocketStatus(equipped, mission) {
 
   const meters = [
     {
-      ...roomMeter('budget', 'Budget', budgetLeft, limits.budget, 'cr'),
+      ...roomMeter('budget', 'Budget', report.cost, limits.budget, 'cr'),
       text: budgetLeft < 0 ? `${-budgetLeft} cr over` : `${budgetLeft} cr left`,
       bar: true,
     },
-    { ...roomMeter('mass', 'Mass', massLeft, limits.mass, 'kg'), text: `${report.massKg} kg` },
+    { ...roomMeter('mass', 'Mass', report.massKg, limits.mass, 'kg'), text: `${report.massKg} kg` },
     {
-      ...roomMeter('energy', 'Energy', powerLeft, report.supplyWatts, 'W'),
+      ...roomMeter('energy', 'Energy', report.drawWatts, report.supplyWatts, 'W'),
       text: `${Math.round(powerLeft)} W`,
     },
     goalMeter('heat', 'Heat', report.heat, limits.heat),
@@ -87,7 +88,9 @@ export function rocketStatus(equipped, mission) {
   return { meters, problems };
 }
 
-function roomMeter(id, label, left, max, unit) {
+/** A limit being used up: the bar fills with what is used, so it grows as parts are added. */
+function roomMeter(id, label, used, max, unit) {
+  const left = max - used;
   const over = left < 0;
   const ratio = max > 0 ? left / max : 0;
   const tone = over ? 'over' : ratio <= 0.2 ? 'warn' : 'ok';
@@ -95,11 +98,11 @@ function roomMeter(id, label, left, max, unit) {
   return {
     id,
     label,
-    current: Math.max(0, left),
+    current: Math.max(0, Math.min(used, max)),
     max,
     text: amount,
     tone,
-    fill: over ? 100 : fillOf(left, max),
+    fill: over ? 100 : fillOf(used, max),
   };
 }
 

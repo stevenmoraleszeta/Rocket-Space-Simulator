@@ -898,6 +898,70 @@
   animation: crew-patrol 6.4s linear infinite;
 }
 
+/* Launch called off (no astronaut): the crew walks off the pad, one on each side. */
+.crew__mover.is-leaving-left {
+  animation: crew-leave-left 2.4s linear forwards;
+}
+
+.crew__mover.is-leaving-right {
+  animation: crew-leave-right 2.4s linear forwards;
+}
+
+@keyframes crew-leave-left {
+  to { transform: translateX(-70vw); }
+}
+
+@keyframes crew-leave-right {
+  to { transform: translateX(70vw); }
+}
+
+/* The one who stays shakes "no": turning left and right on the spot. */
+.engineer.is-saying-no {
+  background-position-y: -72px;
+  animation:
+    crew-work 0.96s steps(4) infinite,
+    crew-say-no 0.5s steps(1) 0.6s infinite;
+}
+
+@keyframes crew-say-no {
+  0% { transform: scale(calc(var(--scale) * 0.34), calc(var(--scale) * 0.34)); }
+  50% { transform: scale(calc(var(--scale) * -0.34), calc(var(--scale) * 0.34)); }
+}
+
+/* Speech bubble over the one saying "no" */
+.crew__bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(24px * var(--scale) * 0.34 + 10px);
+  z-index: 4;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: #fff;
+  color: #04213a;
+  border: 3px solid #14182a;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.35);
+  font-family: var(--ms-font-pixel);
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
+  animation: crew-bubble-in 0.3s steps(3) 0.6s both;
+}
+
+.crew__bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: #14182a;
+}
+
+@keyframes crew-bubble-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 @keyframes crew-work {
   from { background-position-x: 0; }
   to { background-position-x: -64px; }
@@ -1062,9 +1126,14 @@
   to { background-position-x: calc((var(--first, 0) + var(--frames)) * -32px); }
 }
 
-/* Explosion (explosion_sheet.png, first row): 8 cells once, then nothing is left. */
+/* Explosion (explosion_sheet.png, first row): 8 cells once, then nothing is left.
+   It grows from the middle of the rocket, larger than the rocket itself. */
 .rocket__layer--explosion {
-  animation: rocket-explode 0.8s steps(8) forwards;
+  left: calc(16px * var(--scale) - 16px);
+  top: calc(16px * var(--scale) - 16px);
+  transform: scale(calc(var(--scale) * 1.8));
+  transform-origin: center;
+  animation: rocket-explode 1s steps(8) forwards;
 }
 
 @keyframes rocket-explode {
@@ -1073,6 +1142,60 @@
 }
 
 .rocket.is-exploding { filter: none; }
+
+/* On the pad every rocket uses the pad scale (.prep): standing still after a called-off
+   launch, straining, or blowing up, it stays the same size and in the same place. */
+.prep .rocket { --scale: inherit; }
+
+/* Why the rocket blew up, over the explosion (LaunchSequence and AscentScene). */
+.launch-boom {
+  position: fixed;
+  left: 50%;
+  top: 22%;
+  z-index: 6;
+  width: min(520px, calc(100vw - 32px));
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  padding: 14px 20px;
+  border: 3px solid #ff5d73;
+  background: rgba(11, 16, 48, 0.94);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+  text-align: center;
+  animation: launch-boom-in 0.3s steps(4) 0.35s both;
+}
+
+.launch-boom__title {
+  margin: 0;
+  font-family: var(--ms-font-pixel);
+  font-size: clamp(14px, 2.4vw, 20px);
+  line-height: 1.5;
+  color: #ff5d73;
+  text-transform: uppercase;
+}
+
+.launch-boom__text {
+  margin: 6px 0 0;
+  font-family: var(--ms-font);
+  font-size: 18px;
+  line-height: 1.35;
+  color: #ffffff;
+}
+
+@keyframes launch-boom-in {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Called home (no food): the rocket turns engine-down and gently sinks back toward Earth. */
+.rocket.is-returning {
+  animation: rocket-return 3.2s ease-in-out forwards;
+}
+
+@keyframes rocket-return {
+  0% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-2vh) rotate(180deg); }
+  100% { transform: translateY(40vh) rotate(180deg); opacity: 0.2; }
+}
 
 /* No boosters: the engines roar but the rocket only shakes on the pad. */
 .rocket.is-straining {

@@ -97,7 +97,7 @@ export const PARTS = [
     id: 'fuel',
     name: 'Fuel tank',
     blurb: 'Side tanks with more fuel.',
-    missions: ['earth', 'mars'],
+    from: 'moon',
     cost: 26,
     mass: 12,
     // Extra propellant only. The engines are still the boosters.
@@ -130,7 +130,7 @@ export const PARTS = [
     id: 'water',
     name: 'Water',
     blurb: 'Drinking water for the crew. You can pack more than one.',
-    missions: ['earth', 'mars'],
+    from: 'moon',
     stack: true,
     max: 4,
     cost: 14,
@@ -144,7 +144,7 @@ export const PARTS = [
     id: 'medicine',
     name: 'Medicine',
     blurb: 'A kit for when someone feels sick.',
-    missions: ['earth', 'mars'],
+    from: 'moon',
     cost: 18,
     mass: 5,
     // One kit for the crew, the way NASA flies a medical kit.
@@ -156,7 +156,7 @@ export const PARTS = [
     id: 'veggie',
     name: 'Plant locker',
     blurb: 'A small plant locker. The lights use power, and the plants drink water.',
-    missions: ['earth'],
+    from: 'mars',
     cost: 32,
     mass: 11,
     // NASA Veggie uses about 70 W. One energy point is 40 W, so this is 80 W.
@@ -183,13 +183,12 @@ export const PARTS = [
     src: astronaut,
     inside: true,
   },
-  // Mission 3 only. Fuel, water, medicine, and the Earth plant locker stay on the missions
-  // their own `missions` list names.
+  // Mission 3 (Mars) on: the long cruise and the landing.
   {
     id: 'pantry',
     name: 'Meal locker',
     blurb: 'A big locker of meals. A cruise of many months needs this and some food packs.',
-    missions: ['mars'],
+    from: 'mars',
     cost: 24,
     mass: 10,
     energy: 2,
@@ -202,7 +201,7 @@ export const PARTS = [
     id: 'recycler',
     name: 'Water recycler',
     blurb: 'Cleans most of the water the crew drinks, so one bottle lasts for months.',
-    missions: ['mars'],
+    from: 'mars',
     cost: 20,
     mass: 8,
     energy: 3,
@@ -216,7 +215,7 @@ export const PARTS = [
     id: 'scrubber',
     name: 'Air scrubber',
     blurb: 'Cleans the air the crew breathes out, so the tanks last for months.',
-    missions: ['mars'],
+    from: 'mars',
     cost: 22,
     mass: 8,
     energy: 5,
@@ -229,7 +228,7 @@ export const PARTS = [
     id: 'shelter',
     name: 'Storm shelter',
     blurb: 'A thick little room. The crew hides here when the Sun throws a particle storm.',
-    missions: ['mars'],
+    from: 'mars',
     cost: 26,
     mass: 11,
     energy: 2,
@@ -241,7 +240,7 @@ export const PARTS = [
     id: 'parachute',
     name: 'Parachute',
     blurb: 'Opens in Mars’s thin air and slows the ship for landing.',
-    missions: ['mars'],
+    from: 'mars',
     cost: 16,
     mass: 6,
     lands: true,
@@ -252,7 +251,7 @@ export const PARTS = [
     id: 'rover',
     name: 'Rover',
     blurb: 'Rolls out on Mars and looks at the red rocks.',
-    missions: ['mars'],
+    from: 'mars',
     cost: 20,
     mass: 12,
     energy: 3,
@@ -264,7 +263,7 @@ export const PARTS = [
     id: 'antenna',
     name: 'Radio dish',
     blurb: 'Calls home. Needed when the Sun sits between Earth and Mars.',
-    missions: ['mars'],
+    from: 'mars',
     cost: 18,
     mass: 5,
     energy: 2,
@@ -274,9 +273,17 @@ export const PARTS = [
   },
 ];
 
-/** Parts offered in this mission. A part with no `missions` list is in every hangar. */
+/** Missions in play order. Parts unlock along it and stay unlocked (see `from`). */
+const MISSION_ORDER = ['earth', 'moon', 'mars'];
+
+/**
+ * Parts offered in this mission: every part whose `from` mission comes at or before it.
+ * A part with no `from` is there from the first mission. Mission 1 has only the basics,
+ * and each later mission adds its own parts on top of the ones before.
+ */
 export function partsForMission(missionId) {
-  return PARTS.filter((part) => !part.missions || part.missions.includes(missionId));
+  const at = Math.max(0, MISSION_ORDER.indexOf(missionId));
+  return PARTS.filter((part) => MISSION_ORDER.indexOf(part.from ?? 'earth') <= at);
 }
 
 /** How many of this part are packed. Missing entries count as zero. */

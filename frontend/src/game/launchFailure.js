@@ -2,8 +2,12 @@
  * LAUNCH FAILURES — why a packed rocket never finishes the trip.
  *
  * On the pad or in the climb (the launch animation stops here):
- *   over budget, too heavy, no crew, not enough power, no food, no oxygen,
+ *   over budget, too heavy, no crew, not enough power, no water, no oxygen,
  *   no boosters (or the engines cannot lift the weight), no heat shield
+ *
+ * With no food the rocket still launches. In space the weak crew cannot steer:
+ * mission control calls them back, and the rocket comes home and lands upright on its engine,
+ * the way modern reusable rockets do (noFood, returnsHome: true). The mission fails, the crew is safe.
  *
  * During the trip, food, water, or oxygen can hit zero. On a long trip
  * with no medicine, space sickness can stop the crew too.
@@ -27,8 +31,10 @@ export const LAUNCH_FAILURES = Object.freeze({
   },
   noCrew: {
     id: 'noCrew',
-    at: 'pad',
-    message: 'No one is aboard to fly the rocket.',
+    // Nobody to fly it: mission control calls off the launch. Nothing blows up; the pad crew
+    // walks away and one of them shakes "no" (LaunchSequence, PadCrew).
+    at: 'scrub',
+    message: 'There were no astronauts in the rocket, so there was no one to fly it. Mission control called off the launch.',
     hint: 'Go back to the hangar and add an astronaut.',
   },
   noPower: {
@@ -39,8 +45,11 @@ export const LAUNCH_FAILURES = Object.freeze({
   },
   noFood: {
     id: 'noFood',
-    at: 'pad',
-    message: 'There is no food on the rocket. The crew cannot eat.',
+    // The rocket launches fine. In space the crew gets too weak to go on, so mission control
+    // calls them home: the rocket comes back down and lands upright, like modern rockets.
+    at: 'flight',
+    returnsHome: true,
+    message: 'In space the crew had no food and got too weak to go on. Mission control called them home, and the rocket came back and landed safely.',
     hint: 'Go back to the hangar and pack food.',
   },
   noWater: {
@@ -93,7 +102,13 @@ export const LAUNCH_FAILURES = Object.freeze({
   },
 });
 
-/** The failure that stops launch, or null when the rocket can leave the pad. */
+/** Trip fraction when a crew with no food loses control (hangar flights to the Moon and Mars). */
+const NO_FOOD_TRIP_FRACTION = 0.3;
+
+/**
+ * The failure that stops launch, or null when the rocket can leave the pad.
+ * No food does not stop it: the rocket launches and fails in space (flightSupplyFailure).
+ */
 export function launchFailure(equipped, mission) {
   const report = supplyReport(equipped, mission);
   const vehicle = buildLaunchVehicle(equipped);
@@ -101,7 +116,6 @@ export function launchFailure(equipped, mission) {
   if (report.massKg > report.limits.mass) return LAUNCH_FAILURES.tooHeavy;
   if (report.crew < report.minCrew) return LAUNCH_FAILURES.noCrew;
   if (report.drawWatts > report.supplyWatts) return LAUNCH_FAILURES.noPower;
-  if (report.foodKg <= 0) return LAUNCH_FAILURES.noFood;
   if (report.tracksWater && report.waterKg <= 0) return LAUNCH_FAILURES.noWater;
   if (report.o2Kg <= 0) return LAUNCH_FAILURES.noAir;
   if (partCount(equipped, 'boosters') <= 0 || vehicle.thrustToWeight <= 1) return LAUNCH_FAILURES.noBoosters;
@@ -115,7 +129,13 @@ export function launchFailure(equipped, mission) {
  */
 export function flightSupplyFailure(equipped, mission) {
   if (launchFailure(equipped, mission)) return null;
-  const end = earliestSupplyEnd(supplyReport(equipped, mission));
+  const report = supplyReport(equipped, mission);
+  // No food at all: the rocket reaches space, then loses control. The orbit level moves this
+  // moment to the coast after the engines stop (OrbitalLaunchLevel), so it is always in space.
+  if (report.foodKg <= 0) {
+    return { ...LAUNCH_FAILURES.noFood, atSeconds: report.durationSeconds * NO_FOOD_TRIP_FRACTION };
+  }
+  const end = earliestSupplyEnd(report);
   if (!end) return null;
   return { ...LAUNCH_FAILURES[end.id], atSeconds: end.atSeconds };
 }
