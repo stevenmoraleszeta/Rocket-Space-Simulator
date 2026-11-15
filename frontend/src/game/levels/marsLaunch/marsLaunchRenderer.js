@@ -19,8 +19,6 @@ import {
 
 /** Mars's orbit uses this fraction of half the smaller side of the canvas. */
 const MAP_FILL = 0.86
-/** Drag this far (fraction of the smaller side) for full power. */
-const AIM_MAX_VIEW_FRACTION = 0.42
 const PLANET_PIXELS = { earth: 34, mars: 28, sun: 46 }
 const ROCKET_PIXELS = 30
 const HAZARD_PIXELS = 18
@@ -48,7 +46,6 @@ export function createMarsView(width, height) {
     centerX: width / 2,
     centerY: height / 2,
     pixelsPerAu: (smallerSide / 2 / MARS_ORBIT_AU) * MAP_FILL,
-    aimMaxPixels: smallerSide * AIM_MAX_VIEW_FRACTION,
   }
 }
 
@@ -80,25 +77,6 @@ export function pathScreenPoint(view, sample, site) {
   const base = baseScreenPosition(view, site, 0)
   const pull = 1 - sample.day / BASE_BLEND_DAYS
   return { x: point.x + (base.x - earth.x) * pull, y: point.y + (base.y - earth.y) * pull }
-}
-
-/** Direction (degrees, counterclockwise from the right) and power from the launch base to the pointer. */
-export function aimFromPointer(view, pointerX, pointerY, site) {
-  const base = baseScreenPosition(view, site)
-  const dx = pointerX - base.x
-  const dy = base.y - pointerY
-  const distance = Math.hypot(dx, dy)
-  if (distance < 6) return null
-  const angleDeg = (((Math.atan2(dy, dx) * 180) / Math.PI) % 360 + 360) % 360
-  return { angleDeg, power: Math.min(1, Math.max(0.2, distance / view.aimMaxPixels)) }
-}
-
-/** Screen point the pointer would be at for an aim (to draw the aim line from the base). */
-export function aimScreenPoint(view, aim, site) {
-  const base = baseScreenPosition(view, site)
-  const angle = (aim.angleDeg * Math.PI) / 180
-  const length = aim.power * view.aimMaxPixels
-  return { x: base.x + Math.cos(angle) * length, y: base.y - Math.sin(angle) * length }
 }
 
 function circle(ctx, x, y, radius, fill) {
@@ -245,7 +223,7 @@ function drawPath(ctx, view, samples, site, color, untilDay = Infinity, alpha = 
   ctx.globalAlpha = 1
 }
 
-/** Little protractor at the launch base: the 0° line to the right and the current direction. */
+/** Little protractor at the launch base: the 0° line to the right and an arc up to the aim angle. */
 function drawProtractor(ctx, view, aim, site) {
   const earth = baseScreenPosition(view, site)
   const radius = 44
@@ -263,16 +241,6 @@ function drawProtractor(ctx, view, aim, site) {
   ctx.beginPath()
   ctx.arc(earth.x, earth.y, radius, 0, -angle, true)
   ctx.stroke()
-  const tip = aimScreenPoint(view, aim, site)
-  ctx.strokeStyle = '#ffffff'
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.moveTo(earth.x, earth.y)
-  ctx.lineTo(tip.x, tip.y)
-  ctx.stroke()
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(Math.round(tip.x) - 7, Math.round(tip.y) - 1, 14, 3)
-  ctx.fillRect(Math.round(tip.x) - 1, Math.round(tip.y) - 7, 3, 14)
 }
 
 function drawRocket(ctx, view, images, here, ahead, site) {
