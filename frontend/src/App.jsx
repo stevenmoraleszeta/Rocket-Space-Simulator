@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { AppLogo } from './brand/AppLogo.jsx'
 import { MissionSelect, ProgressProvider, SpaceBackground } from './levels'
 import { MissionFlow } from './game/MissionFlow.jsx'
-import { SettingsProvider } from './settings'
+import { SettingsMenu, SettingsProvider } from './settings'
 import { AMBIENCE, AudioVolumeSync, MUSIC, useSoundtrack } from './audio'
 import { createCloudProgressStorage, createCloudSettingsStorage } from './lib/cloudStorage.js'
 import { usePlayerSession } from './lib/playerSession.js'
@@ -48,6 +48,13 @@ export default function App() {
             <MenuSoundtrack />
             <MissionSelect googleSignedIn={session.google} authError={session.authError} onStartMission={setMission} />
           </>
+        )}
+        {/* The mission menu shows its own settings button; on the game screens it comes from here,
+            so the music settings are available on every screen (fixed in the top-right corner). */}
+        {mission && (
+          <div className="st-floating">
+            <SettingsMenu googleSignedIn={session.google} authError={session.authError} />
+          </div>
         )}
       </ProgressProvider>
     </SettingsProvider>

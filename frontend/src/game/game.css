@@ -129,6 +129,8 @@
   align-items: center;
   gap: 16px;
   padding: 16px 20px;
+  /* Leave room for the Settings button fixed in the top-right corner (about 170 px + gaps). */
+  padding-right: 204px;
 }
 
 .game__back {
@@ -1940,6 +1942,9 @@
   .game__hud {
     grid-template-columns: 1fr;
     justify-items: center;
+    padding-right: 20px;
+    /* On phones the floating Settings button sits above the centered HUD. */
+    padding-top: 84px;
   }
 
   .game__back,

@@ -1,6 +1,9 @@
 /* Settings button + panel. The button reuses the pixel ms-btn style. */
 .st-root { position: relative; z-index: 40; display: flex; font-family: var(--ms-font); color: var(--ms-text); }
 
+/* On the game screens the settings button floats in the top-right corner (the menu has it in its toolbar). */
+.st-floating { position: fixed; top: 16px; right: 16px; z-index: 40; }
+
 .st-toggle[aria-expanded="true"]::after {
   box-shadow: inset var(--px) var(--px) 0 #d7f4ff, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #1a7eb8;
 }
