@@ -69,18 +69,28 @@ export const MISSIONS = [
     intro: 'A long trip to the Moon.',
     story: [
       'You fly to the Moon to look for ice in the dark.',
-      'The trip takes 8 days. The crew has to eat every day.',
-      'The Moon has no air. The cabin alone cannot last that long.',
-      'The way there is hot, and the Moon is much farther than a loop around Earth.',
+      'Apollo 11 took 8 days. Apollo 17 took about 12.',
+      'The crew eats and drinks every day. After the first day, someone can feel sick.',
+      'People breathe out a gas. On a long trip that gas has to be cleaned.',
+      'Going up is hot, and the Moon is much farther than one loop around Earth.',
+      'The Moon has almost no air. A ship that is still going fast at the end will crash.',
     ],
     hints: [
-      'Food for one person is not food for two.',
-      'There is no air outside the ship. The crew still has to breathe.',
-      'This trip is farther. Heat and push still matter.',
+      'Food and water for 8 days do not last 12. One person is not two people.',
+      'The gas the crew breathes out has to be cleaned, or the cabin turns bad.',
+      'Almost no air means nothing up there can catch the ship.',
+      'The ice is in a crater the Sun never reaches. Something has to roll in and look.',
+      'One path lasts 12 days and meets a storm from the Sun. Another loses the radio at the south pole.',
+      'The middle of the road is almost empty. A high or low road can meet a rock.',
     ],
-    funFact: 'Some craters near the south pole of the Moon never see the Sun.',
+    funFact: 'Apollo 11 flew for 8 days. In 2009 NASA found ice in a dark crater at the south pole.',
     passPct: 60,
-    loadout: { budget: 160, mass: 120, energy: 40, heat: 30, thrust: 55, minCrew: 1, durationSeconds: 8 * 86400 },
+    // Quiet 8-day pack: shield, boosters, 1 food, 1 water, medicine, 1 crew,
+    // air filter, lander, ice rover = 208 cr, 136 kg, 33 energy.
+    // The south pole adds the radio (18 cr, 5 kg).
+    // The 12-day storm adds a second food, a second water, and the shelter:
+    // 264 cr, 164 kg, 35 energy. 266 cr and 166 kg leave no room for the radio as well.
+    loadout: { budget: 266, mass: 166, energy: 40, heat: 30, thrust: 55, minCrew: 1, durationSeconds: 8 * 86400 },
   },
   {
     id: 'mars',

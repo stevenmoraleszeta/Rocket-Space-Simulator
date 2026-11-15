@@ -57,17 +57,26 @@ function Board({ title, label, onClose, children }) {
   const closeRef = useRef(null);
   useEffect(() => {
     closeRef.current?.focus();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const onKey = (event) => { if (event.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
   }, [onClose]);
 
   return (
     <div className="ms-modal" role="dialog" aria-modal="true" aria-labelledby="ms-board-title" onClick={(event) => event.target === event.currentTarget && onClose()}>
       <div className="ms-card ms-card--wide">
-        <h2 id="ms-board-title">{title}</h2>
-        <p className="ms-board__lead">{label}</p>
-        {children}
+        <div className="ms-board__head">
+          <h2 id="ms-board-title">{title}</h2>
+          <p className="ms-board__lead">{label}</p>
+        </div>
+        <div className="ms-board__body">
+          {children}
+        </div>
         <div className="ms-card__actions">
           <button type="button" className="ms-btn" ref={closeRef} onClick={onClose}>Back</button>
         </div>
@@ -93,8 +102,8 @@ function flightWhen(at) {
 function PackChip({ id, count }) {
   const part = PARTS.find((item) => item.id === id);
   if (!part) return null;
-  const x = part.offX ?? part.frameX ?? 0;
-  const y = part.offY ?? part.frameY ?? 0;
+  const x = part.frameX ?? 0;
+  const y = part.frameY ?? 0;
   return (
     <li className="ms-pack">
       {part.src ? (
@@ -109,7 +118,8 @@ function PackChip({ id, count }) {
           }}
         />
       )}
-      <span>{count > 1 ? `${part.name} ×${count}` : part.name}</span>
+      <span className="ms-pack__name">{part.name}</span>
+      <b className="ms-pack__count">×{count}</b>
     </li>
   );
 }
@@ -137,7 +147,7 @@ export function HistoryBoard({ progress, missions, onClose }) {
             <li key={card.id} className={`ms-trip${card.success ? ' is-made' : ''}`}>
               <div className="ms-trip__head">
                 <Planet planet={card.mission.planet} size={56} />
-                <div>
+                <div className="ms-trip__meta">
                   <p className="ms-log__num">Mission {card.mission.number} · {card.mission.place}</p>
                   <h3 className="ms-log__title">{card.mission.title}</h3>
                   <p className="ms-trip__when">{flightWhen(card.at)}</p>

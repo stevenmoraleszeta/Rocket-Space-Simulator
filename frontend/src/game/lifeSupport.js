@@ -68,12 +68,14 @@ export function supplyReport(equipped, mission) {
   let plantWaterPerDay = 0
   let waterRecycle = 0
   let medicineCount = 0
+  let co2Filters = 0
   let o2Kg = HULL.o2Kg
   let o2Recycle = 0
   let crew = 0
   const offered = partsForMission(mission?.id)
   const tracksWater = offered.some((part) => part.waterDays)
   const tracksMedicine = offered.some((part) => part.medicine)
+  const tracksCo2 = offered.some((part) => part.co2Filter)
 
   for (const part of PARTS) {
     const count = partCount(equipped, part.id)
@@ -88,6 +90,7 @@ export function supplyReport(equipped, mission) {
     plantWaterPerDay += (part.waterKgPerDay || 0) * count
     if (part.waterRecycle) waterRecycle = Math.max(waterRecycle, part.waterRecycle)
     if (part.medicine) medicineCount += count
+    if (part.co2Filter) co2Filters += count
     o2Kg += (part.o2Kg || 0) * count
     if (part.o2Recycle) o2Recycle = Math.max(o2Recycle, part.o2Recycle)
     if (part.id === 'astronaut') crew += count
@@ -132,8 +135,10 @@ export function supplyReport(equipped, mission) {
     waterNeedKg,
     plantWaterPerDay,
     medicineCount,
+    co2Filters,
     tracksWater,
     tracksMedicine,
+    tracksCo2,
     o2Kg,
     foodNeedKg,
     o2NeedKg,

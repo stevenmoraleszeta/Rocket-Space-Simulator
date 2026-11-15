@@ -4,7 +4,7 @@
  */
 import './brand.css'
 
-export function AppLogo({ size = 64, wordmark = false, decorative = false, className = '' }) {
+export function AppLogo({ size = 64, wordmark = false, className = '' }) {
   const named = Boolean(wordmark)
   const classes = ['brand', named ? 'brand--wordmark' : '', className].filter(Boolean).join(' ')
   return (
@@ -12,7 +12,7 @@ export function AppLogo({ size = 64, wordmark = false, decorative = false, class
       <img
         className="brand__mark"
         src="/favicon.svg"
-        alt={named || decorative ? '' : 'Rocket Space Simulator'}
+        alt={named ? '' : 'Rocket Space Simulator'}
         width={size}
         height={size}
         draggable="false"

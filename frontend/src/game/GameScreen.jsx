@@ -24,7 +24,6 @@ import { partTags, rocketStatus } from './stats.js';
 import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../audio';
 import { useSettings } from '../settings/SettingsContext.jsx';
 import { engineerName, sayTo } from '../settings/settingsStore.js';
-import { HudMission } from './HudMission.jsx';
 import './game.css';
 
 /**
@@ -198,9 +197,11 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       <button type="button" className="game__back" onClick={onExit}>
         Missions
       </button>
-      <HudMission kicker={`Mission ${mission.number}`} title={mission.title}>
+      <div className="game__mission">
+        <div className="game__num">Mission {mission.number}</div>
+        <h1>{mission.title}</h1>
         {playerName && <p className="game__engineer">Engineer {playerName}</p>}
-      </HudMission>
+      </div>
       <div className="game__place">{mission.place}</div>
     </header>
   );
@@ -414,9 +415,28 @@ function BulbIcon() {
 
 /** Detail for one part. Opens on the right, next to the icon row. */
 function PartDialog({ part, count, creditsLeft, onChange, onClose }) {
+  const [denied, setDenied] = useState(false);
+  const denyTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(denyTimer.current), []);
+  useEffect(() => setDenied(false), [part?.id]);
+
   if (!part) return null;
   const max = partMax(part);
   const broke = creditsLeft < part.cost;
+
+  function tryAdd() {
+    if (count >= max) return;
+    if (!broke) {
+      setDenied(false);
+      onChange(part.id, 1);
+      return;
+    }
+    setDenied(true);
+    playSfx(SFX.error);
+    clearTimeout(denyTimer.current);
+    denyTimer.current = setTimeout(() => setDenied(false), 700);
+  }
 
   return (
     <section
@@ -450,11 +470,11 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose }) {
         <span className="part-dialog__count" aria-live="polite">{count} / {max}</span>
         <button
           type="button"
-          className="step-btn"
-          disabled={count >= max || broke}
+          className={denied ? 'step-btn is-denied' : 'step-btn'}
+          disabled={count >= max}
           title={broke && count < max ? 'Not enough money' : undefined}
           aria-label={`Add one ${part.name}`}
-          onClick={() => onChange(part.id, 1)}
+          onClick={tryAdd}
         >
           +
         </button>

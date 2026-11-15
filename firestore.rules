@@ -60,7 +60,7 @@ service cloud.firestore {
     function validPacked(packed) {
       return packed is map
         && packed.size() <= 16
-        && packed.keys().hasOnly(['shield', 'boosters', 'fuel', 'food', 'water', 'medicine', 'veggie', 'astronaut', 'garden', 'scrubber', 'shelter', 'parachute', 'rover', 'antenna'])
+        && packed.keys().hasOnly(['shield', 'boosters', 'fuel', 'food', 'water', 'medicine', 'veggie', 'astronaut', 'garden', 'filter', 'lander', 'prospector', 'pantry', 'recycler', 'scrubber', 'shelter', 'parachute', 'rover', 'antenna'])
         && countOk(packed, 'shield')
         && countOk(packed, 'boosters')
         && countOk(packed, 'fuel')
@@ -70,6 +70,11 @@ service cloud.firestore {
         && countOk(packed, 'veggie')
         && countOk(packed, 'astronaut')
         && countOk(packed, 'garden')
+        && countOk(packed, 'filter')
+        && countOk(packed, 'lander')
+        && countOk(packed, 'prospector')
+        && countOk(packed, 'pantry')
+        && countOk(packed, 'recycler')
         && countOk(packed, 'scrubber')
         && countOk(packed, 'shelter')
         && countOk(packed, 'parachute')

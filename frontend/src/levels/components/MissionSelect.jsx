@@ -80,11 +80,9 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
                 }
               >
                 <Planet planet={m.planet} size={130} locked={state === 'locked'} />
-                {state === 'locked' && (
+                {state === 'locked' && SPRITES.lock?.src && (
                   <span className="ms-lock" aria-hidden="true">
-                    {SPRITES.lock?.src
-                      ? <img className={`ms-lock__img${SPRITES.lock.pixelArt ? ' is-pixel' : ''}`} src={SPRITES.lock.src} alt="" draggable="false" />
-                      : '🔒'}
+                    <img className={`ms-lock__img${SPRITES.lock.pixelArt ? ' is-pixel' : ''}`} src={SPRITES.lock.src} alt="" draggable="false" />
                   </span>
                 )}
                 {state === 'completed' && <span className="ms-check" aria-hidden="true">✓</span>}
@@ -149,7 +147,7 @@ export function MissionCard({ mission, stars, completed, onClose, onLaunch }) {
         )}
         <div className="ms-card__actions">
           <button className="ms-btn ms-btn--ghost" onClick={onClose}>Back</button>
-          <button className="ms-btn" ref={launchRef} onClick={onLaunch}>{completed ? 'Play again 🚀' : 'Launch! 🚀'}</button>
+          <button className="ms-btn" ref={launchRef} onClick={onLaunch}>{completed ? 'Play again' : 'Launch!'}</button>
         </div>
       </div>
     </div>

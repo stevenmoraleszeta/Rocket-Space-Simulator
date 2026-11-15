@@ -40,6 +40,22 @@
 .orbit-canvas--target { cursor: pointer; }
 .orbit-canvas--aim { cursor: crosshair; }
 
+.orbit-note {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  margin: 0;
+  max-width: 18em;
+  padding: 8px 10px;
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--ms-yellow);
+  background: rgba(5, 6, 26, 0.88);
+  pointer-events: none;
+}
+
 /* Launch bases on top of the planet */
 .orbit-sites { position: absolute; inset: 0; pointer-events: none; }
 .orbit-site {
@@ -184,7 +200,6 @@ button.orbit-site:focus-visible .orbit-site__name { outline: 3px solid var(--ms-
   animation: mission-complete-pop 0.45s steps(6) both;
 }
 
-.mission-complete__logo { margin: 0 auto 12px; }
 .mission-complete__kicker {
   margin: 0;
   font-family: var(--ms-font-pixel);

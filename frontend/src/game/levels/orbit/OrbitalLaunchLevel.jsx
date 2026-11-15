@@ -20,7 +20,6 @@ import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
-import { HudMission } from '../../HudMission.jsx'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { FlightReadout } from '../../FlightReadout.jsx'
 import { flightReadout } from '../../lifeSupport.js'
@@ -148,9 +147,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const orbit = useMemo(() => hardestOrbit(), [])
   const siteCheck = site ? checkTargetFromSite(site, orbit) : null
   const rotationBoost = rotationBoostForInclination(orbit.inclinationDeg)
-  // Ring view: the path, the arrival orbit and the satellites are drawn around the Earth, not as
-  // a ground track on the map (groundTrack.js). The renderer still accepts a track if one is passed.
-  const track = null
   const arrival = useMemo(
     () => (orbit && arrivalAngle !== null ? arrivalPosition(orbit.altitudeKm, arrivalAngle) : null),
     [orbit, arrivalAngle],
@@ -301,7 +297,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       orbitId: orbit.id,
       orbitsForSite,
       arrival,
-      track,
       aimPoint,
       prediction,
       images,
@@ -399,7 +394,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           orbits: current.orbitsForSite,
           selectedOrbitId: current.orbitId,
           arrival: current.arrival,
-          track: current.track,
           satellites: REAL_SATELLITES,
           // A rocket that blew up at launch never flew: no path or rocket on the map.
           prediction: current.blewUp ? null : current.prediction,
@@ -532,7 +526,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       <button type="button" className="game__back" onClick={onExit}>
         Missions
       </button>
-      <HudMission kicker={`Level ${stageInfo.levelNumber} · ${stageInfo.title}`} title={mission.title} />
+      <div className="game__mission">
+        <div className="game__num">Level {stageInfo.levelNumber} · {stageInfo.title}</div>
+        <h1>{mission.title}</h1>
+      </div>
       <div className="game__place">{mission.place}</div>
     </header>
   )
@@ -585,6 +582,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
             onPointerCancel={handlePointerUp}
             onPointerLeave={handlePointerLeave}
           />
+          <p className="orbit-note">This is a simulation, not a real flight.</p>
           {shownSatellite && (
             <div
               className={`satellite-card${shownSatellite.y < 150 ? ' is-below' : ''}${hoveredSatellite ? ' is-hover' : ''}`}

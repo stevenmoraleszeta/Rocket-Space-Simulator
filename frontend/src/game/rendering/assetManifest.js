@@ -19,6 +19,7 @@ import rocketSheetUrl from '../../assets/images/rockets/animations/rocket_sheet.
 import launchBaseUrl from '../../assets/images/rockets/launch_base.png'
 import explosionSheetUrl from '../../assets/images/rockets/animations/explosion_sheet.png'
 import earthPlanetUrl from '../../assets/images/planets/earth.svg'
+import moonPlanetUrl from '../../assets/images/planets/moon.svg'
 import marsPlanetUrl from '../../assets/images/planets/mars.svg'
 import phobosUrl from '../../assets/images/planets/phobos.svg'
 import deimosUrl from '../../assets/images/planets/deimos.svg'
@@ -41,6 +42,7 @@ export const ASSETS = Object.freeze({
   // 8 frames of 32 x 32 in the first row.
   explosion: { src: explosionSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
   earthPlanet: { src: earthPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
+  moonPlanet: { src: moonPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
   marsPlanet: { src: marsPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
   phobos: { src: phobosUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
   deimos: { src: deimosUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
