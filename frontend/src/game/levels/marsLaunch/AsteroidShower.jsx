@@ -17,6 +17,7 @@ import {
   createShower,
   stepShower,
 } from './asteroidShower.js'
+import { createShowerSky, drawShowerSky } from './showerSky.js'
 
 /** Keyboard steering speed, in field pixels per second. */
 const KEY_SPEED = 150
@@ -44,7 +45,7 @@ export function AsteroidShower({ onEnd }) {
     const rock = loadImage(ASSETS.asteroid.src)
     const rocket = loadImage(ASSETS.rocketUpperStage.src)
     const shower = createShower()
-    const stars = Array.from({ length: 50 }, (_, i) => ({ x: (i * 53) % FIELD_W, y: (i * 37) % FIELD_H, speed: 10 + (i % 4) * 8 }))
+    const sky = createShowerSky()
     let frameId = 0
     let last = performance.now()
     let lastHud = 0
@@ -72,15 +73,9 @@ export function AsteroidShower({ onEnd }) {
         flashUntil = now + 250
       }
 
-      // Space, with stars sliding down so it feels like flying
+      // Starry space with nebulas; the star layers slide down so it feels like flying
       ctx.imageSmoothingEnabled = false
-      ctx.fillStyle = now < flashUntil ? '#3a0d16' : '#05061a'
-      ctx.fillRect(0, 0, FIELD_W, FIELD_H)
-      ctx.fillStyle = '#c9d4ff'
-      for (const star of stars) {
-        const y = (star.y + shower.time * star.speed) % FIELD_H
-        ctx.fillRect(star.x, Math.floor(y), 1, 1)
-      }
+      drawShowerSky(ctx, sky, shower.time, dt, now < flashUntil)
       // Rocks
       for (const r of shower.rocks) {
         const size = r.r * 2 + 2

@@ -64,7 +64,8 @@ test('the right path stops for crew choices: close passes plus the two runaway a
       if (pass.shower) continue // the asteroid shower is a dodging game, not a choice card
       const kinds = pass.situation.choices.map((choice) => choice.kind).sort()
       assert.deepEqual(kinds, [CHOICE.BAD, CHOICE.GOOD, CHOICE.MILD].sort())
-      assert.ok(!pass.situation.question.includes('{name}'))
+      // Questions are translated as templates, then filled with the (translated) name
+      assert.ok(!/\{name\}/.test(pass.situation.question.replace(/\{\{name\}\}/g, '')))
     }
   }
   assert.ok(SPACE_FACTS.length >= 10)
