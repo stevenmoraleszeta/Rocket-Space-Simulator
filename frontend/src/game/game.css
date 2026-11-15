@@ -960,14 +960,34 @@
   transform: translateX(40px);
 }
 
-/* Sprite-sheet loop: steps through --frames cells of one 32px row. */
+/* Sprite-sheet loop: steps through --frames cells of one 32px row, from cell --first. */
 .rocket__layer--anim {
   animation: rocket-frames calc(var(--frames) * 90ms) steps(var(--frames)) infinite;
 }
 
 @keyframes rocket-frames {
+  from { background-position-x: calc(var(--first, 0) * -32px); }
+  to { background-position-x: calc((var(--first, 0) + var(--frames)) * -32px); }
+}
+
+/* Stage separation (8 cells, ROCKET.separation): plays once and stays on the last cell. */
+.rocket__layer--once {
+  animation: rocket-frames-once var(--separation-time, 800ms) steps(7) forwards;
+}
+
+@keyframes rocket-frames-once {
   from { background-position-x: 0; }
-  to { background-position-x: calc(var(--frames) * -32px); }
+  to { background-position-x: -224px; }
+}
+
+/* Side boosters fall away together with the rear stage. */
+.rocket__layer--dropping {
+  animation: rocket-drop var(--separation-time, 800ms) ease-in forwards;
+}
+
+@keyframes rocket-drop {
+  from { transform: scale(var(--scale)); opacity: 1; }
+  to { transform: scale(var(--scale)) translateY(18px) rotate(8deg); opacity: 0; }
 }
 
 .dock {
@@ -1380,6 +1400,8 @@
   .rocket.is-flying,
   .rocket.is-launching,
   .rocket__layer--anim,
+  .rocket__layer--once,
+  .rocket__layer--dropping,
   .engineer,
   .crew__mover.is-patrol {
     animation: none;

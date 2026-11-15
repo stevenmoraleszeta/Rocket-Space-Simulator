@@ -4,12 +4,17 @@
  * stars fade in and Earth curves away below. Then the rocket shoots out the top.
  * CSS animations in ascent.css use the same length (--ascent-time: 6s).
  */
+import { useEffect, useState } from 'react';
 import { SPRITES } from '../levels';
 import { PlanetHorizon } from './PlanetHorizon.jsx';
 import { Rocket } from './Rocket.jsx';
 import './ascent.css';
 
 export const ASCENT_MS = 6000;
+// Out of the atmosphere (the sky is already dark): the rear stage drops away, then only the
+// short upper stage keeps going. Matches --separation-time in game.css.
+const SEPARATION_AT_MS = 3800;
+const SEPARATION_MS = 800;
 
 // Clouds that slide down past the rocket: horizontal spot, width, delay and speed
 const CLOUDS = [
@@ -21,6 +26,22 @@ const CLOUDS = [
 ];
 
 export function AscentScene({ equipped, hud }) {
+  // With reduced motion the separation is skipped and the short stage shows right away.
+  const [stage, setStage] = useState(() =>
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'upper' : 'full',
+  );
+  useEffect(() => {
+    if (stage !== 'full') return undefined;
+    const drop = setTimeout(() => setStage('separating'), SEPARATION_AT_MS);
+    const upper = setTimeout(() => setStage('upper'), SEPARATION_AT_MS + SEPARATION_MS);
+    return () => {
+      clearTimeout(drop);
+      clearTimeout(upper);
+    };
+    // Timers start once; the stage changes they make must not restart them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="ascent">
       <div className="ascent__sky" aria-hidden="true" />
@@ -37,7 +58,7 @@ export function AscentScene({ equipped, hud }) {
         />
       ))}
       <div className="ascent__rocket">
-        <Rocket equipped={equipped} ascending />
+        <Rocket equipped={equipped} ascending stage={stage} />
       </div>
       <div className="ascent__content">
         {hud}

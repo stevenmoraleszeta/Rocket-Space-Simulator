@@ -15,6 +15,7 @@
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { circularOrbitAngularSpeed, pointOnCircle } from '../../physics/orbitalMechanics.js'
 import { OUTCOMES, degreesToRadians, satellitePositionAt } from './launchSimulation.js'
+import { ASSETS } from '../../rendering/assetManifest.js'
 
 /** Altitude where the display curve starts to squeeze heights (km). */
 export const ALTITUDE_DISPLAY_SCALE_KM = 1200
@@ -40,6 +41,10 @@ const SATELLITE_TYPES = [
 const SATELLITE_FRAMES_PER_SECOND = 6
 const satelliteTypeCache = new WeakMap()
 const ROCKET_DRAW_SIZE = 40
+/** Kármán line, where space begins: above it the rear stage has dropped and only the short stage flies. */
+const STAGE_SEPARATION_ALTITUDE_METERS = 100_000
+/** Rows of the short stage cell that are hull; the rows below are its flame. */
+const UPPER_STAGE_HULL_ROWS = 17
 const EXPLOSION_FRAME_SIZE = 32
 const EXPLOSION_FRAME_COUNT = 8
 const EXPLOSION_FRAMES_PER_SECOND = 10
@@ -326,14 +331,26 @@ export function flightPoseAt(samples, timeSeconds) {
 function drawRocket(ctx, view, pose, headingPoint, images) {
   const screen = worldToScreen(view, pose.x, pose.y)
   const ahead = worldToScreen(view, headingPoint.x, headingPoint.y)
-  const image = pose.burning ? images.rocketLit : images.rocketOff
+  const inSpace = Math.hypot(pose.x, pose.y) - EARTH_RADIUS_METERS > STAGE_SEPARATION_ALTITUDE_METERS
+  const upper = images.rocketUpperStage
+  const image = inSpace && upper?.complete ? upper : pose.burning ? images.rocketLit : images.rocketOff
   if (!image?.complete) return
   // The sprite points up: rotate it toward where it is going on screen.
   const heading = Math.atan2(ahead.y - screen.y, ahead.x - screen.x)
+  const half = ROCKET_DRAW_SIZE / 2
   ctx.save()
   ctx.translate(Math.round(screen.x), Math.round(screen.y))
   ctx.rotate(heading + Math.PI / 2)
-  ctx.drawImage(image, -ROCKET_DRAW_SIZE / 2, -ROCKET_DRAW_SIZE / 2, ROCKET_DRAW_SIZE, ROCKET_DRAW_SIZE)
+  if (image === upper) {
+    // Short upper stage: flickering flame while burning, hull only (no flame) when coasting.
+    const sprite = ASSETS.rocketUpperStage
+    const cell = sprite.frameX + (Math.floor(performance.now() / 90) % sprite.frames) * sprite.frameWidth
+    const rows = pose.burning ? sprite.frameHeight : UPPER_STAGE_HULL_ROWS
+    const scale = ROCKET_DRAW_SIZE / sprite.frameHeight
+    ctx.drawImage(image, cell, sprite.frameY, sprite.frameWidth, rows, -half, -half, ROCKET_DRAW_SIZE, rows * scale)
+  } else {
+    ctx.drawImage(image, -half, -half, ROCKET_DRAW_SIZE, ROCKET_DRAW_SIZE)
+  }
   ctx.restore()
 }
 

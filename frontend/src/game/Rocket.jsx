@@ -1,13 +1,18 @@
 import { PARTS, ROCKET, partCount } from './parts.js';
 
 /** Plays `frames` cells of one sheet row in a loop (see .rocket__layer--anim in game.css). */
-function animatedStyle(sheet, sheetWidth, sheetHeight, frameY, frames) {
+function animatedStyle(sheet, sheetWidth, sheetHeight, frameY, frames, firstFrame = 0) {
   return {
     backgroundImage: `url(${sheet})`,
     backgroundSize: `${sheetWidth}px ${sheetHeight}px`,
     backgroundPositionY: `${-frameY}px`,
     '--frames': frames,
+    '--first': firstFrame,
   };
+}
+
+function rowStyle(row) {
+  return animatedStyle(row.sheet, row.sheetWidth, row.sheetHeight, row.frameY, row.frames, row.firstFrame);
 }
 
 function sheetStyle(part, lit) {
@@ -24,8 +29,10 @@ function sheetStyle(part, lit) {
  * Pixel rocket with the parts the player chose stacked on the same sprite cell.
  * flying: flight screen (rises in from below). launching: leaving the launch pad.
  * ascending: climbing through the atmosphere. All of them show the lit, animated engine.
+ * stage: 'full' (whole rocket), 'separating' (leaving the atmosphere, the rear stage and the
+ * side boosters drop away) or 'upper' (in space: only the short upper stage is left).
  */
-export function Rocket({ equipped, flying = false, launching = false, ascending = false, open = false }) {
+export function Rocket({ equipped, flying = false, launching = false, ascending = false, open = false, stage = 'full' }) {
   const lit = flying || launching || ascending;
   const classes = ['rocket'];
   if (flying) classes.push('is-flying');
@@ -33,6 +40,7 @@ export function Rocket({ equipped, flying = false, launching = false, ascending 
   if (ascending) classes.push('is-ascending');
   if (open) classes.push('rocket--open');
 
+  const separated = stage !== 'full';
   const interior = PARTS.filter((part) => part.inside && partCount(equipped, part.id) > 0);
 
   return (
@@ -50,10 +58,12 @@ export function Rocket({ equipped, flying = false, launching = false, ascending 
           })}
         </div>
       )}
-      {lit ? (
+      {lit && stage === 'separating' ? (
+        <span className="rocket__layer rocket__layer--once" style={rowStyle(ROCKET.separation)} />
+      ) : lit ? (
         <span
           className="rocket__layer rocket__layer--anim"
-          style={animatedStyle(ROCKET.flight.sheet, ROCKET.flight.sheetWidth, ROCKET.flight.sheetHeight, ROCKET.flight.frameY, ROCKET.flight.frames)}
+          style={rowStyle(stage === 'upper' ? ROCKET.upperStage : ROCKET.flight)}
         />
       ) : (
         <span
@@ -64,8 +74,16 @@ export function Rocket({ equipped, flying = false, launching = false, ascending 
           }}
         />
       )}
-      {PARTS.filter((part) => part.sheet && partCount(equipped, part.id) > 0).map((part) =>
-        lit && part.flightFrames ? (
+      {PARTS.filter((part) => part.sheet && partCount(equipped, part.id) > 0)
+        .filter((part) => !(stage === 'upper' && part.dropsWithStage))
+        .map((part) =>
+        separated && part.dropsWithStage ? (
+          <span
+            key={part.id}
+            className="rocket__layer rocket__layer--dropping"
+            style={sheetStyle(part, false)}
+          />
+        ) : lit && part.flightFrames ? (
           <span
             key={part.id}
             className="rocket__layer rocket__layer--anim"

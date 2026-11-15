@@ -153,6 +153,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     earth: loadImage(ASSETS.earthPlanet.src),
     rocketLit: loadImage(ASSETS.rocketLit.src),
     rocketOff: loadImage(ASSETS.rocketIdle.src),
+    rocketUpperStage: loadImage(ASSETS.rocketUpperStage.src),
     explosion: loadImage(ASSETS.explosion.src),
     goldSatellite: loadImage(ASSETS.goldSatellite.src),
     commsSatellite: loadImage(ASSETS.commsSatellite.src),

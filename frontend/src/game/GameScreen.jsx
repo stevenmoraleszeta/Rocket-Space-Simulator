@@ -118,7 +118,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           {hud}
           <div className="flight">
             <p className="flight__status">Liftoff! Heading to {mission.place}.</p>
-            <Rocket equipped={equipped} flying />
+            <Rocket equipped={equipped} flying stage="upper" />
             <Meters meters={meters} />
             <button type="button" className="game__back" onClick={() => setPhase('assemble')}>
               Hangar
