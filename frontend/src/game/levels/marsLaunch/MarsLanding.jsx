@@ -1,9 +1,9 @@
 /**
  * After reaching Mars: the recon dome comes down slowly under its parachute, fires its braking
- * rockets and touches the red ground (marsLandingScene.js). While it comes down, short captions
- * say why exploring Mars matters; on touchdown, that one day people may live there.
- * It waits for "Continue" so there is time to read. "Skip" ends it at once; with reduced motion
- * it shows the dome already on the ground.
+ * rockets and touches the red ground (marsLandingScene.js). Meanwhile the player reads, one at a
+ * time with "Next", why exploring Mars matters and that one day people may live there. The last
+ * message's "Continue" (once the dome is down) opens the mission complete screen, like every
+ * level. "Skip" ends it at once; with reduced motion the dome is already on the ground.
  */
 import { useEffect, useRef, useState } from 'react'
 import { t } from '../../../i18n/index.js'
@@ -23,11 +23,13 @@ const WHY_MARS = [
   'The recon dome studies the ground, the air, the ice and the dangers, like dust storms and radiation.',
 ]
 const LIVE_THERE = 'With what we learn, in some years people may be able to live on Mars!'
+const MESSAGES = [...WHY_MARS, LIVE_THERE]
 
 export function MarsLanding({ onDone }) {
   const canvasRef = useRef(null)
   const [landed, setLanded] = useState(false)
   const [line, setLine] = useState(0)
+  const last = line === MESSAGES.length - 1
   const doneRef = useRef(onDone)
   useEffect(() => {
     doneRef.current = onDone
@@ -52,7 +54,6 @@ export function MarsLanding({ onDone }) {
       const seconds = (now - start) / 1000
       drawLandingFrame(image, scene, Math.min(seconds, LANDING_SECONDS))
       ctx.putImageData(image, 0, 0)
-      setLine(Math.min(WHY_MARS.length - 1, Math.floor((seconds / TOUCHDOWN) * WHY_MARS.length)))
       if (seconds >= TOUCHDOWN) setLanded(true)
       // After the dust settles the scene stays, waiting for "Continue".
       if (seconds >= LANDING_SECONDS) return
@@ -71,16 +72,26 @@ export function MarsLanding({ onDone }) {
           {landed ? t('The recon dome is on Mars.') : t('The recon dome is coming down slowly…')}
         </p>
       </div>
-      <p className={`mars-landing__why${landed ? ' is-landed' : ''}`} key={landed ? 'live' : line} aria-live="polite">
-        {landed ? t(LIVE_THERE) : t(WHY_MARS[line])}
-      </p>
-      <button
-        type="button"
-        className={`${landed ? 'ms-btn' : 'game__back'} mars-landing__skip`}
-        onClick={() => doneRef.current()}
-      >
-        {landed ? t('Continue') : t('Skip')}
-      </button>
+      <div className={`mars-landing__why${last ? ' is-landed' : ''}`} key={line} aria-live="polite">
+        <p className="mars-landing__why-text">{t(MESSAGES[line])}</p>
+        <div className="mars-landing__why-row">
+          <span className="mars-landing__count">{line + 1} / {MESSAGES.length}</span>
+          {last ? (
+            <button type="button" className="ms-btn" disabled={!landed} onClick={() => doneRef.current()}>
+              {landed ? t('Continue') : t('Landing…')}
+            </button>
+          ) : (
+            <button type="button" className="ms-btn" onClick={() => setLine((current) => current + 1)}>
+              {t('Next')} ▶
+            </button>
+          )}
+        </div>
+      </div>
+      {!last && (
+        <button type="button" className="game__back mars-landing__skip" onClick={() => doneRef.current()}>
+          {t('Skip')}
+        </button>
+      )}
     </div>
   )
 }

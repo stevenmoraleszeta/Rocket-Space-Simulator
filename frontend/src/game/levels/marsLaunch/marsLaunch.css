@@ -194,3 +194,6 @@
   animation: mars-fact-in 0.5s ease-out;
 }
 .mars-landing__why.is-landed { border-color: #3ddc97; color: #e6fff2; }
+.mars-landing__why-text { margin: 0 0 0.75rem; }
+.mars-landing__why-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.mars-landing__count { font-family: var(--ms-font-pixel); font-size: 0.6875rem; color: #e8c07a; }
