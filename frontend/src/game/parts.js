@@ -41,6 +41,7 @@ export const PARTS = [
     offX: 128,
     offY: 0,
     frame: 32,
+    breaksOnSeparation: true, // the shell cracks in two out of the atmosphere, no heat left
     flightFrames: 5, // lit frames in row frameY, played while flying
   },
   {

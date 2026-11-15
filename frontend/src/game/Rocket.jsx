@@ -29,8 +29,9 @@ function sheetStyle(part, lit) {
  * Pixel rocket with the parts the player chose stacked on the same sprite cell.
  * flying: flight screen (rises in from below). launching: leaving the launch pad.
  * ascending: climbing through the atmosphere. All of them show the lit, animated engine.
- * stage: 'full' (whole rocket), 'separating' (leaving the atmosphere, the rear stage and the
- * side boosters drop away) or 'upper' (in space: only the short upper stage is left).
+ * stage: 'full' (whole rocket), 'separating' (leaving the atmosphere: the rear stage and the
+ * side boosters drop away and the heat shield cracks in two) or 'upper' (in space: only the
+ * short upper stage is left).
  */
 export function Rocket({ equipped, flying = false, launching = false, ascending = false, open = false, stage = 'full' }) {
   const lit = flying || launching || ascending;
@@ -75,9 +76,15 @@ export function Rocket({ equipped, flying = false, launching = false, ascending 
         />
       )}
       {PARTS.filter((part) => part.sheet && partCount(equipped, part.id) > 0)
-        .filter((part) => !(stage === 'upper' && part.dropsWithStage))
+        .filter((part) => !(stage === 'upper' && (part.dropsWithStage || part.breaksOnSeparation)))
         .map((part) =>
-        separated && part.dropsWithStage ? (
+        separated && part.breaksOnSeparation ? (
+          <span key={part.id} className="rocket__shell" aria-hidden="true">
+            <span className="rocket__layer rocket__shell-half rocket__shell-half--left" style={sheetStyle(part, true)} />
+            <span className="rocket__layer rocket__shell-half rocket__shell-half--right" style={sheetStyle(part, true)} />
+            <span className="rocket__layer rocket__shell-flash" />
+          </span>
+        ) : separated && part.dropsWithStage ? (
           <span
             key={part.id}
             className="rocket__layer rocket__layer--dropping"
