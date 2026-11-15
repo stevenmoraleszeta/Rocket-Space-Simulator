@@ -294,13 +294,9 @@ img.ms-planet { object-fit: contain; user-select: none; }
 .ms-stage { max-width: min(84rem, 100%); }
 .ms-path { grid-template-columns: repeat(5, 1fr); gap: 1.25rem clamp(0.75rem, 2.5vw, 3rem); }
 .ms-path::before { left: 10%; right: 10%; }
-.ms-stop--soon .ms-stop__soon {
-  font-family: var(--ms-font-pixel);
-  font-size: 0.625rem;
-  color: var(--ms-yellow);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
+/* Missions 4 and 5 can be tapped (only to say "Coming soon!"), so they show a pointer. */
+.ms-stop--soon .ms-stop__btn { cursor: pointer; }
+.ms-bubble--soon { white-space: nowrap; }
 @media (max-width: 720px) {
   .ms-path { grid-template-columns: 1fr; }
 }
