@@ -10,17 +10,17 @@ It handles:
 - **saving progress** (Firestore for the signed-in player, with a copy in localStorage),
 - the **selection screen** and the **mission card** with a "Launch!" button.
 
-Everything else (gameplay, results screen, menus, stats) belongs to other parts of the project.
+Mission 1 gameplay stays in `src/game/`. Mission 2's build, launch-site/date selection, orbit events, and science report live in `src/game/levels/moon/` and use the same mission data and progress context. Moon Mapper currently uses Medium difficulty only. Selecting a launch site zooms the Earth map in; the next step zooms back out and lets players move a date slider through a synodic month. The Moon's elliptical orbit, phase, arrival position, and Hohmann transfer path update with the date. Launch windows check Moon timing and modeled satellite/debris clearance; orbital traffic is illustrative and is not live TLE data. The `MoonFlight.jsx` gravity-slingshot mini-game is retained in the codebase but is not part of the active flow.
 
 ## Running it
 
 ```bash
 npm install
-npm run dev     # demo at http://localhost:5173
-npm test        # 15 tests for the progression logic
+npm run dev     # game at http://localhost:5173
+npm run test:moon
 ```
 
-The demo replaces gameplay with a screen where you pick how the mission ends (failed, 65 %, 85 % or 100 %), so unlocking and stars can be tested.
+Mission 2 is temporarily available from the start. Mission 3 still unlocks after Mission 2 is completed. Moon Mapper's best science score is saved in localStorage.
 
 ## Structure
 
@@ -40,6 +40,14 @@ src/levels/
     └── StarRating.jsx
 src/levels/assets/
 └── sprites.js              ← plug the art in here
+src/game/levels/moon/
+├── MoonMission.jsx         ← briefing, build, launch, orbit events, report
+├── MoonHangar.jsx          ← lunar parts, categories, and supplies
+├── MoonLaunchSetup.jsx     ← launch base, date, Moon position, transfer path
+├── moonLaunchPlanning.js   ← lunar phase, elliptical orbit, transfer, and traffic checks
+├── MoonFlight.jsx          ← parked gravity-slingshot mini-game (not in active flow)
+├── moonMissionData.js      ← equipment, difficulty, and event rules
+└── moonPhysics.js          ← small-step gravity simulation
 ```
 
 ## Rules

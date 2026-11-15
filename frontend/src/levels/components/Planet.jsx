@@ -5,13 +5,15 @@
 import { SPRITES } from '../assets/sprites.js';
 
 export function Planet({ planet, size = 120, locked = false }) {
+  // `size` is in design pixels; rem makes it follow the window scale (see lib/uiScale.js).
+  const box = { width: `${size / 16}rem`, height: `${size / 16}rem` };
   const sprite = SPRITES.planets[planet];
   const cls = `ms-planet ${locked ? 'is-locked' : ''} ${sprite?.pixelArt ? 'is-pixel' : ''}`;
 
   if (sprite?.src) {
     const frames = Math.max(1, sprite.frames || 1);
     if (frames === 1) {
-      return <img className={cls} src={sprite.src} width={size} height={size} alt="" draggable="false" />;
+      return <img className={cls} src={sprite.src} style={box} alt="" draggable="false" />;
     }
     // Horizontal sprite sheet: step through the frames with a CSS animation
     return (
@@ -19,8 +21,7 @@ export function Planet({ planet, size = 120, locked = false }) {
         className={`${cls} ms-sprite`}
         aria-hidden="true"
         style={{
-          width: size,
-          height: size,
+          ...box,
           backgroundImage: `url(${sprite.src})`,
           backgroundSize: `${frames * 100}% 100%`,
           animationDuration: `${frames / (sprite.fps || 8)}s`,
@@ -30,11 +31,11 @@ export function Planet({ planet, size = 120, locked = false }) {
     );
   }
 
-  return <PlanetSVG planet={planet} size={size} className={cls} />;
+  return <PlanetSVG planet={planet} box={box} className={cls} />;
 }
 
 /** Built-in drawings, used until the sprites arrive. */
-function PlanetSVG({ planet, size, className }) {
+function PlanetSVG({ planet, box, className }) {
   const art = {
     earth: (
       <>
@@ -66,7 +67,7 @@ function PlanetSVG({ planet, size, className }) {
   }[planet];
 
   return (
-    <svg className={className} viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
+    <svg className={className} viewBox="0 0 100 100" style={box} aria-hidden="true">
       <defs>
         <radialGradient id={`ms-shade-${planet}`} cx="35%" cy="30%" r="75%">
           <stop offset="55%" stopColor="#000" stopOpacity="0" />

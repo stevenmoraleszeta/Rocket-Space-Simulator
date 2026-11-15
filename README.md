@@ -2,7 +2,7 @@
 
 ![Logotipo de Rocket Space Simulator: un cohete despega sobre la Tierra](frontend/public/favicon.svg)
 
-Base de un videojuego espacial. El cliente, la API y Firebase quedan conectados. Todavía no hay lógica del juego.
+Prototipo de videojuego espacial 2D en pixel art. Mission 1 permite construir y lanzar un satélite; Mission 2, **Moon Mapper**, añade el viaje jugable a la Luna, su órbita, eventos y un informe de ciencia.
 
 Licencia MIT. El texto completo está en [LICENSE](LICENSE).
 
@@ -22,6 +22,8 @@ Licencia MIT. El texto completo está en [LICENSE](LICENSE).
 ```
 frontend/          Cliente React. Firebase se inicializa en src/lib/firebase.js
 backend/           API FastAPI. Dependencias en requirements.txt
+frontend/src/game/levels/moon/
+                    Briefing, hangar, vuelo, eventos y reporte de Mission 2
 firebase.json      Emuladores, reglas y hosting del build de frontend/dist
 firestore.rules    Cada jugador solo lee y escribe su progreso y sus ajustes
 storage.rules      Lectura y escritura cerradas
@@ -68,6 +70,7 @@ npm run dev:web
 | Emuladores | http://127.0.0.1:4000          |
 
 `npm run build:web` genera el cliente en `frontend/dist`, que es la carpeta que publica Firebase Hosting.
+`npm run test:moon` corre las pruebas de recursos, eventos y física del viaje lunar.
 
 ## Datos del jugador
 
