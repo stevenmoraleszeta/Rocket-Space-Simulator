@@ -161,35 +161,62 @@ function drawPlanets(ctx, view, images, day) {
  * yellow = satellite); once launched, the satellite sprites show and debris looks like a tumbling
  * rocket stage.
  */
-function drawHazards(ctx, view, images, day, launched, clockSeconds) {
-  for (const hazard of MARS_HAZARDS) {
-    const world = hazardPosition(hazard, day)
-    const spot = toScreen(view, world.x, world.y)
-    circle(ctx, spot.x, spot.y, hazard.dangerAu * view.pixelsPerAu, COLORS.danger)
-    const color = hazard.kind === 'debris' ? COLORS.debris : COLORS.satellite
-    if (!launched) {
-      ctx.save()
-      ctx.shadowColor = color
-      ctx.shadowBlur = 10
-      circle(ctx, spot.x, spot.y, 5, color)
-      ctx.restore()
-      continue
-    }
-    if (hazard.kind === 'satellite' && images.satellite?.complete && images.satellite.naturalWidth > 0) {
-      drawImageCentered(ctx, images.satellite, spot.x, spot.y, HAZARD_PIXELS + 6)
-    } else {
-      // Tumbling old rocket stage: a gray body with a dark nozzle, slowly turning.
-      ctx.save()
-      ctx.translate(spot.x, spot.y)
-      ctx.rotate(clockSeconds * 0.8 + hazard.startDeg)
-      ctx.fillStyle = color
-      ctx.fillRect(-4, -HAZARD_PIXELS / 2, 8, HAZARD_PIXELS - 4)
-      ctx.fillStyle = '#5c6772'
-      ctx.fillRect(-5, HAZARD_PIXELS / 2 - 5, 10, 4)
-      ctx.restore()
-    }
-    label(ctx, hazard.name, spot.x, spot.y - HAZARD_PIXELS, color, 'center', 12)
+/**
+ * Before the launch each hazard is a tiny blinking pixel light. Colors step through RGB, each one
+ * blinks on its own beat, and there are three pixel shapes so they do not all look the same.
+ */
+const PIXEL_LIGHT_COLORS = ['#ff3b3b', '#3bff6a', '#3b8bff', '#ffe83b', '#ff3bf2', '#3bf5ff']
+const PIXEL_LIGHT_SHAPES = [
+  { block: 3, cells: [[0, 0]] }, // one small square
+  { block: 3, cells: [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]] }, // a plus
+  { block: 3, cells: [[-1, -1], [0, -1], [1, -1], [-1, 0], [0, 0], [1, 0], [-1, 1], [0, 1], [1, 1]] }, // a big square
+]
+
+function drawBlinkingPixel(ctx, spot, index, clockSeconds) {
+  // Each light blinks on its own beat: on for most of the beat, off for a short moment.
+  const beat = 0.7 + (index % 3) * 0.25
+  const phase = (clockSeconds / beat + index * 0.37) % 1
+  if (phase > 0.72) return
+  const color = PIXEL_LIGHT_COLORS[(Math.floor(clockSeconds * 2.5) + index) % PIXEL_LIGHT_COLORS.length]
+  const shape = PIXEL_LIGHT_SHAPES[index % PIXEL_LIGHT_SHAPES.length]
+  const x0 = Math.round(spot.x)
+  const y0 = Math.round(spot.y)
+  ctx.fillStyle = color
+  for (const [cx, cy] of shape.cells) {
+    ctx.fillRect(x0 + cx * shape.block - Math.floor(shape.block / 2), y0 + cy * shape.block - Math.floor(shape.block / 2), shape.block, shape.block)
   }
+  // A white pixel in the middle makes it sparkle.
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(x0 - 1, y0 - 1, 2, 2)
+}
+
+function drawHazards(ctx, view, images, day, launched, clockSeconds) {
+  MARS_HAZARDS.forEach((hazard, index) => drawHazard(ctx, view, images, day, launched, clockSeconds, hazard, index))
+}
+
+function drawHazard(ctx, view, images, day, launched, clockSeconds, hazard, index) {
+  const world = hazardPosition(hazard, day)
+  const spot = toScreen(view, world.x, world.y)
+  circle(ctx, spot.x, spot.y, hazard.dangerAu * view.pixelsPerAu, COLORS.danger)
+  const color = hazard.kind === 'debris' ? COLORS.debris : COLORS.satellite
+  if (!launched) {
+    drawBlinkingPixel(ctx, spot, index, clockSeconds)
+    return
+  }
+  if (hazard.kind === 'satellite' && images.satellite?.complete && images.satellite.naturalWidth > 0) {
+    drawImageCentered(ctx, images.satellite, spot.x, spot.y, HAZARD_PIXELS + 6)
+  } else {
+    // Tumbling old rocket stage: a gray body with a dark nozzle, slowly turning.
+    ctx.save()
+    ctx.translate(spot.x, spot.y)
+    ctx.rotate(clockSeconds * 0.8 + hazard.startDeg)
+    ctx.fillStyle = color
+    ctx.fillRect(-4, -HAZARD_PIXELS / 2, 8, HAZARD_PIXELS - 4)
+    ctx.fillStyle = '#5c6772'
+    ctx.fillRect(-5, HAZARD_PIXELS / 2 - 5, 10, 4)
+    ctx.restore()
+  }
+  label(ctx, hazard.name, spot.x, spot.y - HAZARD_PIXELS, color, 'center', 12)
 }
 
 export function pathColor(outcome) {
