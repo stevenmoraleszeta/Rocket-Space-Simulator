@@ -1,18 +1,54 @@
 /* Laika on the launch pad, and her story bubble. */
-.pad-laika {
+
+/* Her lane across the pad area (.prep, which sets --scale for the crew too). It is as wide as
+   the pad, so translate(x%) in PadLaika.jsx moves her by a share of the pad; the y part drops
+   her below the platform top (lower on the apron beside it).
+   Same z-index as .crew and earlier in the page, so the engineers are drawn over her. */
+.laika-track {
   position: absolute;
-  z-index: 4;
+  z-index: 3;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* One dog pixel is 0.62 of an engineer pixel (game.css .engineer: scale × 0.34), so she stands
+   about a third as tall as the crew. */
+.pad-laika {
+  --dog-px: calc(var(--scale) * 0.34 * 0.62px);
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: calc(20 * var(--dog-px));
   aspect-ratio: 20 / 14;
   padding: 0;
   border: 0;
   background: transparent;
-  transform: translate(-50%, -100%);
   pointer-events: auto;
   cursor: pointer;
-  filter: drop-shadow(0 0.25rem 0 rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 calc(var(--dog-px) * 0.8) 0 rgba(0, 0, 0, 0.3));
 }
 
-/* Tail, body and head are stacked full-size layers (PadLaika.jsx, Part), each animated alone. */
+.pad-laika:focus-visible {
+  outline: 0.1875rem solid var(--ms-yellow);
+  outline-offset: 0.25rem;
+}
+
+.pad-laika__hop,
+.pad-laika__dog {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.pad-laika.is-flip .pad-laika__dog {
+  transform: scaleX(-1);
+}
+
+/* Tail, legs, torso and head are stacked full-size layers (PadLaika.jsx, Part), each animated alone. */
 .pad-laika__part {
   position: absolute;
   inset: 0;
@@ -21,44 +57,170 @@
   height: 100%;
   overflow: visible;
   will-change: transform;
+  transition: transform 0.25s steps(3, end);
 }
 
-.pad-laika:focus-visible {
-  outline: 0.1875rem solid var(--ms-yellow);
-  outline-offset: 0.25rem;
-}
-
+/* Always: a happy tail and a little breathing. */
 .pad-laika__tail {
   animation: laika-wag 0.36s ease-in-out infinite alternate;
 }
 
-.pad-laika__body {
+.pad-laika__torso {
   animation: laika-breathe 2.4s ease-in-out infinite;
 }
 
-.pad-laika__head {
-  animation: laika-look 5s ease-in-out infinite;
+/* Walking and running: legs swing in pairs (a and b), the body bobs. */
+.pad-laika.is-walk .pad-laika__leg--a,
+.pad-laika.is-run .pad-laika__leg--a {
+  animation: laika-step 0.34s ease-in-out infinite alternate;
 }
 
+.pad-laika.is-walk .pad-laika__leg--b,
+.pad-laika.is-run .pad-laika__leg--b {
+  animation: laika-step 0.34s ease-in-out -0.34s infinite alternate-reverse;
+}
+
+.pad-laika.is-walk .pad-laika__hop {
+  animation: laika-trot 0.34s ease-in-out infinite alternate;
+}
+
+.pad-laika.is-run .pad-laika__leg {
+  animation-duration: 0.16s;
+}
+
+.pad-laika.is-run .pad-laika__hop {
+  animation: laika-trot 0.16s ease-in-out infinite alternate;
+}
+
+.pad-laika.is-run .pad-laika__tail,
+.pad-laika.is-spin .pad-laika__tail,
+.pad-laika.is-bark .pad-laika__tail {
+  animation-duration: 0.14s;
+}
+
+/* Sniffing the tarmac: nose down, bobbing. */
+.pad-laika.is-sniff .pad-laika__head {
+  animation: laika-sniff 0.4s ease-in-out infinite alternate;
+}
+
+/* Sitting (and scratching, which starts from a sit): hind legs tucked, chest up. */
+.pad-laika.is-sit .pad-laika__torso,
+.pad-laika.is-scratch .pad-laika__torso {
+  animation: none;
+  transform: rotate(-22deg);
+}
+
+.pad-laika.is-sit .pad-laika__leg--hind,
+.pad-laika.is-scratch .pad-laika__leg--hind {
+  transform: translate(10%, -6%) rotate(-80deg);
+}
+
+.pad-laika.is-sit .pad-laika__head,
+.pad-laika.is-scratch .pad-laika__head {
+  transform: translate(-6%, -16%);
+}
+
+.pad-laika.is-sit .pad-laika__leg--front,
+.pad-laika.is-scratch .pad-laika__leg--front {
+  transform: rotate(-12deg);
+}
+
+.pad-laika.is-sit .pad-laika__tail,
+.pad-laika.is-scratch .pad-laika__tail {
+  animation: laika-wag-low 0.5s ease-in-out infinite alternate;
+}
+
+/* Scratching an ear with a fast hind paw, head tipped toward it. */
+.pad-laika.is-scratch .pad-laika__leg--scratch {
+  animation: laika-scratch 0.12s linear infinite alternate;
+}
+
+.pad-laika.is-scratch .pad-laika__head {
+  transform: translate(-6%, -16%) rotate(14deg);
+}
+
+/* Jumping off the platform edge or back up onto it: the lane moves her across and down/up in
+   a straight line, the hop layer adds the arc. Legs stretch out front and back in the air. */
+.pad-laika.is-jump-down .pad-laika__hop {
+  animation: laika-leap-down var(--move-ms, 0.56s) ease-out both;
+}
+
+.pad-laika.is-jump-up .pad-laika__hop {
+  animation: laika-leap-up var(--move-ms, 0.56s) ease-out both;
+}
+
+.pad-laika.is-jump-down .pad-laika__leg--front,
+.pad-laika.is-jump-up .pad-laika__leg--front {
+  transform: rotate(-45deg);
+}
+
+.pad-laika.is-jump-down .pad-laika__leg--hind,
+.pad-laika.is-jump-up .pad-laika__leg--hind {
+  transform: rotate(45deg);
+}
+
+.pad-laika.is-jump-down .pad-laika__dog {
+  transform: rotate(14deg);
+}
+
+.pad-laika.is-jump-down.is-flip .pad-laika__dog {
+  transform: scaleX(-1) rotate(14deg);
+}
+
+.pad-laika.is-jump-up .pad-laika__dog {
+  transform: rotate(-14deg);
+}
+
+.pad-laika.is-jump-up.is-flip .pad-laika__dog {
+  transform: scaleX(-1) rotate(-14deg);
+}
+
+/* Two happy hops. */
+.pad-laika.is-hop .pad-laika__hop {
+  animation: laika-hop 0.65s cubic-bezier(0.3, 0, 0.4, 1) 2;
+}
+
+/* Barking: head bobs, the bubble says "Woof!". */
+.pad-laika.is-bark .pad-laika__head,
 .pad-laika:hover .pad-laika__head,
 .pad-laika.is-talking .pad-laika__head {
-  animation: laika-bark 0.5s ease-in-out infinite;
+  animation: laika-bark 0.3s ease-in-out infinite;
+}
+
+/* Chasing her tail: turning round and round on the spot. */
+.pad-laika.is-spin .pad-laika__dog {
+  animation: laika-spin 0.5s steps(2, end) 3;
+}
+
+/* A curious head tilt, like listening to the player. */
+.pad-laika.is-tilt .pad-laika__head {
+  transform: rotate(-16deg);
 }
 
 .pad-laika__bubble {
   position: absolute;
-  left: 70%;
-  bottom: 100%;
+  left: 50%;
+  bottom: 120%;
   display: grid;
   place-items: center;
-  width: 1.75rem;
+  min-width: 1.75rem;
   height: 1.75rem;
+  padding: 0 0.375rem;
+  box-sizing: border-box;
+  transform: translateX(-50%);
   font-family: var(--ms-font-pixel);
   font-size: 0.875rem;
+  white-space: nowrap;
   color: #2a2000;
   background: var(--ms-yellow);
   box-shadow: 0.1875rem 0.1875rem 0 #05061a;
   animation: laika-call 1.2s steps(2, end) infinite;
+}
+
+.pad-laika__bubble.is-woof {
+  font-size: 0.625rem;
+  color: #1a1d33;
+  background: #ffffff;
 }
 
 @keyframes laika-wag {
@@ -66,14 +228,59 @@
   to { transform: rotate(18deg); }
 }
 
+@keyframes laika-wag-low {
+  from { transform: translateY(18%) rotate(30deg); }
+  to { transform: translateY(18%) rotate(55deg); }
+}
+
 @keyframes laika-breathe {
   0%, 100% { transform: scaleY(1); }
   50% { transform: scaleY(1.05); }
 }
 
-@keyframes laika-look {
-  0%, 70%, 100% { transform: rotate(0); }
-  78%, 90% { transform: rotate(-10deg); }
+@keyframes laika-step {
+  from { transform: rotate(-28deg); }
+  to { transform: rotate(28deg); }
+}
+
+@keyframes laika-trot {
+  from { transform: translateY(0); }
+  to { transform: translateY(-5%); }
+}
+
+@keyframes laika-sniff {
+  from { transform: translateY(18%) rotate(26deg); }
+  to { transform: translateY(22%) rotate(32deg); }
+}
+
+@keyframes laika-scratch {
+  from { transform: translate(10%, -10%) rotate(-150deg); }
+  to { transform: translate(10%, -10%) rotate(-115deg); }
+}
+
+@keyframes laika-hop {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  12% { transform: translateY(0) scaleY(0.85); }
+  50% { transform: translateY(-55%) scaleY(1.08); }
+  88% { transform: translateY(0) scaleY(0.9); }
+}
+
+@keyframes laika-leap-down {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-70%); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes laika-leap-up {
+  0% { transform: translateY(0) scaleY(0.85); }
+  15% { transform: translateY(0) scaleY(1); }
+  55% { transform: translateY(-120%); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes laika-spin {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(-1); }
 }
 
 @keyframes laika-bark {
@@ -82,7 +289,7 @@
 }
 
 @keyframes laika-call {
-  50% { transform: translateY(-0.25rem); }
+  50% { transform: translate(-50%, -0.25rem); }
 }
 
 /* Story bubble: a comic card in the lower left, above the dog. */
@@ -170,9 +377,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pad-laika__tail,
-  .pad-laika__body,
-  .pad-laika__head,
+  .pad-laika .pad-laika__part,
+  .pad-laika__hop,
+  .pad-laika__dog,
   .pad-laika__bubble,
   .laika-talk,
   .laika-talk__art {

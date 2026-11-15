@@ -63,7 +63,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
       <div className="ms-stage">
       <header className="ms-head">
         <AppLogo size={64} wordmark bare />
-        <p className="ms-ages">A space game for kids ages 7 to 12</p>
+        <p className="ms-ages">A space game for kids ages 8 to 12</p>
         <h1>Choose your mission!</h1>
         <p className="ms-greet">
           {playerName

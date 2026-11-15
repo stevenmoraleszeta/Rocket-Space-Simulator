@@ -1,6 +1,6 @@
 # Space Mission: mission selection
 
-Mission selection screen for the first prototype: **3 missions played in order** (Earth → Moon → Mars), designed for players aged 8–15.
+Mission selection screen for the first prototype: **3 missions played in order** (Earth → Moon → Mars), designed for players aged 8–12.
 
 It handles:
 

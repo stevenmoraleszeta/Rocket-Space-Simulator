@@ -8,6 +8,7 @@ import { useEffect, useRef } from 'react'
 import { MISSIONS, Planet, StarRating } from '../../../levels'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
+import { MissionReport } from '../../design/MissionReport.jsx'
 import { LaunchFact } from './LaunchFact.jsx'
 
 function nextMissionAfter(missionId) {
@@ -15,7 +16,7 @@ function nextMissionAfter(missionId) {
   return index >= 0 ? (MISSIONS[index + 1] ?? null) : null
 }
 
-export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain, lead }) {
+export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain, lead, design }) {
   const playerName = engineerName(useSettings().playerName)
   const nextMission = nextMissionAfter(mission.id)
   const continueRef = useRef(null)
@@ -47,11 +48,13 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
 
         <dl className="orbit-stats mission-complete__stats">
           <div><dt>Score</dt><dd>{result.pct}%</dd></div>
-          {Number.isFinite(result.outcome?.missKm) && (
+          {!design && Number.isFinite(result.outcome?.missKm) && (
             <div><dt>Off target</dt><dd>{Math.round(result.outcome.missKm)} km</dd></div>
           )}
-          {directionDeg != null && <div><dt>Your direction</dt><dd>{directionDeg}°</dd></div>}
+          {!design && directionDeg != null && <div><dt>Your direction</dt><dd>{directionDeg}°</dd></div>}
         </dl>
+
+        <MissionReport design={design} success={result.success} />
 
         <LaunchFact result={result} className="mission-complete__fact" />
 
