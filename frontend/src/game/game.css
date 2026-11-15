@@ -712,7 +712,7 @@
 /* Supplies other than the budget: one color for every bar and value, whatever the amount,
    so the color never tells whether it is enough */
 .meter.is-plain {
-  --meter: #7f9be0;
+  --meter: #1ed8ff;
 }
 
 .meter__track {
@@ -759,10 +759,12 @@
   filter: drop-shadow(0 12px 0 rgba(0, 0, 0, 0.35));
 }
 
-/* Preparation shows a larger rocket with the payload bay cut open. */
+/* Preparation shows a larger rocket with the payload bay cut open. The scale is kept small
+   enough that the tower's mast and its blinking light (15 sprite pixels above the rocket) fit
+   on screen; shorter screens step it down further (see the max-height queries below). */
 .rocket--open,
 .prep {
-  --scale: 18;
+  --scale: 20;
 }
 
 .prep {
@@ -793,6 +795,16 @@
 .tower.is-launching .tower__arm--crew { animation-delay: 0s; }
 .tower.is-launching .tower__arm--upper { animation-delay: 0.08s; }
 .tower.is-launching .tower__arm--stage { animation-delay: 0.16s; }
+
+/* Warning light at the tip of the lightning mast: on, then off, like an aircraft beacon. */
+.tower__light {
+  animation: tower-light-blink 1.2s steps(1, end) infinite;
+}
+
+@keyframes tower-light-blink {
+  0%, 55% { opacity: 1; }
+  55.01%, 100% { opacity: 0; }
+}
 
 @keyframes tower-arm-retract {
   from { transform: scaleX(1); }
@@ -876,69 +888,85 @@
   transform-origin: top left;
 }
 
-/* Cabin hole in the 32×32 hull: columns 12–19, rows 6–22. */
-.rocket--open .rocket__hull {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' fill='white'/%3E%3Crect x='12' y='6' width='8' height='17' fill='black'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' fill='white'/%3E%3Crect x='12' y='6' width='8' height='17' fill='black'/%3E%3C/svg%3E");
-  -webkit-mask-mode: luminance;
-  mask-mode: luminance;
-  -webkit-mask-size: 32px 32px;
-  mask-size: 32px 32px;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-}
-
-.rocket__cabin {
+/* Speech bubble beside the upper hull (column 21 of the 32 grid) listing what rides inside.
+   The tail on its left edge points at the rocket. */
+.rocket__bubble {
   position: absolute;
-  z-index: 0;
-  left: calc(100% * 12 / 32);
-  top: calc(100% * 6 / 32);
-  width: calc(100% * 8 / 32);
-  height: calc(100% * 17 / 32);
-  box-sizing: border-box;
+  z-index: 4;
+  left: calc(100% * 22 / 32);
+  top: calc(100% * 4 / 32);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-evenly;
-  gap: 8px;
-  padding: 10px 8px 12px;
-  overflow: hidden;
-  background-color: #1b2638;
-  background-image:
-    linear-gradient(#101722, #101722),
-    linear-gradient(#2c3b52, #2c3b52),
-    linear-gradient(90deg, #314156 0 8%, #1e2a3c 8% 92%, #121a28 92% 100%);
-  background-size: 100% 7px, 100% 4px, 100% 100%;
-  background-position: center bottom, center 46%, 0 0;
-  background-repeat: no-repeat;
-  box-shadow: inset 0 7px 0 #121a28;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #04213a;
+  border: 3px solid #14182a;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
 }
 
-.rocket__cargo-slot {
-  position: relative;
-  width: 100%;
-  height: 46%;
-  min-height: 0;
+.rocket__bubble::before,
+.rocket__bubble::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  border-style: solid;
+  border-color: transparent;
+}
+
+/* Tail: dark outline triangle with a white one on top */
+.rocket__bubble::before {
+  left: -18px;
+  border-width: 9px 15px 9px 0;
+  border-right-color: #14182a;
+}
+
+.rocket__bubble::after {
+  left: -12px;
+  top: 21px;
+  border-width: 6px 10px 6px 0;
+  border-right-color: #fff;
+}
+
+.rocket__cargo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .rocket__cargo {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
   image-rendering: pixelated;
 }
 
-.rocket__qty {
-  position: absolute;
-  right: 0;
-  bottom: 0;
+/* The astronaut floats in zero-g: bobs up and down and tilts, in pixel steps */
+.rocket__cargo--astronaut {
+  animation: astronaut-float 2.4s steps(12) infinite;
+}
+
+@keyframes astronaut-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(-8deg); }
+  50% { transform: translateY(-6px) rotate(0deg); }
+  75% { transform: translateY(-2px) rotate(8deg); }
+}
+
+.rocket__cargo-name {
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 12px;
+}
+
+.rocket__qty {
+  margin-left: auto;
+  font-family: var(--ms-font-pixel);
+  font-size: 12px;
   line-height: 1.4;
   color: #04213a;
   background: var(--ms-yellow);
-  padding: 1px 3px;
+  padding: 1px 4px;
 }
 
 /* Launch: the rocket rises from below the screen to its spot, then hovers. */
@@ -1393,14 +1421,35 @@
 
   .rocket--open,
   .prep {
-    --scale: 12;
+    --scale: 11;
+  }
+}
+
+@media (max-height: 1100px) and (min-width: 721px) {
+  .rocket--open,
+  .prep {
+    --scale: 16;
   }
 }
 
 @media (max-height: 900px) and (min-width: 721px) {
   .rocket--open,
   .prep {
-    --scale: 16;
+    --scale: 14;
+  }
+}
+
+@media (max-height: 760px) and (min-width: 721px) {
+  .rocket--open,
+  .prep {
+    --scale: 12;
+  }
+}
+
+@media (max-height: 620px) and (min-width: 721px) {
+  .rocket--open,
+  .prep {
+    --scale: 10;
   }
 }
 
@@ -1408,6 +1457,8 @@
   .rocket.is-flying,
   .rocket.is-launching,
   .rocket__layer--anim,
+  .rocket__cargo--astronaut,
+  .tower__light,
   .engineer,
   .crew__mover.is-patrol {
     animation: none;

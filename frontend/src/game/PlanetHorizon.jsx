@@ -8,8 +8,11 @@
  */
 import { useEffect, useRef } from 'react';
 
-const W = 192; // canvas resolution: one canvas pixel = one big screen "pixel"
-const H = 108;
+// Canvas resolution: one canvas pixel = one screen "pixel". DETAIL multiplies the original
+// 192×108 grid, so the planet keeps its size and shape but gets finer pixels
+const DETAIL = 2;
+const W = 192 * DETAIL;
+const H = 108 * DETAIL;
 
 const COLORS = {
   ocean: [47, 127, 216],
@@ -41,7 +44,13 @@ function smoothNoise(x, y) {
 }
 
 function fbm(x, y) {
-  return smoothNoise(x, y) * 0.6 + smoothNoise(x * 2.1, y * 2.1) * 0.3 + smoothNoise(x * 4.3, y * 4.3) * 0.1;
+  // The last, finest layer gives the coasts and clouds small details at the higher resolution
+  return (
+    smoothNoise(x, y) * 0.55 +
+    smoothNoise(x * 2.1, y * 2.1) * 0.27 +
+    smoothNoise(x * 4.3, y * 4.3) * 0.12 +
+    smoothNoise(x * 9.1, y * 9.1) * 0.06
+  );
 }
 
 const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
@@ -49,12 +58,12 @@ const lerp = (a, b, t) => a + (b - a) * t;
 
 function drawPlanet(ctx, image, t) {
   const e = easeInOut(t);
-  const radius = lerp(900, 120, e);             // huge (flat horizon) → small (curved)
-  const top = lerp(H - 6, H - 40, e);           // how far the planet reaches up the screen
+  const radius = lerp(900, 120, e) * DETAIL;            // huge (flat horizon) → small (curved)
+  const top = H - lerp(6, 40, e) * DETAIL;          // how far the planet reaches up the screen
   const cx = W / 2;
   const cy = top + radius;
   const spin = t * 0.35;                        // the surface drifts slowly
-  const glowSize = 5;
+  const glowSize = 5 * DETAIL;
   const data = image.data;
 
   for (let py = 0; py < H; py += 1) {
@@ -76,7 +85,7 @@ function drawPlanet(ctx, image, t) {
         // Atmosphere: bright right at the edge, fading outward in hard pixel steps
         const k = 1 - (dist - radius) / glowSize;
         color = COLORS.glow;
-        alpha = Math.round(Math.ceil(k * 3) / 3 * 200);
+        alpha = Math.round(Math.ceil(k * 3 * DETAIL) / (3 * DETAIL) * 200);
       } else {
         const nx = dx / radius;
         const ny = dy / radius;
@@ -94,7 +103,7 @@ function drawPlanet(ctx, image, t) {
 
         // Darker toward the edge of the disc, and a thin bright rim of atmosphere
         const shade = 0.55 + 0.45 * nz;
-        const rim = radius - dist < 1.5 ? 0.5 : 0;
+        const rim = radius - dist < 1.5 * DETAIL ? 0.5 : 0;
         color = color.map((c, n) => Math.min(255, c * shade + COLORS.glow[n] * rim));
       }
 

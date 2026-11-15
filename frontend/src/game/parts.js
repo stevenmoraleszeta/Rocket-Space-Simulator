@@ -1,8 +1,9 @@
 import rocket from '../assets/images/rockets/rocket_32x32.png';
 import rocketOff from '../assets/images/rockets/rocket_off_32x32.png';
+import rocketHangar from '../assets/images/rockets/rocket_hangar_32x32.png';
 import rocketSheet from '../assets/images/rockets/animations/rocket_sheet.png';
 import shieldSheet from '../assets/images/rockets/animations/heat_shield_sheet.png';
-import boosterSheet from '../assets/images/rockets/animations/side_boosters_sheet.png';
+import boosterSheet from '../assets/images/rockets/animations/side_boosters_small_sheet.png';
 import food from '../assets/images/items/food.svg';
 import astronaut from '../assets/images/items/astronaut.svg';
 
@@ -10,6 +11,8 @@ import astronaut from '../assets/images/items/astronaut.svg';
 export const ROCKET = {
   src: rocket,
   off: rocketOff,
+  // Hangar view: `off` with plain white hull where the windows and vents were
+  hangar: rocketHangar,
   frame: 32,
   // In flight: first row of rocket_sheet.png, 4 frames of flickering flame
   flight: { sheet: rocketSheet, sheetWidth: 256, sheetHeight: 96, frameY: 0, frames: 4 },
@@ -47,12 +50,13 @@ export const PARTS = [
     mass: 24,
     energy: 6,
     thrust: 46,
+    // 12px tall boosters strapped to the body, cold (row 0) and in flight (row 1)
     sheet: boosterSheet,
-    sheetWidth: 256,
+    sheetWidth: 160,
     sheetHeight: 64,
     frameX: 0,
     frameY: 32,
-    offX: 32,
+    offX: 0,
     offY: 0,
     frame: 32,
     flightFrames: 5, // lit frames in row frameY, played while flying

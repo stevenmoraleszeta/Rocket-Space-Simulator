@@ -17,7 +17,8 @@
 
 // Drawn area, in rocket sprite pixels: from (ORIGIN_X, ORIGIN_Y) to (ORIGIN_X + WIDTH, 32).
 const ORIGIN_X = 18;
-const ORIGIN_Y = -10;
+// Starts at the glow above the mast light (TOWER_TOP - 11), so the light is never clipped.
+const ORIGIN_Y = -15;
 const WIDTH = 18;
 const HEIGHT = 32 - ORIGIN_Y;
 
@@ -33,6 +34,7 @@ const COLORS = {
   crane: '#f2c94c',
   mast: '#c9dcf0',
   light: '#ff5d73',
+  glow: 'rgba(255, 93, 115, 0.45)',
 };
 
 /** Arms: row and x where they touch the rocket hull. Each one is a single pixel row. */
@@ -42,8 +44,10 @@ const ARMS = [
   { id: 'stage', top: 12, hullX: 21 },
 ];
 
-function px(x, y, color, w = 1, h = 1, key = `${x},${y},${color}`) {
-  return <rect key={key} x={x - ORIGIN_X} y={y - ORIGIN_Y} width={w} height={h} fill={color} />;
+function px(x, y, color, w = 1, h = 1, key = `${x},${y},${color}`, className = undefined) {
+  return (
+    <rect key={key} className={className} x={x - ORIGIN_X} y={y - ORIGIN_Y} width={w} height={h} fill={color} />
+  );
 }
 
 function lattice() {
@@ -68,9 +72,12 @@ function top() {
     px(LEFT_LEG, TOWER_TOP - 1, COLORS.crane, RIGHT_LEG - LEFT_LEG + 1, 1, 'crane-base'),
     px(34, TOWER_TOP - 3, COLORS.steelDark, 2, 1, 'counterweight'),
     px(25, TOWER_TOP - 1, COLORS.hook, 1, 2, 'hook'),
-    // Lightning mast with its red warning light
+    // Lightning mast with its red warning light at the tip. It blinks, and a pixel cross
+    // glows around it while it is on (see .tower__light in game.css).
     px(32, TOWER_TOP - 9, COLORS.mast, 1, 7, 'mast'),
-    px(32, TOWER_TOP - 10, COLORS.light, 1, 1, 'mast-light'),
+    px(31, TOWER_TOP - 10, COLORS.glow, 3, 1, 'mast-glow-h', 'tower__light tower__light--glow'),
+    px(32, TOWER_TOP - 11, COLORS.glow, 1, 3, 'mast-glow-v', 'tower__light tower__light--glow'),
+    px(32, TOWER_TOP - 10, COLORS.light, 1, 1, 'mast-light', 'tower__light'),
   ];
 }
 
