@@ -34,7 +34,7 @@ export const ORBIT_TARGETS = [
     inclinationDeg: 51.6,
     missionFit: 0.6,
     color: '#4fc3ff',
-    why: 'Easy to reach, but crowded (ISS, Tiangong) and the thin air slows satellites down, so they fall sooner.',
+    why: 'Easy to reach, but crowded (the ISS and its cargo ships) and the thin air slows satellites down, so they fall sooner.',
   },
   {
     id: 'tropical-orbit',

@@ -16,6 +16,10 @@ export const ROCKET = {
   frame: 32,
   // In flight: first row of rocket_sheet.png, 4 frames of flickering flame
   flight: { sheet: rocketSheet, sheetWidth: 256, sheetHeight: 96, frameY: 0, frames: 4 },
+  // Leaving the atmosphere: third row, 8 frames where the rear stage drops away (played once)
+  separation: { sheet: rocketSheet, sheetWidth: 256, sheetHeight: 96, frameY: 64, frames: 8 },
+  // Only the short upper stage left: last 2 frames of that row, small flickering flame
+  upperStage: { sheet: rocketSheet, sheetWidth: 256, sheetHeight: 96, frameY: 64, firstFrame: 6, frames: 2 },
 };
 
 /**
@@ -40,6 +44,7 @@ export const PARTS = [
     offX: 128,
     offY: 0,
     frame: 32,
+    breaksOnSeparation: true, // the shell cracks in two out of the atmosphere, no heat left
     flightFrames: 5, // lit frames in row frameY, played while flying
   },
   {
@@ -59,6 +64,7 @@ export const PARTS = [
     offX: 0,
     offY: 0,
     frame: 32,
+    dropsWithStage: true, // fixed to the rear stage: falls away with it in space
     flightFrames: 5, // lit frames in row frameY, played while flying
   },
   {

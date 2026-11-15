@@ -2,7 +2,7 @@
  * After a mission is launched the player fits the rocket on Earth,
  * then presses Launch and the flight begins.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { SpaceBackground } from '../levels';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
@@ -11,6 +11,8 @@ import { METER_ICONS } from './meterIcons.js';
 import { PadClouds } from './PadClouds.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
+import { LaunchSequence } from './LaunchSequence.jsx';
+import { launchFailure } from './launchFailure.js';
 import { ASCENT_MS, AscentScene } from './AscentScene.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
@@ -58,6 +60,9 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
     return () => clearTimeout(timer);
   }, [phase]);
 
+  // Without boosters or heat shield the rocket blows up (launchFailure.js).
+  const [failure, setFailure] = useState(null);
+
   function startLaunch() {
     if (onLaunch) {
       onLaunch(equipped);
@@ -66,8 +71,15 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
     playSfx(SFX.liftoff);
     setStoryOpen(false);
     setOpenPart(null);
-    setPhase('launching');
+    const willFail = launchFailure(equipped);
+    setFailure(willFail);
+    setPhase(willFail ? 'failing' : 'launching');
   }
+
+  const showFailure = useCallback(() => {
+    playSfx(SFX.lose);
+    setPhase('failed');
+  }, []);
 
   const launching = phase === 'launching';
 
@@ -108,6 +120,28 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
     </header>
   );
 
+  if (phase === 'failing') {
+    return <LaunchSequence equipped={equipped} hud={hud} failure={failure} onFail={showFailure} />;
+  }
+
+  if (phase === 'failed') {
+    return (
+      <SpaceBackground>
+        <div className="game">
+          {hud}
+          <div className="flight launch-failed" role="alert">
+            <h2 className="launch-failed__title">Mission failed</h2>
+            <p className="flight__status">{failure?.message}</p>
+            <p className="launch-failed__hint">{failure?.hint}</p>
+            <button type="button" className="ms-btn" onClick={() => setPhase('assemble')}>
+              Back to the hangar
+            </button>
+          </div>
+        </div>
+      </SpaceBackground>
+    );
+  }
+
   if (phase === 'ascent') {
     return <AscentScene equipped={equipped} hud={hud} />;
   }
@@ -119,7 +153,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           {hud}
           <div className="flight">
             <p className="flight__status">Liftoff! Heading to {mission.place}.</p>
-            <Rocket equipped={equipped} flying />
+            <Rocket equipped={equipped} flying stage="upper" />
             <Meters meters={meters} />
             <button type="button" className="game__back" onClick={() => setPhase('assemble')}>
               Hangar

@@ -35,8 +35,14 @@ export const SAMPLE_EVERY_SECONDS = 5
 export const TARGET_TOLERANCE_KILOMETERS = 150
 /** Higher than this the rocket is far above every arrival orbit: the mission is lost. */
 export const LOST_ALTITUDE_KILOMETERS = 2500
-/** After passing the arrival point, moving this much farther away ends the flight as a miss. */
+/** After passing the arrival point, moving this much farther away counts as a miss. */
 const MISS_RECEDING_KILOMETERS = 2000
+/**
+ * After a miss the rocket keeps flying with gravity alone: if it falls back it crashes (earthImpact,
+ * and it explodes). If it is still up after this long (about one trip around the Earth) it stays
+ * in a wrong orbit and the flight ends as missedTarget.
+ */
+const MISS_FOLLOW_SECONDS = 100 * 60
 
 export const OUTCOMES = Object.freeze({
   ORBIT_REACHED: 'orbitReached',
@@ -132,6 +138,8 @@ export function simulateLaunch({ siteAngleRadians, rotationBoost, arrival, vehic
   let hasLeftGround = false
   /** State and distance to the arrival point one step ago (coast only). */
   let previous = null
+  /** Time the rocket missed the arrival point; from then on it only falls or circles. */
+  let missedAt = null
 
   while (state.t < MAX_SIMULATION_SECONDS) {
     const burning = state.massKg > ascentEndMassKg + 1e-6
@@ -166,6 +174,11 @@ export function simulateLaunch({ siteAngleRadians, rotationBoost, arrival, vehic
 
     if (burning) continue
 
+    if (missedAt !== null) {
+      if (state.t - missedAt > MISS_FOLLOW_SECONDS) return finish(OUTCOMES.MISSED_TARGET)
+      continue
+    }
+
     // Insertion burn at the closest point to the arrival point (where the distance stops shrinking).
     const distanceToArrival = Math.hypot(arrival.x - state.x, arrival.y - state.y)
     closestTargetMeters = Math.min(closestTargetMeters, distanceToArrival)
@@ -188,9 +201,11 @@ export function simulateLaunch({ siteAngleRadians, rotationBoost, arrival, vehic
         })
       }
     }
-    // Already went past the arrival point and keeps moving away: it missed.
+    // Already went past the arrival point and keeps moving away: it missed. Keep following it,
+    // it may fall back and crash.
     if (distanceToArrival > closestTargetMeters + kilometersToMeters(MISS_RECEDING_KILOMETERS)) {
-      return finish(OUTCOMES.MISSED_TARGET)
+      missedAt = state.t
+      continue
     }
     previous = { state, distance: distanceToArrival }
   }

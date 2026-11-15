@@ -1,5 +1,6 @@
 /**
- * REAL LAUNCH SITES — coordinates are the real ones (degrees, north and east positive).
+ * REAL LAUNCH SITES — every one is a real city with a spaceport. Coordinates are the real ones
+ * (degrees, north and east positive). `name` is the city, `spaceport` the launch site there.
  *
  * In the 2D orbit view every site is drawn on the rim of the Earth at its LONGITUDE
  * (the view looks down from above the North Pole). The latitude still matters physically:
@@ -11,9 +12,10 @@
  */
 export const LAUNCH_SITES = [
   {
-    id: 'vandenberg',
-    name: 'Vandenberg',
+    id: 'lompoc',
+    name: 'Lompoc',
     country: 'USA',
+    spaceport: 'Vandenberg Space Force Base',
     latitudeDeg: 34.7,
     longitudeDeg: -120.6,
     allowsEastward: false,
@@ -25,6 +27,7 @@ export const LAUNCH_SITES = [
     id: 'cape-canaveral',
     name: 'Cape Canaveral',
     country: 'USA',
+    spaceport: 'Cape Canaveral and Kennedy Space Center',
     latitudeDeg: 28.5,
     longitudeDeg: -80.6,
     allowsEastward: true,
@@ -36,6 +39,7 @@ export const LAUNCH_SITES = [
     id: 'kourou',
     name: 'Kourou',
     country: 'French Guiana',
+    spaceport: 'Guiana Space Centre',
     latitudeDeg: 5.2,
     longitudeDeg: -52.8,
     allowsEastward: true,
@@ -44,9 +48,10 @@ export const LAUNCH_SITES = [
     whatFor: 'Low-tilt orbits, big communication satellites and polar orbits too.',
   },
   {
-    id: 'plesetsk',
-    name: 'Plesetsk',
+    id: 'mirny',
+    name: 'Mirny',
     country: 'Russia',
+    spaceport: 'Plesetsk Cosmodrome',
     latitudeDeg: 62.9,
     longitudeDeg: 40.6,
     allowsEastward: true,
@@ -58,6 +63,7 @@ export const LAUNCH_SITES = [
     id: 'baikonur',
     name: 'Baikonur',
     country: 'Kazakhstan',
+    spaceport: 'Baikonur Cosmodrome',
     latitudeDeg: 45.9,
     longitudeDeg: 63.3,
     allowsEastward: true,
@@ -66,9 +72,10 @@ export const LAUNCH_SITES = [
     whatFor: 'Crews and cargo for the International Space Station.',
   },
   {
-    id: 'sriharikota',
-    name: 'Sriharikota',
+    id: 'sullurpeta',
+    name: 'Sullurpeta',
     country: 'India',
+    spaceport: 'Satish Dhawan Space Centre, on Sriharikota island',
     latitudeDeg: 13.7,
     longitudeDeg: 80.2,
     allowsEastward: true,
@@ -77,20 +84,22 @@ export const LAUNCH_SITES = [
     whatFor: 'India launches its Earth-imaging satellites into polar orbits from here.',
   },
   {
-    id: 'jiuquan',
-    name: 'Jiuquan',
-    country: 'China',
-    latitudeDeg: 41.0,
-    longitudeDeg: 100.3,
+    id: 'minamitane',
+    name: 'Minamitane',
+    country: 'Japan',
+    spaceport: 'Tanegashima Space Center',
+    latitudeDeg: 30.4,
+    longitudeDeg: 131.0,
     allowsEastward: true,
     allowsPolar: true,
-    why: 'In the Gobi Desert, far from cities, so used rocket stages fall on empty land.',
-    whatFor: 'Crews to the Tiangong station and many Earth-observation satellites.',
+    why: 'At the southern tip of Tanegashima island: rockets fly east or south over the Pacific Ocean, away from towns.',
+    whatFor: "Japan's rockets: weather and Earth-observation satellites, and cargo for the space station.",
   },
   {
     id: 'mahia',
     name: 'Mahia',
     country: 'New Zealand',
+    spaceport: 'Rocket Lab Launch Complex 1',
     latitudeDeg: -39.3,
     longitudeDeg: 177.9,
     allowsEastward: true,
