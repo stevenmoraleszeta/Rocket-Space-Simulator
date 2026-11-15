@@ -37,17 +37,20 @@ export function Rocket({ equipped, flying = false, launching = false, ascending 
 
   return (
     <div className={classes.join(' ')}>
-      {open && (
-        <div className="rocket__cabin">
-          {interior.map((part) => {
-            const count = partCount(equipped, part.id);
-            return (
-              <span key={part.id} className="rocket__cargo-slot">
-                <img className="rocket__cargo" src={part.src} alt="" />
-                {count > 1 && <span className="rocket__qty">{count}</span>}
-              </span>
-            );
-          })}
+      {/* What rides inside, in a speech bubble beside the closed hull */}
+      {open && interior.length > 0 && (
+        <div className="rocket__bubble" aria-label="Inside the rocket">
+          {interior.map((part) => (
+            <span key={part.id} className="rocket__cargo-row">
+              <img
+                className={part.id === 'astronaut' ? 'rocket__cargo rocket__cargo--astronaut' : 'rocket__cargo'}
+                src={part.src}
+                alt=""
+              />
+              <span className="rocket__cargo-name">{part.name}</span>
+              <span className="rocket__qty">×{partCount(equipped, part.id)}</span>
+            </span>
+          ))}
         </div>
       )}
       {lit ? (
@@ -57,9 +60,9 @@ export function Rocket({ equipped, flying = false, launching = false, ascending 
         />
       ) : (
         <span
-          className={open ? 'rocket__layer rocket__hull' : 'rocket__layer'}
+          className="rocket__layer"
           style={{
-            backgroundImage: `url(${ROCKET.off})`,
+            backgroundImage: `url(${open ? ROCKET.hangar : ROCKET.off})`,
             backgroundSize: `${ROCKET.frame}px ${ROCKET.frame}px`,
           }}
         />
