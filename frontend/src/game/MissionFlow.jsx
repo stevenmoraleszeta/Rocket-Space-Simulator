@@ -3,7 +3,7 @@
  *
  *   Level 2  GameScreen          hangar: fit the rocket parts
  *   Level 2  OrbitalLaunchLevel  choose a site, aim at the hardest orbit, launch (mission 1)
- *   Level 3  MoonMission         build, launch, and map the Moon (mission 2, own flow)
+ *   Level 3  MoonTransitLevel   choose a window, aim at the Moon, coast (mission 2)
  *   Level 4  MarsTransitLevel   choose a window, aim at Mars, cruise (mission 3)
  *
  * Launch in the hangar hands the rocket to the next implemented stage of the mission (stages.js).
@@ -12,22 +12,30 @@
 import { useState } from 'react'
 import { GameScreen } from './GameScreen.jsx'
 import { OrbitalLaunchLevel } from './levels/orbit/OrbitalLaunchLevel.jsx'
-import { MoonMission } from './levels/moon/MoonMission.jsx'
+import { MoonTransitLevel } from './levels/moon/MoonTransitLevel.jsx'
 import { MarsTransitLevel } from './levels/mars/MarsTransitLevel.jsx'
 import { STAGE_IDS, STAGE_INFO, getFirstStage, getNextStage } from './stages.js'
 
-export function MissionFlow({ mission, onExit, onNextMission }) {
+export function MissionFlow({ mission, onExit }) {
   const [stageId, setStageId] = useState(() => getFirstStage(mission.id))
   // Rocket built in the hangar, handed to the launch stage.
   const [equipped, setEquipped] = useState(null)
 
-  if (mission.id === 'moon') {
-    return <MoonMission mission={mission} onExit={onExit} onNextMission={onNextMission} />
-  }
-
   if (stageId === STAGE_IDS.ORBITAL_LAUNCH && equipped) {
     return (
       <OrbitalLaunchLevel
+        mission={mission}
+        stageInfo={STAGE_INFO[stageId]}
+        equipped={equipped}
+        onBackToHangar={() => setStageId(STAGE_IDS.BUILD_AND_LAUNCH)}
+        onExit={onExit}
+      />
+    )
+  }
+
+  if (stageId === STAGE_IDS.MOON_TRANSIT && equipped) {
+    return (
+      <MoonTransitLevel
         mission={mission}
         stageInfo={STAGE_INFO[stageId]}
         equipped={equipped}

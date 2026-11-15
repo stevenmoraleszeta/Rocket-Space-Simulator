@@ -487,7 +487,7 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose }) {
 /** Blocks in each supply bar. */
 const METER_CELLS = 8;
 
-export function Meters({ meters }) {
+function Meters({ meters }) {
   return (
     <section className="meters" aria-label="Rocket supplies">
       <header className="meters__head">
@@ -505,10 +505,7 @@ export function Meters({ meters }) {
               className={`meter meter--${meter.id}${meter.bar && meter.tone === 'over' ? ' is-over' : ''}`}
             >
               {METER_ICONS[meter.id] && <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />}
-              {!METER_ICONS[meter.id] && meter.icon && (
-                <span className="meter__icon meter__icon--emoji" aria-hidden="true">{meter.icon}</span>
-              )}
-              <span className="meter__label" title={meter.tooltip}>{meter.label}</span>
+              <span className="meter__label">{meter.label}</span>
               <div
                 className="meter__track"
                 role="meter"

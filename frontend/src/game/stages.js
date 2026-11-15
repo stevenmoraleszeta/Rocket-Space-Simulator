@@ -7,7 +7,7 @@
  * Mapping between the game design levels and the missions:
  *   Mission 'earth' -> Level 2 (build: GameScreen.jsx, then launch to orbit:
  *                      levels/orbit/OrbitalLaunchLevel.jsx)
- *   Mission 'moon'  -> Level 3 (build, launch, and map the Moon)
+ *   Mission 'moon'  -> Level 2, then the coast to the Moon (levels/moon/MoonTransitLevel.jsx)
  *   Mission 'mars'  -> Level 2, then Level 4 (trip to Mars: levels/mars/MarsTransitLevel.jsx)
  *
  * Level 1 (preparation) is still being designed, so it is not in any flow yet.
@@ -34,7 +34,7 @@ export const STAGE_INFO = Object.freeze({
 /** Ordered stages of each mission. The key is the mission id from src/levels/data/missions.js. */
 export const MISSION_STAGES = Object.freeze({
   earth: [STAGE_IDS.BUILD_AND_LAUNCH, STAGE_IDS.ORBITAL_LAUNCH],
-  moon: [STAGE_IDS.MOON_TRANSIT],
+  moon: [STAGE_IDS.BUILD_AND_LAUNCH, STAGE_IDS.MOON_TRANSIT],
   mars: [STAGE_IDS.BUILD_AND_LAUNCH, STAGE_IDS.MARS_TRANSIT],
 })
 

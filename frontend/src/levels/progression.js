@@ -60,7 +60,6 @@ const mp = (progress, id) => progress.missions[id] || null;
 export function isUnlocked(progress, id, missions = MISSIONS) {
   const i = indexOf(id, missions);
   if (i < 0) return false;
-  if (id === 'moon') return true;
   return i === 0 || !!mp(progress, missions[i - 1].id)?.completed;
 }
 
@@ -134,9 +133,7 @@ export function applyResult(progress, missionId, result, missions = MISSIONS) {
       stars,
       pct,
       newBest: stars > prev.stars,
-      unlockedMissionId: completed && !prev.completed && next && !isUnlocked(progress, next.id, missions)
-        ? next.id
-        : null,
+      unlockedMissionId: completed && !prev.completed && next ? next.id : null,
     },
   };
 }

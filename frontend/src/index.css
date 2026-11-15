@@ -5,11 +5,6 @@
   color: #e8e6e3;
 }
 
-/* --ui comes from src/lib/uiScale.js; every rem in the app follows the window size. */
-html {
-  font-size: calc(16px * var(--ui, 1));
-}
-
 body {
   margin: 0;
 }

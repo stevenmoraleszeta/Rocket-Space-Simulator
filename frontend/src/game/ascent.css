@@ -134,7 +134,7 @@
 }
 
 .ascent__status {
-  margin-top: 0.5rem;
+  margin-top: 8px;
   animation: ascent-status var(--ascent-time) ease both;
 }
 

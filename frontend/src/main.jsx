@@ -4,7 +4,6 @@ import '@fontsource/press-start-2p/400.css'
 import '@fontsource/pixelify-sans/400.css'
 import '@fontsource/pixelify-sans/700.css'
 import './index.css'
-import './lib/uiScale.js'
 import './lib/firebase.js'
 import App from './App.jsx'
 
