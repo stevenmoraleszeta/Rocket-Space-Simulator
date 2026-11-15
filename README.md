@@ -74,7 +74,7 @@ npm run dev:web
 
 ## Datos del jugador
 
-Con Firebase configurado, el juego entra con una sesión anónima y guarda en Firestore. En Ajustes se puede iniciar sesión con Google. Si esa cuenta se enlaza a la sesión anónima, se conservan las estrellas. El punto rojo del botón de ajustes avisa cuando falta el nombre o la sesión de Google.
+Con Firebase configurado, el juego entra con una sesión anónima y guarda en Firestore. En Ajustes, el botón de Google pide la cuenta en esta misma página, para que una llave de acceso o la contraseña puedan terminar. Si esa cuenta se enlaza a la sesión anónima, se conservan las estrellas. El punto rojo del botón de ajustes avisa cuando falta el nombre o la sesión de Google.
 
 - `progress/{uid}`: misiones completadas, estrellas, mejor puntaje e intentos
 - `progress/{uid}/flights/{id}`: cada viaje, aunque se repita, con lo empacado y las elecciones (base, órbita, ventana, lugar)
@@ -82,7 +82,7 @@ Con Firebase configurado, el juego entra con una sesión anónima y guarda en Fi
 
 Cada documento solo lo puede leer y escribir ese jugador. También queda una copia en el navegador por si la red falla. El hangar en curso no se guarda hasta que el viaje termina.
 
-El acceso anónimo ya está activo y las reglas de Firestore ya están publicadas. El botón de Google sigue apagado hasta activar ese proveedor en Authentication. Si cambias las reglas o los proveedores:
+El acceso anónimo y el proveedor de Google ya están activos, y las reglas de Firestore ya están publicadas. Si cambias las reglas o los proveedores:
 
 ```powershell
 npx firebase deploy --only firestore:rules

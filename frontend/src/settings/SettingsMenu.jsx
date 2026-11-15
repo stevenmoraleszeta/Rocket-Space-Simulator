@@ -2,7 +2,7 @@
  * Settings button that opens a panel to change the music volume,
  * the ambient/effects volume and the player's name, and to sign in with Google.
  */
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import googleMark from '../assets/images/icons/google-g.png';
 import settingsIcon from '../assets/images/icons/settings.svg';
 import { loadGoogleSignIn, renderGoogleButton } from '../lib/googleSignIn.js';
@@ -22,7 +22,9 @@ function GoogleSignInButton({ onError }) {
     let active = true;
     loadGoogleSignIn()
       .then(() => {
-        if (active && hostRef.current) renderGoogleButton(hostRef.current);
+        requestAnimationFrame(() => {
+          if (active && hostRef.current) renderGoogleButton(hostRef.current);
+        });
       })
       .catch((error) => {
         if (active) onError(googleSignInMessage(error));
@@ -61,9 +63,7 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
   const { musicVolume, ambientVolume, playerName, language, update } = useSettings();
   const [open, setOpen] = useState(false);
   const [authError, setAuthError] = useState('');
-  const reportAuthError = useRef(setAuthError);
-  reportAuthError.current = setAuthError;
-  const onGoogleError = useRef((message) => reportAuthError.current(message));
+  const onGoogleError = useCallback((message) => setAuthError(message), []);
   const panelRef = useRef(null);
   const buttonRef = useRef(null);
   const nameRef = useRef(null);
@@ -170,7 +170,7 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
                   <span className="st-dot" aria-hidden="true" />
                 </p>
                 <p className="st-hint">{t('Sign in so your name and stars are still here next time.')}</p>
-                <GoogleSignInButton onError={onGoogleError.current} />
+                <GoogleSignInButton onError={onGoogleError} />
                 {(authError || redirectError) && <p className="st-error" role="alert">{t(authError || redirectError)}</p>}
                 <p className="st-hint">{t('Choose your Google account here. A passkey or password can finish, and your stars stay with you.')}</p>
               </>

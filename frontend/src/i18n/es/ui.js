@@ -19,6 +19,8 @@ export const ui = {
   'Opening Google…': 'Abriendo Google…',
   'Sign in with Google': 'Entrar con Google',
   'Google opens on this page so you can finish the sign-in, then the game comes back.': 'Google se abre en esta página para que termines de entrar, y luego vuelve el juego.',
+  'Choose your Google account here. A passkey or password can finish, and your stars stay with you.': 'Elige tu cuenta de Google aquí. Una llave de acceso o la contraseña sí pueden terminar, y tus estrellas se quedan contigo.',
+  'Google did not accept that sign-in. Try again.': 'Google no aceptó ese ingreso. Inténtalo otra vez.',
   'Music': 'Música',
   'Sounds': 'Sonidos',
   'Done': 'Listo',

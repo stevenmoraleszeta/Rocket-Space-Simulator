@@ -57,6 +57,8 @@
   background: #f1f3f4;
   box-shadow: inset var(--px) var(--px) 0 #fff, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #dadce0;
 }
+.st-google-host { width: 100%; min-height: 44px; margin-top: 10px; }
+.st-google-host > div { display: flex; justify-content: center; }
 .st-google__mark { width: 28px; height: 28px; flex: none; display: block; image-rendering: pixelated; }
 .st-label .st-google__mark { width: 22px; height: 22px; }
 .st-signed {
