@@ -335,9 +335,10 @@ function circularRate(altitudeKm) {
 /**
  * The flight plays days in a few seconds, so at real speed the ISS would circle Earth about seven
  * times a second on screen. Satellites and junk clouds move on this slower clock instead: about one
- * ISS lap every 5 seconds. Hits use the same angles, so what the player sees is still what counts.
+ * ISS lap every 1.7 seconds, quick enough to feel like traffic. Hits use the same angles, so what
+ * the player sees is still what counts.
  */
-export const TRAFFIC_TIME_SCALE = 1 / 36
+export const TRAFFIC_TIME_SCALE = 1 / 12
 
 export function trafficAngle(object, launchDate, seconds) {
   const shown = seconds * TRAFFIC_TIME_SCALE

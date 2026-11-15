@@ -9,7 +9,7 @@
  *                      levels/orbit/OrbitalLaunchLevel.jsx)
  *   Mission 'moon'  -> Level 2 (hangar), then Level 3: base, launch day, aim and the trip to the Moon
  *                      (levels/moon/MoonLaunchLevel.jsx)
- *   Mission 'mars'  -> Level 2, then Level 4 (trip to Mars: levels/mars/MarsTransitLevel.jsx)
+ *   Mission 'mars'  -> Level 2, then Level 4 (launch to Mars: levels/marsLaunch/MarsLaunchLevel.jsx)
  *
  * Level 1 (preparation) is still being designed, so it is not in any flow yet.
  * Stages with `implemented: false` are declared but not played.
