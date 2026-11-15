@@ -11,6 +11,30 @@ import { OUTCOMES } from './launchSimulation.js'
 const BULLSEYE_KM = 30
 
 export const LAUNCH_FACTS = {
+  moonArrived: {
+    title: 'Braking at the Moon',
+    text: 'The Moon has almost no air to slow a ship down. Apollo fired its big engine behind the Moon, out of radio contact, to drop into orbit. Nobody on Earth knew if it worked until the ship came around again.',
+  },
+  moonImpact: {
+    title: 'A Moon full of craters',
+    text: 'With no air, nothing burns up before it hits the Moon. That is why it is covered in craters. Spacecraft aim to pass beside it, then brake.',
+  },
+  moonShort: {
+    title: 'Aiming at a moving target',
+    text: 'The Moon moves about 1 km every second around Earth. A ship that leaves today has to aim at where the Moon will be in about 3 to 5 days.',
+  },
+  moonPast: {
+    title: 'Free return',
+    text: 'Apollo 13 lost its main oxygen tank on the way. Its path swung around the Moon and back to Earth on its own, and the crew came home safely.',
+  },
+  noLander: {
+    title: 'No air, no parachute',
+    text: 'On Earth, air and parachutes slow a capsule down. At the Moon only a rocket engine can do it, so every lander carries one.',
+  },
+  moonLowScience: {
+    title: 'Space junk is a real problem',
+    text: 'There are more than 30,000 tracked pieces of junk around Earth. Even a fleck of paint can crack a window, because it moves faster than a bullet.',
+  },
   bullseye: {
     title: 'The gravity turn',
     text: 'Nice aim! Real rockets go straight up for only a few seconds. Then they lean over until they fly almost flat. That lean is called a gravity turn. Gravity helps bend the path.',
@@ -100,6 +124,13 @@ export function factForResult(result) {
       return LAUNCH_FACTS.satelliteCollision
     case OUTCOMES.NO_LIFTOFF:
       return LAUNCH_FACTS.noLiftoff
+    case 'moonArrived':
+    case 'moonImpact':
+    case 'moonShort':
+    case 'moonPast':
+    case 'noLander':
+    case 'moonLowScience':
+      return LAUNCH_FACTS[outcome.type]
     // Loadout failures (launchFailure.js ids)
     case 'overBudget':
     case 'tooHeavy':
