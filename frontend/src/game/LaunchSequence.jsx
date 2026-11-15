@@ -14,6 +14,7 @@ import sunGlow from '../assets/images/backgrounds/sun_glow.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
 import { ASCENT_MS, AscentScene, FALL_BACK_EXPLODE_AT_MS, OVERHEAT_EXPLODE_AT_MS } from './AscentScene.jsx';
 import { PadClouds } from './PadClouds.jsx';
+import { Rocket } from './Rocket.jsx';
 import { PadFlag } from './PadFlag.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
