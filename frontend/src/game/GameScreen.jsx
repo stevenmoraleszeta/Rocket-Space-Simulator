@@ -2,20 +2,22 @@
  * After a mission is launched the player fits the rocket on Earth,
  * then presses Launch and the flight begins.
  */
-import { useCallback, useEffect, useState } from 'react';
-import { SpaceBackground } from '../levels';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { SpaceBackground, useProgress } from '../levels';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
-import { EMPTY_LOADOUT, PARTS, partCount, partMax } from './parts.js';
+import { EMPTY_LOADOUT, partCount, partMax, partsForMission } from './parts.js';
 import { METER_ICONS } from './meterIcons.js';
 import { PadClouds } from './PadClouds.jsx';
 import { PadFlag } from './PadFlag.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
 import { LaunchSequence } from './LaunchSequence.jsx';
+import { flightNotes } from './flightSummary.js';
+import { MissionFailedScreen } from './levels/orbit/MissionFailedScreen.jsx';
 import { flightSupplyFailure, launchFailure } from './launchFailure.js';
 import { FlightReadout } from './FlightReadout.jsx';
-import { flightReadout } from './lifeSupport.js';
+import { flightReadout, supplyReport } from './lifeSupport.js';
 import { ASCENT_MS, AscentScene } from './AscentScene.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
@@ -31,6 +33,8 @@ import './game.css';
 const TIMED_PHASES = {
   launching: { ms: 3600, next: 'ascent' },
   ascent: { ms: ASCENT_MS, next: 'flight' },
+  // Called home (no food): the rocket comes back down and lands, then the "You lose" screen
+  returning: { ms: 3200, next: 'failed' },
 };
 
 /**
@@ -41,6 +45,8 @@ const TIMED_PHASES = {
  */
 export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
   const playerName = engineerName(useSettings().playerName);
+  const { completeMission } = useProgress();
+  const loggedTrip = useRef(false);
   const [phase, setPhase] = useState('assemble');
   const [storyOpen, setStoryOpen] = useState(true);
   const [openPart, setOpenPart] = useState(null);
@@ -72,6 +78,28 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
   // Food and oxygen that run out later fail on the flight clock.
   const [failure, setFailure] = useState(null);
 
+  const recordTrip = useCallback((success) => {
+    if (onLaunch || loggedTrip.current) return;
+    loggedTrip.current = true;
+    try {
+      completeMission(mission.id, {
+        pct: success ? 100 : 0,
+        success,
+        flight: flightNotes(equipped, { place: mission.place }),
+      });
+    } catch {
+      /* mission locked or unknown: the flight screen still explains what happened */
+    }
+  }, [onLaunch, completeMission, mission, equipped]);
+
+  function returnToHangar() {
+    loggedTrip.current = false;
+    setFlightHeld(false);
+    setFlightSeconds(0);
+    setFailure(null);
+    setPhase('assemble');
+  }
+
   function startLaunch() {
     if (onLaunch) {
       onLaunch(equipped);
@@ -100,25 +128,33 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       const elapsed = Math.min(duration, ((now - started) / watchMs) * duration);
       setFlightSeconds(elapsed);
       if (supplyFailure && elapsed >= supplyFailure.atSeconds) {
-        playSfx(SFX.lose);
         setFailure(supplyFailure);
-        setPhase('failed');
+        recordTrip(false);
+        if (supplyFailure.returnsHome) {
+          playSfx(SFX.lose);
+          setPhase('returning');
+        } else {
+          playSfx(SFX.lose);
+          setPhase('failed');
+        }
         return;
       }
       if (elapsed >= duration) {
         setFlightHeld(true);
+        recordTrip(true);
         return;
       }
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [phase, equipped, mission]);
+  }, [phase, equipped, mission, recordTrip]);
 
   const showFailure = useCallback(() => {
     playSfx(SFX.lose);
+    recordTrip(false);
     setPhase('failed');
-  }, []);
+  }, [recordTrip]);
 
   const launching = phase === 'launching';
 
@@ -130,16 +166,26 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
         : { music: MUSIC.assemble },
   );
 
+  const catalog = useMemo(() => partsForMission(mission.id), [mission.id]);
+  const supplies = supplyReport(equipped, mission);
+  const creditsLeft = supplies.limits.budget - supplies.cost;
+
   function changeCount(id, delta) {
-    const part = PARTS.find((item) => item.id === id);
+    const part = catalog.find((item) => item.id === id);
+    if (!part) return;
     const max = partMax(part);
-    // Sound only when the count really changes (not when already at 0 or at the max)
     const before = partCount(equipped, id);
     const after = Math.max(0, Math.min(max, before + delta));
+    if (after === before) return;
+    if (after > before && creditsLeft < part.cost) return;
     if (after > before) playSfx(SFX.equip);
-    else if (after < before) playSfx(SFX.unequip);
+    else playSfx(SFX.unequip);
     setEquipped((current) => {
       const count = Math.max(0, Math.min(max, partCount(current, id) + delta));
+      if (count > partCount(current, id)) {
+        const report = supplyReport(current, mission);
+        if (report.limits.budget - report.cost < part.cost) return current;
+      }
       return { ...current, [id]: count };
     });
   }
@@ -151,7 +197,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       <button type="button" className="game__back" onClick={onExit}>
         Missions
       </button>
-        <div className="game__mission">
+      <div className="game__mission">
         <div className="game__num">Mission {mission.number}</div>
         <h1>{mission.title}</h1>
         {playerName && <p className="game__engineer">Engineer {playerName}</p>}
@@ -169,14 +215,13 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       <SpaceBackground>
         <div className="game">
           {hud}
-          <div className="flight launch-failed" role="alert">
-            <h2 className="launch-failed__title">{playerName ? sayTo(playerName, 'Try again') : 'Try again'}</h2>
-            <p className="flight__status">{failure?.message}</p>
-            <p className="launch-failed__hint">{failure?.hint}</p>
-            <button type="button" className="ms-btn" onClick={() => setPhase('assemble')}>
-              Back to the hangar
-            </button>
-          </div>
+          <MissionFailedScreen
+            mission={mission}
+            result={{ outcome: { type: failure?.id }, success: false }}
+            reason={sayTo(playerName, failure?.message ?? '')}
+            hint={failure?.hint}
+            onHangar={returnToHangar}
+          />
         </div>
       </SpaceBackground>
     );
@@ -186,30 +231,30 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
     return <AscentScene equipped={equipped} hud={hud} />;
   }
 
-  if (phase === 'flight') {
+  if (phase === 'flight' || phase === 'returning') {
+    const goingHome = phase === 'returning';
     return (
       <SpaceBackground>
         <div className="game">
           {hud}
           <div className="flight">
             <p className="flight__status">
-              {flightHeld
-                ? sayTo(playerName, 'The crew made it. Food, air, and power held for the whole trip.')
-                : sayTo(playerName, `Liftoff! Heading to ${mission.place}.`)}
+              {goingHome
+                ? sayTo(playerName, 'The crew is too weak to go on. Mission control is bringing them home.')
+                : flightHeld
+                  ? sayTo(playerName, 'The crew made it. Food, air, and power held for the whole trip.')
+                  : sayTo(playerName, `Liftoff! Heading to ${mission.place}.`)}
             </p>
-            <Rocket equipped={equipped} flying stage="upper" />
+            <Rocket
+              equipped={equipped}
+              flying
+              stage="upper"
+              returning={goingHome}
+            />
             <FlightReadout
               rows={flightReadout(equipped, mission, flightSeconds, { altitudeMeters: 400000, speedMetersPerSecond: 0 })}
             />
-            <button
-              type="button"
-              className="game__back"
-              onClick={() => {
-                setFlightHeld(false);
-                setFlightSeconds(0);
-                setPhase('assemble');
-              }}
-            >
+            <button type="button" className="game__back" onClick={returnToHangar}>
               Hangar
             </button>
           </div>
@@ -251,8 +296,8 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
         </div>
         <Meters meters={meters} />
         <div className="dock">
-          <ul className="parts">
-            {PARTS.map((part) => {
+          <ul className={catalog.length > 6 ? 'parts parts--wrap' : 'parts'}>
+            {catalog.map((part) => {
               const count = partCount(equipped, part.id);
               const open = openPart === part.id;
               return (
@@ -278,8 +323,9 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           </ul>
           {openPart && (
             <PartDialog
-              part={PARTS.find((part) => part.id === openPart)}
+              part={catalog.find((part) => part.id === openPart)}
               count={partCount(equipped, openPart)}
+              creditsLeft={creditsLeft}
               onChange={changeCount}
               onClose={() => setOpenPart(null)}
             />
@@ -368,9 +414,29 @@ function BulbIcon() {
 }
 
 /** Detail for one part. Opens on the right, next to the icon row. */
-function PartDialog({ part, count, onChange, onClose }) {
+function PartDialog({ part, count, creditsLeft, onChange, onClose }) {
+  const [denied, setDenied] = useState(false);
+  const denyTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(denyTimer.current), []);
+  useEffect(() => setDenied(false), [part?.id]);
+
   if (!part) return null;
   const max = partMax(part);
+  const broke = creditsLeft < part.cost;
+
+  function tryAdd() {
+    if (count >= max) return;
+    if (!broke) {
+      setDenied(false);
+      onChange(part.id, 1);
+      return;
+    }
+    setDenied(true);
+    playSfx(SFX.error);
+    clearTimeout(denyTimer.current);
+    denyTimer.current = setTimeout(() => setDenied(false), 700);
+  }
 
   return (
     <section
@@ -404,10 +470,11 @@ function PartDialog({ part, count, onChange, onClose }) {
         <span className="part-dialog__count" aria-live="polite">{count} / {max}</span>
         <button
           type="button"
-          className="step-btn"
+          className={denied ? 'step-btn is-denied' : 'step-btn'}
           disabled={count >= max}
+          title={broke && count < max ? 'Not enough money' : undefined}
           aria-label={`Add one ${part.name}`}
-          onClick={() => onChange(part.id, 1)}
+          onClick={tryAdd}
         >
           +
         </button>
@@ -417,21 +484,28 @@ function PartDialog({ part, count, onChange, onClose }) {
 }
 
 /** Budget, mass, energy, and the supplies the mission asks for. */
+/** Blocks in each supply bar. */
+const METER_CELLS = 8;
+
 function Meters({ meters }) {
   return (
     <section className="meters" aria-label="Rocket supplies">
-      <h2 className="meters__title">Supplies</h2>
+      <header className="meters__head">
+        <h2 className="meters__title">Supplies</h2>
+        <span className="meters__stripes" aria-hidden="true" />
+      </header>
       <div className="meters__grid">
-        {meters.map((meter) => (
-          <div key={meter.id} className={`meter is-${meter.tone}`}>
-            {METER_ICONS[meter.id] && (
-              <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />
-            )}
-            <div className="meter__body">
-              <div className="meter__top">
-                <span className="meter__label">{meter.label}</span>
-                <span className="meter__value">{meter.text}</span>
-              </div>
+        {meters.map((meter) => {
+          const lit = meter.fill > 0 ? Math.max(1, Math.round((meter.fill / 100) * METER_CELLS)) : 0;
+          // Every bar is the same cyan, so the color never says whether a supply is enough:
+          // only money turns red when it is overspent (is-over).
+          return (
+            <div
+              key={meter.id}
+              className={`meter meter--${meter.id}${meter.bar && meter.tone === 'over' ? ' is-over' : ''}`}
+            >
+              {METER_ICONS[meter.id] && <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />}
+              <span className="meter__label">{meter.label}</span>
               <div
                 className="meter__track"
                 role="meter"
@@ -441,11 +515,14 @@ function Meters({ meters }) {
                 aria-valuenow={meter.current}
                 aria-valuetext={`${meter.label}: ${meter.text}`}
               >
-                <span className="meter__fill" style={{ clipPath: `inset(0 ${100 - meter.fill}% 0 0)` }} />
+                {Array.from({ length: METER_CELLS }, (_, index) => (
+                  <span key={index} className={index < lit ? 'meter__cell is-lit' : 'meter__cell'} />
+                ))}
               </div>
+              <span className="meter__value">{meter.text}</span>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

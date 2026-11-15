@@ -12,12 +12,15 @@
  * @typedef {Object} Progress
  * @property {number} version
  * @property {Object<string, MissionProgress>} missions
+ * @property {import('./flights.js').FlightLog[]} flights  every attempt, newest first
  *
  * @typedef {Object} MissionResult  what gameplay reports when a mission ends
  * @property {number}  pct          score achieved (0–100)
  * @property {boolean} success      the mission did not fail (rocket arrived, probe survived)
+ * @property {{ packed?: Object<string, number>, picks?: Object<string, string> }} [flight]
  */
 import { MISSIONS } from './data/missions.js';
+import { appendFlight, newFlightId, normalizeFlights, sanitizePacked, sanitizePicks } from './flights.js';
 
 export const PROGRESS_VERSION = 1;
 /** Minimum score for 2 and 3 stars (1 star = the mission's passPct). */
@@ -25,13 +28,15 @@ export const STAR_THRESHOLDS = { two: 80, three: 95 };
 
 /** @returns {Progress} */
 export function createEmptyProgress() {
-  return { version: PROGRESS_VERSION, missions: {} };
+  return { version: PROGRESS_VERSION, missions: {}, flights: [] };
 }
 
 /** Accepts old or incomplete data (e.g. from a database) and returns a valid Progress. */
 export function normalizeProgress(raw) {
   const out = createEmptyProgress();
-  if (!raw || typeof raw !== 'object' || typeof raw.missions !== 'object' || !raw.missions) return out;
+  if (!raw || typeof raw !== 'object') return out;
+  out.flights = normalizeFlights(raw.flights);
+  if (typeof raw.missions !== 'object' || !raw.missions) return out;
   for (const [id, mp] of Object.entries(raw.missions)) {
     if (!mp || typeof mp !== 'object') continue;
     out.missions[id] = {
@@ -97,6 +102,17 @@ export function applyResult(progress, missionId, result, missions = MISSIONS) {
   const prev = mp(progress, missionId) || { completed: false, stars: 0, bestPct: 0, attempts: 0 };
   const next = getNextMission(missionId, missions);
 
+  const flight = {
+    id: newFlightId(),
+    missionId,
+    at: new Date().toISOString(),
+    success: !!result.success,
+    pct,
+    stars,
+    packed: sanitizePacked(result.flight?.packed),
+    picks: sanitizePicks(result.flight?.picks),
+  };
+
   return {
     progress: {
       ...progress,
@@ -109,6 +125,7 @@ export function applyResult(progress, missionId, result, missions = MISSIONS) {
           attempts: prev.attempts + 1,
         },
       },
+      flights: appendFlight(progress.flights, flight),
     },
     outcome: {
       missionId,

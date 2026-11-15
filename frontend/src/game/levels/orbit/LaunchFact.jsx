@@ -39,6 +39,47 @@ export const LAUNCH_FACTS = {
     title: 'A crowded sky',
     text: 'Thousands of satellites and bits of space junk fly around Earth. The space station even moves out of the way a few times a year.',
   },
+  // Loadout failures (launchFailure.js): one fact for each reason.
+  overBudget: {
+    title: 'Space is expensive',
+    text: 'One launch can cost millions of dollars. Some companies now land their boosters and fly them again, which makes launches much cheaper.',
+  },
+  tooHeavy: {
+    title: 'Every kilo counts',
+    text: "Most of a rocket's weight at liftoff is fuel, almost nine parts out of ten. Every extra kilo needs even more fuel to lift it.",
+  },
+  noCrew: {
+    title: 'Someone has to fly it',
+    text: 'Astronauts train for years before their first flight. Even rockets that fly themselves have a team on the ground watching every second.',
+  },
+  noPower: {
+    title: 'Power from the Sun',
+    text: 'The space station gets its power from huge solar panels, about as wide as a football field. Without power, the air and the heat in the cabin stop working.',
+  },
+  food: {
+    title: 'Space food',
+    text: 'Each astronaut needs about 1.8 kg of food every day, packaging included. NASA packs food for every day of the trip, plus some extra.',
+  },
+  oxygen: {
+    title: 'Air to breathe',
+    text: 'Each astronaut breathes about 0.84 kg of oxygen every day. The space station makes new oxygen by splitting water.',
+  },
+  water: {
+    title: 'Every drop counts',
+    text: "The space station cleans and reuses almost all of its water, even sweat and the water in pee. Yesterday's water becomes tomorrow's drink!",
+  },
+  spaceSick: {
+    title: 'Space sickness',
+    text: 'Many astronauts feel sick their first days in space. Floating confuses the part of the ear that helps us keep our balance.',
+  },
+  noBoosters: {
+    title: 'A big push to start',
+    text: 'Boosters give a rocket extra push at liftoff. On the Space Shuttle, the two side boosters gave most of the push to leave the ground.',
+  },
+  noShield: {
+    title: 'Hot, hot, hot',
+    text: 'Rushing through the air makes a rocket very hot. Coming back from the Moon, the Apollo heat shield got hotter than lava!',
+  },
   noLiftoff: {
     title: 'Push more than you weigh',
     text: 'A rocket lifts off only when the engines push harder than the rocket weighs. The big rocket that went to the Moon was almost all fuel.',
@@ -59,17 +100,36 @@ export function factForResult(result) {
       return LAUNCH_FACTS.satelliteCollision
     case OUTCOMES.NO_LIFTOFF:
       return LAUNCH_FACTS.noLiftoff
+    // Loadout failures (launchFailure.js ids)
+    case 'overBudget':
+    case 'tooHeavy':
+    case 'noCrew':
+    case 'noPower':
+    case 'noBoosters':
+    case 'noShield':
+      return LAUNCH_FACTS[outcome.type]
+    case 'noFood':
+    case 'outOfFood':
+      return LAUNCH_FACTS.food
+    case 'noAir':
+    case 'outOfAir':
+      return LAUNCH_FACTS.oxygen
+    case 'noWater':
+    case 'outOfWater':
+      return LAUNCH_FACTS.water
+    case 'spaceSick':
+      return LAUNCH_FACTS.spaceSick
     default:
       return result.reachedArrival ? LAUNCH_FACTS.missedTooFastOrSlow : LAUNCH_FACTS.missedTarget
   }
 }
 
-export function LaunchFact({ result, className = '' }) {
+export function LaunchFact({ result, className = '', label = 'Did you know?' }) {
   const fact = factForResult(result)
   const playerName = engineerName(useSettings().playerName)
   return (
     <section className={`launch-fact ${result.success ? 'is-good' : 'is-bad'} ${className}`}>
-      <p className="launch-fact__label">Did you know?</p>
+      <p className="launch-fact__label">{label}</p>
       {playerName && (
         <p className="launch-fact__hi">
           {sayTo(playerName, result.success ? 'Nice flying.' : 'Here is what happened.')}

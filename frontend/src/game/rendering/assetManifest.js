@@ -19,6 +19,12 @@ import rocketSheetUrl from '../../assets/images/rockets/animations/rocket_sheet.
 import launchBaseUrl from '../../assets/images/rockets/launch_base.png'
 import explosionSheetUrl from '../../assets/images/rockets/animations/explosion_sheet.png'
 import earthPlanetUrl from '../../assets/images/planets/earth.svg'
+import moonPlanetUrl from '../../assets/images/planets/moon.svg'
+import marsPlanetUrl from '../../assets/images/planets/mars.svg'
+import phobosUrl from '../../assets/images/planets/phobos.svg'
+import deimosUrl from '../../assets/images/planets/deimos.svg'
+import sunUrl from '../../assets/images/planets/sun.svg'
+import asteroidSheetUrl from '../../assets/images/asteroids/asteroid_sheet.png'
 import spaceBackgroundUrl from '../../assets/images/backgrounds/space.svg'
 import goldSatelliteSheetUrl from '../../assets/images/satellites/gold_satellite_sheet.png'
 import commsSatelliteUrl from '../../assets/images/satellites/comms_satellite.png'
@@ -36,6 +42,13 @@ export const ASSETS = Object.freeze({
   // 8 frames of 32 x 32 in the first row.
   explosion: { src: explosionSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
   earthPlanet: { src: earthPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
+  moonPlanet: { src: moonPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
+  marsPlanet: { src: marsPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
+  phobos: { src: phobosUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
+  deimos: { src: deimosUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
+  sun: { src: sunUrl, frameWidth: 32, frameHeight: 32, frames: 1 },
+  // 8 frames of 32×32. Rocks on the Mars cruise, not a hangar part.
+  asteroid: { src: asteroidSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
   spaceBackground: { src: spaceBackgroundUrl, frameWidth: 320, frameHeight: 180, frames: 1 },
   // Satellites circling Earth on the orbit map. Three looks, mixed so neighbors never match.
   // Gold box with solar panels: sun glint and blinking light, 4 frames of 24 x 16 in one row.

@@ -1,28 +1,24 @@
-/* Settings button + panel. Uses the st- prefix and reuses the ms- color and font variables. */
-.st-root { position: fixed; top: 16px; right: 16px; z-index: 40; font-family: var(--ms-font); color: var(--ms-text); }
+/* Settings button + panel. The button reuses the pixel ms-btn style. */
+.st-root { position: relative; z-index: 40; display: flex; font-family: var(--ms-font); color: var(--ms-text); }
 
-.st-toggle {
-  position: relative;
-  width: 56px; height: 56px; display: grid; place-items: center;
-  font-size: 30px; line-height: 1; color: var(--ms-text);
-  background: var(--ms-panel); border: 3px solid var(--ms-line); border-radius: 14px;
-  box-shadow: 0 4px 0 #070a22; cursor: pointer; transition: transform .15s;
+/* On the game screens the settings button floats in the top-right corner (the menu has it in its toolbar). */
+.st-floating { position: fixed; top: 16px; right: 16px; z-index: 40; }
+
+.st-toggle[aria-expanded="true"]::after {
+  box-shadow: inset var(--px) var(--px) 0 #d7f4ff, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #1a7eb8;
 }
-.st-toggle:hover { transform: rotate(30deg); }
-.st-toggle[aria-expanded="true"] { border-color: var(--ms-accent); }
-.st-toggle.is-needed { border-color: #ff2a2a; }
 .st-dot {
-  position: absolute; top: 4px; right: 4px; width: 14px; height: 14px;
+  position: absolute; top: -6px; right: -6px; width: 14px; height: 14px;
   background: #ff2a2a; border: 2px solid #fff; box-shadow: 2px 2px 0 #4a0010;
   pointer-events: none;
 }
 .st-toggle .st-dot { animation: st-blink 1s steps(2, end) infinite; }
 .st-label .st-dot { position: static; width: 12px; height: 12px; border-width: 2px; box-shadow: 2px 2px 0 #4a0010; margin-left: auto; animation: none; }
 @keyframes st-blink { 50% { opacity: 0.25; } }
-.st-toggle:focus-visible { outline: 4px solid var(--ms-yellow); outline-offset: 3px; }
 
 .st-panel {
-  position: absolute; top: 68px; right: 0; width: min(360px, calc(100vw - 32px)); box-sizing: border-box;
+  position: absolute; top: calc(100% + 12px); right: 0; width: min(360px, calc(100vw - 32px)); box-sizing: border-box;
+  max-height: calc(100svh - 180px); overflow: auto;
   background: var(--ms-panel); border: 3px solid var(--ms-line); border-radius: 18px;
   padding: 20px 18px 18px; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: ms-pop .2s ease;
 }

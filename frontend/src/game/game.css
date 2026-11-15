@@ -106,8 +106,8 @@
   align-items: center;
   gap: 16px;
   padding: 16px 20px;
-  /* Leave room for the settings button fixed in the top-right corner (56 px + 16 px gap). */
-  padding-right: 92px;
+  /* Leave room for the Settings button fixed in the top-right corner (about 170 px + gaps). */
+  padding-right: 204px;
 }
 
 .game__back {
@@ -233,10 +233,10 @@
 .pad-story {
   position: relative;
   z-index: 3;
-  width: min(320px, 100%);
+  width: min(300px, 100%);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   pointer-events: none;
 }
@@ -627,156 +627,187 @@
     inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
 }
 
+/* SUPPLIES panel, pixel-art style: stepped corners, a 3-layer pixel bevel (dark outline,
+   light top-left, dark bottom-right), flat colors and hard-edged blocks. One row per supply
+   (icon, label, 8-block bar, value). Every supply bar is the same bright cyan, so it never
+   tells whether a supply is enough. Money is gold, shrinks as you spend, and turns red when
+   it is overspent. */
 .meters {
+  --px: 3px;
+  --outline: #070a20;
+  --frame: #3f5fb8;
+  --frame-light: #7d9cf0;
+  --frame-dark: #1c2a66;
+  --panel: #0c1236;
+  --panel-line: #0f1740;
+  /* Square corners cut in 3px steps */
+  --pixel-corners: polygon(
+    0 calc(var(--px) * 2), var(--px) calc(var(--px) * 2), var(--px) var(--px), calc(var(--px) * 2) var(--px), calc(var(--px) * 2) 0,
+    calc(100% - var(--px) * 2) 0, calc(100% - var(--px) * 2) var(--px), calc(100% - var(--px)) var(--px), calc(100% - var(--px)) calc(var(--px) * 2), 100% calc(var(--px) * 2),
+    100% calc(100% - var(--px) * 2), calc(100% - var(--px)) calc(100% - var(--px) * 2), calc(100% - var(--px)) calc(100% - var(--px)), calc(100% - var(--px) * 2) calc(100% - var(--px)), calc(100% - var(--px) * 2) 100%,
+    calc(var(--px) * 2) 100%, calc(var(--px) * 2) calc(100% - var(--px)), var(--px) calc(100% - var(--px)), var(--px) calc(100% - var(--px) * 2), 0 calc(100% - var(--px) * 2)
+  );
   position: relative;
-  isolation: isolate;
   pointer-events: auto;
-  width: min(320px, 100%);
+  width: min(300px, 100%);
   box-sizing: border-box;
-  padding: 10px 12px 12px;
-  border-radius: 0;
-  border: 0;
-  background: transparent;
+  padding: 0;
+  color: #f2f4ff;
+  filter: drop-shadow(var(--px) var(--px) 0 rgba(0, 0, 0, 0.45));
 }
 
-.meters::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: rgba(11, 16, 48, 0.94);
-  clip-path: var(--px-clip);
-  box-shadow:
-    inset var(--px) var(--px) 0 var(--px-edge),
-    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim);
+.meters__head {
+  display: flex;
+  align-items: flex-end;
+  height: 27px;
+  margin-bottom: calc(var(--px) * -1);
 }
 
+/* Title tab: frame-colored block with a pixel outline and a light top edge */
 .meters__title {
+  position: relative;
+  z-index: 1;
   margin: 0;
+  display: flex;
+  align-items: center;
+  height: 27px;
+  box-sizing: border-box;
+  padding: var(--px) 12px 0;
+  background: var(--frame);
+  box-shadow:
+    inset 0 var(--px) 0 var(--outline),
+    inset var(--px) 0 0 var(--outline),
+    inset calc(var(--px) * -1) 0 0 var(--outline),
+    inset 0 calc(var(--px) * 2) 0 var(--frame-light);
+  clip-path: polygon(
+    0 calc(var(--px) * 2), var(--px) calc(var(--px) * 2), var(--px) var(--px), calc(var(--px) * 2) var(--px), calc(var(--px) * 2) 0,
+    calc(100% - var(--px) * 2) 0, calc(100% - var(--px) * 2) var(--px), calc(100% - var(--px)) var(--px), calc(100% - var(--px)) calc(var(--px) * 2), 100% calc(var(--px) * 2),
+    100% 100%, 0 100%
+  );
   font-family: var(--ms-font-pixel);
   font-weight: 400;
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #9eb0d4;
+  color: #ffffff;
+  text-shadow: 2px 2px 0 var(--outline);
 }
 
-.meters__hint {
-  margin: 6px 0 0;
-  color: #9aa3c4;
-  font-size: 14px;
-  line-height: 1.3;
+/* Rest of the top edge: a dark band with three light pixel blocks on the right */
+.meters__stripes {
+  flex: 1;
+  height: 15px;
+  margin-left: calc(var(--px) * -1);
+  background:
+    linear-gradient(var(--frame-light), var(--frame-light)) right 30px center / 6px 6px no-repeat,
+    linear-gradient(var(--frame-light), var(--frame-light)) right 20px center / 6px 6px no-repeat,
+    linear-gradient(var(--frame-light), var(--frame-light)) right 10px center / 6px 6px no-repeat,
+    var(--frame);
+  box-shadow:
+    inset 0 var(--px) 0 var(--outline),
+    inset calc(var(--px) * -1) 0 0 var(--outline),
+    inset 0 calc(var(--px) * 2) 0 var(--frame-light);
+  clip-path: polygon(0 0, calc(100% - var(--px) * 2) 0, calc(100% - var(--px) * 2) var(--px), calc(100% - var(--px)) var(--px), calc(100% - var(--px)) calc(var(--px) * 2), 100% calc(var(--px) * 2), 100% 100%, 0 100%);
 }
 
+/* The box: flat panel with faint pixel scanlines, framed by the 3-layer bevel.
+   One grid for every row, so icons, labels, bars and values line up in columns. */
 .meters__grid {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.meter__top {
-  display: contents;
+  display: grid;
+  grid-template-columns: 20px max-content minmax(60px, 1fr) max-content;
+  align-items: center;
+  gap: 7px 8px;
+  padding: 15px 15px 16px;
+  background:
+    repeating-linear-gradient(180deg, var(--panel) 0 3px, var(--panel-line) 3px 6px);
+  box-shadow:
+    inset 0 0 0 var(--px) var(--outline),
+    inset var(--px) var(--px) 0 var(--px) var(--frame-light),
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px) var(--frame-dark),
+    inset 0 0 0 calc(var(--px) * 3) var(--frame),
+    inset 0 0 0 calc(var(--px) * 4) var(--outline);
+  clip-path: var(--pixel-corners);
 }
 
 .meter {
-  --meter: #6eae90;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  --meter: #00e8ff;
+  --meter-light: #b5fbff;
+  --meter-dark: #0096b8;
+  display: contents;
+}
+
+/* Money is gold (and its bar shrinks as you spend) */
+.meter--budget {
+  --meter: #ffc81e;
+  --meter-light: #fff1a8;
+  --meter-dark: #b07a00;
+}
+
+.meter.is-over {
+  --meter: #ff3b5c;
+  --meter-light: #ffb3c0;
+  --meter-dark: #a3122c;
 }
 
 /* Pixel icon on the left so younger players can tell the meters apart. */
 .meter__icon {
-  flex: none;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   image-rendering: pixelated;
 }
 
-.meter__body {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 68px 1fr auto;
-  align-items: center;
-  column-gap: 8px;
-}
-
-.meter.is-warn,
-.meter.is-short {
-  --meter: #c6b36a;
-}
-
-.meter.is-over {
-  --meter: #d28b98;
-}
-
 .meter__label {
-  grid-column: 1;
-  grid-row: 1;
   font-family: var(--ms-font-pixel);
   font-size: 8px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #9aa3c4;
+  color: #dfe5ff;
+  text-shadow: 1px 1px 0 var(--outline);
+}
+
+/* Bar: a dark pixel slot with 8 square blocks */
+.meter__track {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  height: 14px;
+  box-sizing: border-box;
+  padding: 3px;
+  background: #050816;
+  box-shadow:
+    inset 0 0 0 2px #26336e,
+    inset 2px 2px 0 2px #050816;
+}
+
+.meter.is-over .meter__track {
+  box-shadow: inset 0 0 0 2px var(--meter);
+}
+
+.meter__cell {
+  background: #141c44;
+  transition: background-color 0.12s steps(1);
+}
+
+/* Lit block: flat color with a 2px light top and a 2px dark bottom, no blur */
+.meter__cell.is-lit {
+  background: var(--meter);
+  box-shadow:
+    inset 0 2px 0 var(--meter-light),
+    inset 0 -2px 0 var(--meter-dark);
 }
 
 .meter__value {
-  grid-column: 3;
-  grid-row: 1;
   font-family: var(--ms-font-pixel);
   font-size: 8px;
   line-height: 1.4;
   text-align: right;
   white-space: nowrap;
+  color: #ffffff;
+  text-shadow: 1px 1px 0 var(--outline);
+}
+
+.meter.is-over .meter__value {
   color: var(--meter);
-}
-
-.meter.is-short .meter__value {
-  color: #c6b36a;
-}
-
-/* Supplies other than the budget: one color for every bar and value, whatever the amount,
-   so the color never tells whether it is enough */
-.meter.is-plain {
-  --meter: #1ed8ff;
-}
-
-.meter__track {
-  grid-column: 2;
-  grid-row: 1;
-  position: relative;
-  box-sizing: border-box;
-  height: 16px;
-  margin: 0;
-  border-radius: 0;
-  border: 4px solid #3a4468;
-  background: var(--px-ink);
-  overflow: hidden;
-}
-
-.meter.is-over .meter__track {
-  border-color: var(--meter);
-}
-
-.meter__track::before,
-.meter__fill {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-color: transparent;
-  background-image: repeating-linear-gradient(
-    90deg,
-    var(--cell, #3a4468) 0 4px,
-    transparent 4px 8px
-  );
-}
-
-.meter__fill {
-  --cell: var(--meter);
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.24s steps(8, end);
 }
 
 .rocket {
@@ -888,6 +919,70 @@
 
 .crew__mover.is-patrol {
   animation: crew-patrol 6.4s linear infinite;
+}
+
+/* Launch called off (no astronaut): the crew walks off the pad, one on each side. */
+.crew__mover.is-leaving-left {
+  animation: crew-leave-left 2.4s linear forwards;
+}
+
+.crew__mover.is-leaving-right {
+  animation: crew-leave-right 2.4s linear forwards;
+}
+
+@keyframes crew-leave-left {
+  to { transform: translateX(-70vw); }
+}
+
+@keyframes crew-leave-right {
+  to { transform: translateX(70vw); }
+}
+
+/* The one who stays shakes "no": turning left and right on the spot. */
+.engineer.is-saying-no {
+  background-position-y: -72px;
+  animation:
+    crew-work 0.96s steps(4) infinite,
+    crew-say-no 0.5s steps(1) 0.6s infinite;
+}
+
+@keyframes crew-say-no {
+  0% { transform: scale(calc(var(--scale) * 0.34), calc(var(--scale) * 0.34)); }
+  50% { transform: scale(calc(var(--scale) * -0.34), calc(var(--scale) * 0.34)); }
+}
+
+/* Speech bubble over the one saying "no" */
+.crew__bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(24px * var(--scale) * 0.34 + 10px);
+  z-index: 4;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: #fff;
+  color: #04213a;
+  border: 3px solid #14182a;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.35);
+  font-family: var(--ms-font-pixel);
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
+  animation: crew-bubble-in 0.3s steps(3) 0.6s both;
+}
+
+.crew__bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: #14182a;
+}
+
+@keyframes crew-bubble-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 @keyframes crew-work {
@@ -1054,9 +1149,14 @@
   to { background-position-x: calc((var(--first, 0) + var(--frames)) * -32px); }
 }
 
-/* Explosion (explosion_sheet.png, first row): 8 cells once, then nothing is left. */
+/* Explosion (explosion_sheet.png, first row): 8 cells once, then nothing is left.
+   It grows from the middle of the rocket, larger than the rocket itself. */
 .rocket__layer--explosion {
-  animation: rocket-explode 0.8s steps(8) forwards;
+  left: calc(16px * var(--scale) - 16px);
+  top: calc(16px * var(--scale) - 16px);
+  transform: scale(calc(var(--scale) * 1.8));
+  transform-origin: center;
+  animation: rocket-explode 1s steps(8) forwards;
 }
 
 @keyframes rocket-explode {
@@ -1065,6 +1165,60 @@
 }
 
 .rocket.is-exploding { filter: none; }
+
+/* On the pad every rocket uses the pad scale (.prep): standing still after a called-off
+   launch, straining, or blowing up, it stays the same size and in the same place. */
+.prep .rocket { --scale: inherit; }
+
+/* Why the rocket blew up, over the explosion (LaunchSequence and AscentScene). */
+.launch-boom {
+  position: fixed;
+  left: 50%;
+  top: 22%;
+  z-index: 6;
+  width: min(520px, calc(100vw - 32px));
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  padding: 14px 20px;
+  border: 3px solid #ff5d73;
+  background: rgba(11, 16, 48, 0.94);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+  text-align: center;
+  animation: launch-boom-in 0.3s steps(4) 0.35s both;
+}
+
+.launch-boom__title {
+  margin: 0;
+  font-family: var(--ms-font-pixel);
+  font-size: clamp(14px, 2.4vw, 20px);
+  line-height: 1.5;
+  color: #ff5d73;
+  text-transform: uppercase;
+}
+
+.launch-boom__text {
+  margin: 6px 0 0;
+  font-family: var(--ms-font);
+  font-size: 18px;
+  line-height: 1.35;
+  color: #ffffff;
+}
+
+@keyframes launch-boom-in {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Called home (no food): the rocket turns engine-down and gently sinks back toward Earth. */
+.rocket.is-returning {
+  animation: rocket-return 3.2s ease-in-out forwards;
+}
+
+@keyframes rocket-return {
+  0% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-2vh) rotate(180deg); }
+  100% { transform: translateY(40vh) rotate(180deg); opacity: 0.2; }
+}
 
 /* No boosters: the engines roar but the rocket only shakes on the pad. */
 .rocket.is-straining {
@@ -1133,7 +1287,7 @@
 }
 
 .dock {
-  width: min(320px, 100%);
+  width: min(300px, 100%);
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1149,6 +1303,18 @@
   justify-content: center;
   gap: 10px;
   width: 100%;
+}
+
+.parts--wrap {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Many parts (Moon, Mars): four per row. Stronger than ".parts > li" further down. */
+.parts.parts--wrap > li {
+  flex: 0 0 calc((100% - 24px) / 4);
 }
 
 .part-btn,
@@ -1229,6 +1395,47 @@
 .step-btn:active:not(:disabled)::after,
 .part-dialog__close:active::after {
   bottom: 0;
+}
+
+/* Part buttons match the SUPPLIES frame: blue pixel border, dark panel, bigger icons. */
+.parts > li {
+  flex: 1;
+  min-width: 0;
+}
+
+.part-btn {
+  width: 100%;
+  height: 62px;
+}
+
+.part-btn::after {
+  background: #0c1236;
+  box-shadow:
+    inset 0 0 0 3px #3f5fb8,
+    inset 5px 5px 0 #1c2a66;
+}
+
+.part-btn.is-on::after,
+.part-btn.is-open::after {
+  box-shadow:
+    inset 0 0 0 3px #ffc81e,
+    inset 5px 5px 0 #4a3a10;
+}
+
+.part-btn .part__icon {
+  --scale: 1.5;
+  width: 48px;
+  height: 48px;
+}
+
+.part-btn .part__photo {
+  width: 40px;
+  height: 40px;
+}
+
+/* Parts sit on different rows of the rocket cell; --shift-y (parts.js iconShiftY) centers each one. */
+.part__icon .rocket__layer {
+  transform: scale(var(--scale)) translateY(calc(var(--shift-y, 0) * 1px));
 }
 
 .part-btn__qty {
@@ -1324,6 +1531,29 @@
 .step-btn:disabled::after {
   background: #2a3154;
   box-shadow: inset 0 0 0 var(--px) #454d72;
+}
+
+/* A refused buy: the plus turns red and shakes once. */
+.step-btn.is-denied {
+  color: #fff;
+  animation: step-deny 0.42s steps(3);
+}
+
+.step-btn.is-denied::before {
+  background: #5a1024;
+}
+
+.step-btn.is-denied::after {
+  background: #c4284a;
+  box-shadow:
+    inset var(--px) var(--px) 0 #ff8aa0,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #6e1028;
+}
+
+@keyframes step-deny {
+  0%, 100% { transform: translateX(0); }
+  33% { transform: translateX(-3px); }
+  66% { transform: translateX(3px); }
 }
 
 .part-dialog__count {
@@ -1519,6 +1749,8 @@
     grid-template-columns: 1fr;
     justify-items: center;
     padding-right: 20px;
+    /* On phones the floating Settings button sits above the centered HUD. */
+    padding-top: 84px;
   }
 
   .game__back,
@@ -1537,8 +1769,19 @@
 
   .dock,
   .meters,
-  .pad-story {
-    width: min(320px, 100%);
+  .pad-story,
+  .parts--wrap {
+    width: min(300px, 100%);
+  }
+
+  .meters__grid {
+    grid-template-columns: 18px max-content minmax(48px, 1fr) max-content;
+    column-gap: 6px;
+  }
+
+  .meter__icon {
+    width: 18px;
+    height: 18px;
   }
 
   .brief-modal {
@@ -1615,7 +1858,7 @@
     animation-play-state: paused;
   }
 
-  .meter__fill {
+  .meter__cell {
     transition: none;
   }
 }

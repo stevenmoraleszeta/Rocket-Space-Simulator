@@ -40,6 +40,22 @@
 .orbit-canvas--target { cursor: pointer; }
 .orbit-canvas--aim { cursor: crosshair; }
 
+.orbit-note {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  margin: 0;
+  max-width: 18em;
+  padding: 8px 10px;
+  font-family: var(--ms-font-pixel);
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--ms-yellow);
+  background: rgba(5, 6, 26, 0.88);
+  pointer-events: none;
+}
+
 /* Launch bases on top of the planet */
 .orbit-sites { position: absolute; inset: 0; pointer-events: none; }
 .orbit-site {
@@ -310,3 +326,42 @@ button.orbit-site:focus-visible .orbit-site__name { outline: 3px solid var(--ms-
   cursor: pointer;
 }
 .satellite-card__close:focus-visible { outline: 3px solid var(--ms-yellow, #ffd23f); }
+
+/* MISSION FAILED: the "You lose" partner of the mission complete screen (MissionFailedScreen.jsx). */
+.mission-failed { background: rgba(26, 5, 14, 0.8); }
+.mission-failed__card {
+  border-color: #ff5d73;
+  box-shadow: 0 0 0 6px rgba(255, 93, 115, 0.18), 6px 6px 0 rgba(0, 0, 0, 0.45);
+}
+.mission-failed__title {
+  color: #ff5d73;
+  text-shadow: 3px 3px 0 #6e1424;
+  animation: mission-failed-shake 0.5s steps(5) 0.45s both;
+}
+.mission-failed__why {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 93, 115, 0.6);
+  background: rgba(255, 93, 115, 0.08);
+  text-align: left;
+}
+.mission-failed__why p { margin: 0; }
+.mission-failed__label { font-family: var(--ms-font-pixel); font-size: 10px; line-height: 1.6; color: #ff8fa6; }
+.mission-failed__reason { margin-top: 6px !important; font-size: 19px; line-height: 1.35; font-weight: 700; color: #ffffff; }
+.mission-failed__hint { margin-top: 6px !important; font-size: 17px; line-height: 1.35; color: var(--ms-yellow); }
+
+@keyframes mission-failed-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mission-failed__title { animation: none; }
+}
+
+/* Card that follows the cursor over a satellite: it must not catch the pointer itself. */
+.satellite-card.is-hover { pointer-events: none; }

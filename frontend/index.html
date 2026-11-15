@@ -2,12 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#0b1030" />
+    <meta name="description" content="A space game for kids ages 7 to 12." />
+    <meta property="og:title" content="Rocket Space Simulator" />
+    <meta property="og:description" content="A space game for kids ages 7 to 12." />
+    <meta property="og:image" content="/icon-512.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rocket Space Simulator</title>
+    <style>
+      body { margin: 0; background: #0b1030; }
+      .boot {
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(ellipse at 50% -20%, #2a3a8c 0%, #0b1030 60%);
+      }
+      .boot img { width: 96px; height: 96px; image-rendering: pixelated; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot">
+        <img src="/favicon.svg" alt="Rocket Space Simulator" width="96" height="96" />
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -53,10 +53,77 @@ service cloud.firestore {
         && missionOk(data.missions, 'mars');
     }
 
+    function countOk(packed, id) {
+      return !(id in packed) || (packed[id] is int && packed[id] >= 1 && packed[id] <= 8);
+    }
+
+    function validPacked(packed) {
+      return packed is map
+        && packed.size() <= 16
+        && packed.keys().hasOnly(['shield', 'boosters', 'fuel', 'food', 'water', 'medicine', 'veggie', 'astronaut', 'garden', 'filter', 'lander', 'prospector', 'pantry', 'recycler', 'scrubber', 'shelter', 'parachute', 'rover', 'antenna'])
+        && countOk(packed, 'shield')
+        && countOk(packed, 'boosters')
+        && countOk(packed, 'fuel')
+        && countOk(packed, 'food')
+        && countOk(packed, 'water')
+        && countOk(packed, 'medicine')
+        && countOk(packed, 'veggie')
+        && countOk(packed, 'astronaut')
+        && countOk(packed, 'garden')
+        && countOk(packed, 'filter')
+        && countOk(packed, 'lander')
+        && countOk(packed, 'prospector')
+        && countOk(packed, 'pantry')
+        && countOk(packed, 'recycler')
+        && countOk(packed, 'scrubber')
+        && countOk(packed, 'shelter')
+        && countOk(packed, 'parachute')
+        && countOk(packed, 'rover')
+        && countOk(packed, 'antenna');
+    }
+
+    function pickText(picks, id) {
+      return !(id in picks) || (picks[id] is string && picks[id].size() > 0 && picks[id].size() <= 48);
+    }
+
+    function validPicks(picks) {
+      return picks is map
+        && picks.size() <= 6
+        && picks.keys().hasOnly(['site', 'orbit', 'window', 'craft', 'place'])
+        && pickText(picks, 'site')
+        && pickText(picks, 'orbit')
+        && pickText(picks, 'window')
+        && pickText(picks, 'craft')
+        && pickText(picks, 'place');
+    }
+
+    function validFlight(data) {
+      return data.keys().hasOnly(['missionId', 'at', 'success', 'pct', 'stars', 'packed', 'picks'])
+        && data.missionId in ['earth', 'moon', 'mars']
+        && data.at is string
+        && data.at.size() > 0
+        && data.at.size() <= 40
+        && data.success is bool
+        && data.pct is int
+        && data.pct >= 0
+        && data.pct <= 100
+        && data.stars is int
+        && data.stars >= 0
+        && data.stars <= 3
+        && validPacked(data.packed)
+        && validPicks(data.picks);
+    }
+
     match /progress/{userId} {
       allow read: if signedInAs(userId);
       allow create, update: if signedInAs(userId) && validProgress(request.resource.data);
       allow delete: if false;
+
+      match /flights/{flightId} {
+        allow read: if signedInAs(userId);
+        allow create: if signedInAs(userId) && validFlight(request.resource.data);
+        allow update, delete: if false;
+      }
     }
 
     match /settings/{userId} {

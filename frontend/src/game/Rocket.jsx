@@ -34,6 +34,7 @@ function sheetStyle(part, lit) {
  * side boosters drop away and the heat shield cracks in two) or 'upper' (in space: only the
  * short upper stage is left).
  * straining: the engines roar but the rocket cannot lift (no boosters): it only shakes.
+ * returning: called home (the crew has no food): it turns around and gently sinks out of view.
  * exploding: the rocket blows up (8 frames of explosion_sheet.png, played once) and is gone.
  */
 export function Rocket({
@@ -44,6 +45,7 @@ export function Rocket({
   open = false,
   stage = 'full',
   straining = false,
+  returning = false,
   exploding = false,
 }) {
   if (exploding) {
@@ -62,6 +64,7 @@ export function Rocket({
   if (flying) classes.push('is-flying');
   if (launching) classes.push('is-launching');
   if (straining) classes.push('is-straining');
+  if (returning) classes.push('is-returning');
   if (ascending) classes.push('is-ascending');
   if (open) classes.push('rocket--open');
 
@@ -138,10 +141,7 @@ export function PartIcon({ part, lit = false }) {
   }
   return (
     <span className="part__icon">
-      <span
-        className="rocket__layer"
-        style={{ ...sheetStyle(part, lit), top: `calc(${part.iconOffsetY ?? 0}px * var(--scale))` }}
-      />
+      <span className="rocket__layer" style={{ ...sheetStyle(part, lit), '--shift-y': part.iconShiftY ?? 0 }} />
     </span>
   );
 }

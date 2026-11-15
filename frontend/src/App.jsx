@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { MissionSelect, ProgressProvider } from './levels'
+import { AppLogo } from './brand/AppLogo.jsx'
+import { MissionSelect, ProgressProvider, SpaceBackground } from './levels'
 import { MissionFlow } from './game/MissionFlow.jsx'
 import { SettingsMenu, SettingsProvider } from './settings'
 import { AMBIENCE, AudioVolumeSync, MUSIC, useSoundtrack } from './audio'
@@ -25,7 +26,16 @@ export default function App() {
     [session.remote],
   )
 
-  if (!session.ready) return null
+  if (!session.ready) {
+    return (
+      <SpaceBackground>
+        <div className="brand-splash">
+          <AppLogo size={96} wordmark />
+          <p className="brand-splash__status">Loading…</p>
+        </div>
+      </SpaceBackground>
+    )
+  }
 
   return (
     <SettingsProvider userId={session.uid} storage={settingsStorage}>
@@ -36,11 +46,16 @@ export default function App() {
         ) : (
           <>
             <MenuSoundtrack />
-            <MissionSelect onStartMission={setMission} />
+            <MissionSelect googleSignedIn={session.google} authError={session.authError} onStartMission={setMission} />
           </>
         )}
-        {/* Music, name and account settings, on every screen (fixed in the top-right corner). */}
-        <SettingsMenu googleSignedIn={session.google} />
+        {/* The mission menu shows its own settings button; on the game screens it comes from here,
+            so the music settings are available on every screen (fixed in the top-right corner). */}
+        {mission && (
+          <div className="st-floating">
+            <SettingsMenu googleSignedIn={session.google} authError={session.authError} />
+          </div>
+        )}
       </ProgressProvider>
     </SettingsProvider>
   )

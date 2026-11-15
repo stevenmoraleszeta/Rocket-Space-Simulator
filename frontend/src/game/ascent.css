@@ -156,6 +156,20 @@
 }
 
 /* No heat shield: the rocket glows red hot before it blows up. */
+/* No boosters: it climbs high, nearly reaches space, slows, tips over and falls back down
+   before it blows up (FALL_BACK_EXPLODE_AT_MS in AscentScene). */
+.ascent__rocket.is-falling-back {
+  animation: ascent-fall-back 4.2s forwards;
+}
+
+@keyframes ascent-fall-back {
+  0% { transform: translate(-50%, 60vh) rotate(0deg); animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1); }
+  25% { transform: translate(-50%, -50%) rotate(0deg); animation-timing-function: ease-out; }
+  62% { transform: translate(-50%, -95%) rotate(0deg); animation-timing-function: ease-in-out; }
+  72% { transform: translate(-50%, -92%) rotate(30deg); animation-timing-function: ease-in; }
+  100% { transform: translate(-50%, 35vh) rotate(160deg); }
+}
+
 .ascent__rocket.is-overheating {
   animation: ascent-rocket var(--ascent-time) both, overheat 0.24s steps(2) infinite;
 }

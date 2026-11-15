@@ -19,6 +19,8 @@ const SEPARATION_AT_MS = 3800;
 const SEPARATION_MS = 800;
 /** Without a heat shield: the rocket glows red hot, then blows up still inside the atmosphere. */
 export const OVERHEAT_EXPLODE_AT_MS = 2600;
+/** No boosters: it climbs high, nearly makes it, then falls back and blows up at this time. */
+export const FALL_BACK_EXPLODE_AT_MS = 4200;
 
 // Clouds that slide down past the rocket: horizontal spot, width, delay and speed
 const CLOUDS = [
@@ -33,7 +35,9 @@ const CLOUDS = [
  * overheating: no heat shield. The rocket glows red hot and blows up at OVERHEAT_EXPLODE_AT_MS,
  * before it leaves the atmosphere (the parent ends the scene after that).
  */
-export function AscentScene({ equipped, hud, overheating = false }) {
+export function AscentScene({ equipped, hud, overheating = false, fallingBack = false, failureMessage = null }) {
+  // Both failures end in a blast at OVERHEAT_EXPLODE_AT_MS: too hot, or too little push to stay up.
+  const failing = overheating || fallingBack;
   const [progress, setProgress] = useState(0);
   const [exploded, setExploded] = useState(false);
   // The climb is animated, so altitude and speed here follow the picture.
@@ -58,20 +62,20 @@ export function AscentScene({ equipped, hud, overheating = false }) {
   const skin = Math.round(rocketSkinCelsius(altitudeMeters, speedMetersPerSecond));
   const cabin = overheating ? Math.min(80, Math.round(22 + progress * 70)) : 22;
   useEffect(() => {
-    if (!overheating) return undefined;
+    if (!failing) return undefined;
     const timer = setTimeout(() => {
       playSfx(SFX.explosion);
       setExploded(true);
-    }, OVERHEAT_EXPLODE_AT_MS);
+    }, fallingBack ? FALL_BACK_EXPLODE_AT_MS : OVERHEAT_EXPLODE_AT_MS);
     return () => clearTimeout(timer);
-  }, [overheating]);
+  }, [failing, fallingBack]);
 
   // With reduced motion the separation is skipped and the short stage shows right away.
   const [stage, setStage] = useState(() =>
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'upper' : 'full',
   );
   useEffect(() => {
-    if (stage !== 'full' || overheating) return undefined;
+    if (stage !== 'full' || failing) return undefined;
     const drop = setTimeout(() => setStage('separating'), SEPARATION_AT_MS);
     const upper = setTimeout(() => setStage('upper'), SEPARATION_AT_MS + SEPARATION_MS);
     return () => {
@@ -97,13 +101,31 @@ export function AscentScene({ equipped, hud, overheating = false }) {
           style={{ '--x': cloud.x, '--w': cloud.w, '--delay': cloud.delay, '--time': cloud.time }}
         />
       ))}
-      <div className={overheating && !exploded ? 'ascent__rocket is-overheating' : 'ascent__rocket'}>
+      <div
+        className={
+          overheating && !exploded
+            ? 'ascent__rocket is-overheating'
+            : fallingBack
+              ? 'ascent__rocket is-falling-back'
+              : 'ascent__rocket'
+        }
+      >
         <Rocket equipped={equipped} ascending stage={stage} exploding={exploded} />
       </div>
+      {exploded && failureMessage && (
+        <div className="launch-boom" role="alert">
+          <p className="launch-boom__title">Boom!</p>
+          <p className="launch-boom__text">{failureMessage}</p>
+        </div>
+      )}
       <div className="ascent__content">
         {hud}
         <p className="flight__status ascent__status">
-          {overheating ? 'Too hot! There is no heat shield…' : 'Leaving the atmosphere…'}
+          {overheating
+            ? 'Too hot! There is no heat shield…'
+            : fallingBack
+              ? 'Not enough push! The rocket is losing height…'
+              : 'Leaving the atmosphere…'}
         </p>
         <p className="flight__status ascent__status">
           {`Outside ${outside}°C · Cabin ${cabin}°C · Rocket ${skin}°C`}
