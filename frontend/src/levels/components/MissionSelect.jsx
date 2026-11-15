@@ -45,7 +45,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
         <nav className="ms-tools" aria-label="Menu">
           <button
             type="button"
-            className={`ms-btn ms-btn--ghost ms-btn--icon${adminMode ? ' ms-btn--admin' : ''}`}
+            className={`ms-btn ms-btn--ghost ms-btn--icon ms-admin-toggle${adminMode ? ' ms-btn--admin' : ''}`}
             aria-pressed={adminMode}
             aria-label={adminMode
               ? 'Play as a normal player. Locked missions close again.'

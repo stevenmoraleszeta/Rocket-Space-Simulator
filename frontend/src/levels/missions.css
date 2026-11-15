@@ -252,6 +252,7 @@ img.ms-planet { object-fit: contain; user-select: none; }
   .ms-tools { width: 100%; }
   .ms-tools > .ms-btn,
   .ms-tools > .st-root { flex: 1 1 0; min-width: 0; }
+  .ms-tools > .ms-admin-toggle { flex: 1 1 100%; }
   .ms-tools .ms-btn { width: 100%; justify-content: center; padding-left: 0.5rem; padding-right: 0.5rem; font-size: 0.625rem; }
   .ms-tools .ms-pixel { width: 1.375rem; height: 1.375rem; }
   .ms-path { grid-template-columns: 1fr; gap: 2.125rem; }
