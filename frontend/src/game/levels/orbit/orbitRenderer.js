@@ -211,7 +211,22 @@ function drawSatelliteSprite(ctx, screen, type, image, clockSeconds, index) {
   )
 }
 
-/** Before the launch: each satellite is only a small dot in the color of its type. */
+/** How much bigger a dot gets at the top of its blink, and how often it blinks. */
+const SATELLITE_BLINK_GROW = 0.9
+const SATELLITE_BLINK_SECONDS = 1.8
+
+/**
+ * A satellite dot's blink: once per blink it swells (grow 0 → 1) and settles back to its own
+ * size (grow back to 0). Each satellite has its own start, so they twinkle one after another
+ * instead of all together.
+ */
+function satelliteBlink(index, clockSeconds) {
+  const phase = (clockSeconds / SATELLITE_BLINK_SECONDS + index * 0.137) % 1
+  const swell = 0.35 // share of each blink spent growing and shrinking; the rest it rests
+  return phase < swell ? Math.sin((phase / swell) * Math.PI) : 0
+}
+
+/** Before the launch: each satellite is only a small dot in the color of its type, blinking. */
 /**
  * Before the route is aimed every satellite is a colored dot. The one under the cursor
  * (highlightId) is drawn as its real satellite, with its orbit ring, so only that one shows up.
@@ -227,13 +242,26 @@ function drawSatelliteDots(ctx, view, satellites, timeSeconds, highlightId = nul
     const world = satellitePositionAt(satellite, timeSeconds)
     const screen = worldToScreen(view, world.x, world.y)
     const color = SATELLITE_KIND_COLORS[satellite.kind] ?? COLORS.satellite
-    // Bright dot with a soft glow of its own color and a white sparkle in the middle.
+    const grow = satelliteBlink(index, clockSeconds)
+    const radius = SATELLITE_DOT_RADIUS_PIXELS * (1 + SATELLITE_BLINK_GROW * grow)
+    // Dot in its type's color that blinks: it swells and settles back to its size, with a halo ring on the swell,
+    // a soft glow of its current color and a white sparkle in the middle.
+    if (grow > 0) {
+      ctx.save()
+      ctx.globalAlpha = grow * 0.6
+      ctx.strokeStyle = color
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(screen.x, screen.y, radius + 4 + grow * 6, 0, Math.PI * 2)
+      ctx.stroke()
+      ctx.restore()
+    }
     ctx.save()
     ctx.shadowColor = color
-    ctx.shadowBlur = 10
-    drawCircle(ctx, screen.x, screen.y, SATELLITE_DOT_RADIUS_PIXELS, color)
+    ctx.shadowBlur = 10 + grow * 10
+    drawCircle(ctx, screen.x, screen.y, radius, color)
     ctx.restore()
-    drawCircle(ctx, screen.x, screen.y, SATELLITE_DOT_RADIUS_PIXELS / 2.5, 'rgba(255, 255, 255, 0.85)')
+    drawCircle(ctx, screen.x, screen.y, radius / 2.5, 'rgba(255, 255, 255, 0.85)')
   })
 }
 

@@ -52,6 +52,7 @@ import {
 import { REAL_SATELLITES, SATELLITE_KIND_COLORS } from './realSatellites.js'
 import { useUiScale } from '../../../lib/uiScale.js'
 import { SitePin } from './SitePin.jsx'
+import { FirstOrbitStory } from './FirstOrbitStory.jsx'
 import { PixelIcon } from '../../PixelIcon.jsx'
 import '../../game.css'
 import './orbitalLaunch.css'
@@ -158,6 +159,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launc
   const [aim, setAim] = useState(null)
   const [aimPoint, setAimPoint] = useState(null)
   const [result, setResult] = useState(null)
+  // Mission 1 won: the first-orbit story plays after the Congratulations screen
+  const [firstOrbitStory, setFirstOrbitStory] = useState(false)
   const [telemetry, setTelemetry] = useState(null)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600, pixelRatio: 1 })
 
@@ -560,6 +563,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launc
   }, [])
   const retry = () => {
     flightRef.current = null
+    setFirstOrbitStory(false)
     setResult(null)
     setStep('aim')
   }
@@ -593,16 +597,18 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launc
           <LaunchSequence equipped={equipped} hud={hud} onDone={startOrbitFlight} failure={failure} onFail={failLaunch} />
         </div>
       )}
-      {step === 'result' && result?.success && (
+      {step === 'result' && result?.success && !firstOrbitStory && (
         <MissionCompleteScreen
           mission={mission}
           result={result}
           design={design}
           directionDeg={design ? null : result.directionDeg}
-          onContinue={onExit}
+          onContinue={mission.id === 'earth' ? () => setFirstOrbitStory(true) : onExit}
+          continueLabel={mission.id === 'earth' ? t('Continue') : undefined}
           onFlyAgain={retry}
         />
       )}
+      {step === 'result' && result?.success && firstOrbitStory && <FirstOrbitStory onDone={onExit} />}
       {step === 'result' && result && !result.success && failScreenReady && (
         <MissionFailedScreen
           mission={mission}
