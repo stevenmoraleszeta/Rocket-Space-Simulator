@@ -137,16 +137,31 @@ export function setChannelVolume(channelName, volume) {
  *   playSfx([{ src: a }, { src: b, at: 0.11, volume: 0.8 }])   // `at` in seconds
  */
 export function playSfx(sound) {
+  startSfx(sound);
+}
+
+/**
+ * Same as playSfx, but returns a function that cuts the sound short.
+ * For long effects that must end with their scene (the intro trailer can be skipped).
+ */
+export function startSfx(sound) {
   const volume = loudness(channels.ambient.volume);
-  if (!sound || volume <= 0) return;
+  if (!sound || volume <= 0) return () => {};
   const steps = Array.isArray(sound) ? sound : [{ src: sound }];
+  const stops = [];
   for (const step of steps) {
     const el = new Audio(step.src);
     el.volume = Math.min(1, volume * (step.volume ?? 1));
     const start = () => el.play().catch(() => { /* blocked or interrupted: effects are optional */ });
-    if (step.at > 0) setTimeout(start, step.at * 1000);
+    let timer = 0;
+    if (step.at > 0) timer = setTimeout(start, step.at * 1000);
     else start();
+    stops.push(() => {
+      clearTimeout(timer);
+      el.pause();
+    });
   }
+  return () => stops.forEach((stop) => stop());
 }
 
 /** Effects loudness (0..1) from the settings, for sounds built in code (synth.js). */
