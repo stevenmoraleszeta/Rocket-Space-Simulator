@@ -41,7 +41,7 @@ import {
   simulateMarsTrip,
   tripPointAt,
 } from './marsLaunchRoute.js'
-import { createMarsView, drawMarsScene, pathColor, toScreen } from './marsLaunchRenderer.js'
+import { SUN_PIXELS, createMarsView, drawMarsScene, pathColor, toScreen } from './marsLaunchRenderer.js'
 import {
   CHOICE,
   FACT_EVERY_MS,
@@ -51,7 +51,7 @@ import {
   tripEncounters,
 } from './marsEncounters.js'
 import './marsLaunch.css'
-import sunPicture from '../../../levels/assets/sun.svg'
+import animatedSun from '../../../assets/images/planets/sun_animated.svg'
 import { PixelSky } from './PixelSky.jsx'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
@@ -189,7 +189,6 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     earth: loadImage(ASSETS.earthPlanet.src),
     menuEarth: loadImage(SPRITES.planets.earth.src),
     mars: loadImage(SPRITES.planets.mars.src),
-    sun: loadImage(sunPicture),
     rocket: loadImage(ASSETS.rocketUpperStage.src),
     explosion: loadImage(ASSETS.explosion.src),
     satellite: loadImage(ASSETS.commsSatellite.src),
@@ -556,6 +555,16 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
 
       <div className="orbit-level__body">
         <div className="orbit-stage">
+          {/* Deykell's animated Sun (floats, glow pulses, rays twinkle) at the middle of the map, under the canvas. */}
+          {step !== 'site' && (
+            <img
+              className="mars-sun"
+              src={animatedSun}
+              alt=""
+              aria-hidden="true"
+              style={{ left: view.centerX, top: view.centerY, width: SUN_PIXELS, height: SUN_PIXELS }}
+            />
+          )}
           <canvas
             ref={canvasRef}
             className={`orbit-canvas orbit-canvas--${step === 'aim' ? 'aim' : step}`}

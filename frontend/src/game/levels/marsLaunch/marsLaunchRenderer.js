@@ -21,6 +21,8 @@ import {
 const MAP_FILL = 0.86
 // Whole multiples of the 32-block pictures, so every block is the same size on screen.
 const PLANET_PIXELS = { earth: 32, mars: 32, sun: 96 }
+/** Size of the animated Sun picture: 96 px makes each 8-unit block exactly 3 px. */
+export const SUN_PIXELS = PLANET_PIXELS.sun
 /** The planet pictures (32 × 32 blocks) leave 2 blocks of halo on each side: the body is 28/32 of the size. */
 const PLANET_BODY_FRACTION = 28 / 32
 const ROCKET_PIXELS = 30
@@ -149,8 +151,8 @@ function drawImageCentered(ctx, image, x, y, size) {
 
 function drawPlanets(ctx, view, images, day) {
   const sun = { x: view.centerX, y: view.centerY }
-  // Pixel-art Sun in the same style as the menu planets (levels/assets/sun.svg), halo included.
-  if (!drawImageCentered(ctx, images.sun, sun.x, sun.y, PLANET_PIXELS.sun)) circle(ctx, sun.x, sun.y, PLANET_PIXELS.sun / 2, '#ffd23f')
+  // The Sun itself is Deykell's animated picture, shown as an <img> under the canvas
+  // (MarsLaunchLevel.jsx) so its float, glow and rays keep moving. Only its name is drawn here.
   label(ctx, 'Sun', sun.x, sun.y + PLANET_PIXELS.sun / 2 + 12, '#ffe8a3')
 
   const earthWorld = earthPosition(day)
