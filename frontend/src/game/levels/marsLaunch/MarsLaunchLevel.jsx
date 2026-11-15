@@ -181,6 +181,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   const canvasRef = useRef(null)
   const flightRef = useRef(null) // { startedAt, endDay, endedAt }
   const sceneRef = useRef(null)
+  const tapHintRef = useRef(null) // { startedAt, hazardIndex } of the tapping hand hint
   const [images] = useState(() => ({
     // Picking the base uses mission 1's Earth; the Sun map uses the menu's Earth.
     earth: loadImage(ASSETS.earthPlanet.src),
@@ -395,6 +396,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
           flight,
           images: current.images,
           clockSeconds: now / 1000,
+          tapHint: tapHintRef.current,
         })
       }
       frameId = requestAnimationFrame(draw)
@@ -471,6 +473,8 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
   const goToAim = () => {
     if (!site) return
     playSfx(SFX.confirm)
+    // A pixel hand taps the first light for 3 seconds, to show the lights can be tapped.
+    tapHintRef.current = { startedAt: performance.now() / 1000, hazardIndex: 0 }
     setStep('aim')
   }
   const backToSites = () => {

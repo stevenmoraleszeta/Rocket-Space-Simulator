@@ -178,6 +178,53 @@ function drawPixelLight(ctx, spot, index, clockSeconds) {
   ctx.globalAlpha = 1
 }
 
+/**
+ * Little pixel-art hand that taps one hazard light when the aiming map opens, to show the lights
+ * can be tapped. It pulses a tiny bit (grows and shrinks) for TAP_HINT_SECONDS, then it is gone.
+ * '#' outline, 'w' glove; the fingertip is the top of column 4.
+ */
+const TAP_HINT_SECONDS = 3
+const TAP_HINT_PIXEL = 2
+const TAP_HINT_HAND = [
+  '....##......',
+  '...#ww#.....',
+  '...#ww#.....',
+  '...#ww###...',
+  '...#ww#ww##.',
+  '.###ww#ww#w#',
+  '#ww#wwwwwww#',
+  '#wwwwwwwwww#',
+  '.#wwwwwwwww#',
+  '..#wwwwwww#.',
+  '...#wwwwww#.',
+  '...########.',
+]
+const TAP_HINT_COLORS = { '#': '#1c1e22', w: '#ffffff' }
+const TAP_HINT_FINGERTIP_COLUMN = 4.5
+
+function drawTapHint(ctx, view, hint, day, clockSeconds) {
+  const elapsed = clockSeconds - hint.startedAt
+  if (elapsed < 0 || elapsed > TAP_HINT_SECONDS) return
+  const hazard = MARS_HAZARDS[hint.hazardIndex]
+  if (!hazard) return
+  const world = hazardPosition(hazard, day)
+  const light = toScreen(view, world.x, world.y)
+  // Grows and shrinks a little, a few times in the 3 seconds.
+  const pixel = TAP_HINT_PIXEL * (1 + 0.08 * Math.sin(elapsed * Math.PI * 2 * 1.6))
+  // The fingertip sits just under the light.
+  const left = light.x - TAP_HINT_FINGERTIP_COLUMN * pixel
+  const top = light.y + 8
+  for (let row = 0; row < TAP_HINT_HAND.length; row += 1) {
+    const line = TAP_HINT_HAND[row]
+    for (let column = 0; column < line.length; column += 1) {
+      const color = TAP_HINT_COLORS[line[column]]
+      if (!color) continue
+      ctx.fillStyle = color
+      ctx.fillRect(left + column * pixel, top + row * pixel, Math.ceil(pixel), Math.ceil(pixel))
+    }
+  }
+}
+
 function drawHazards(ctx, view, images, day, launched, clockSeconds) {
   MARS_HAZARDS.forEach((hazard, index) => drawHazard(ctx, view, images, day, launched, clockSeconds, hazard, index))
 }
@@ -280,7 +327,8 @@ function drawBases(ctx, view, sites, chosenId, day, choosing) {
 }
 
 /**
- * scene: { step, trip, aim, site, sites, flight: { day, secondsSinceEnd, crash } | null, images, clockSeconds }
+ * scene: { step, trip, aim, site, sites, flight: { day, secondsSinceEnd, crash } | null, images, clockSeconds,
+ *          tapHint: { startedAt (seconds), hazardIndex } | null }
  *   step 'site': planets on launch day and every launch base on Earth; the chosen one is yellow
  *   step 'aim': planets on launch day, hazards as dots, the dotted prediction and the protractor
  *   step 'flight' / 'result': everything moves with the trip day; the rocket follows the path
@@ -303,6 +351,7 @@ export function drawMarsScene(ctx, view, scene) {
   if (!launched) {
     drawPath(ctx, view, trip.samples, site, color)
     drawProtractor(ctx, view, scene.aim, site)
+    if (scene.tapHint) drawTapHint(ctx, view, scene.tapHint, 0, scene.clockSeconds)
     label(ctx, `Aim: ${TARGET_ANGLE_DEG}° (from ${ANGLE_WINDOW.min}° to ${ANGLE_WINDOW.max}° still works)`, view.width / 2, 22, '#ffd23f', 'center', 15)
     return
   }
