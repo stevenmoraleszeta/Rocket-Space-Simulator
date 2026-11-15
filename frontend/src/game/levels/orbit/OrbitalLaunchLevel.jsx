@@ -37,7 +37,7 @@ import {
   rateSiteForMission,
   scoreOrbitInsertion,
 } from './orbitTargets.js'
-import { REAL_SATELLITES } from './realSatellites.js'
+import { REAL_SATELLITES, SATELLITE_KIND_COLORS } from './realSatellites.js'
 import '../../game.css'
 import './orbitalLaunch.css'
 
@@ -407,7 +407,14 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
                 ✕
               </button>
               <h3 className="satellite-card__name">{satelliteInfo.satellite.shortName}</h3>
-              <p className="satellite-card__kind">{satelliteInfo.satellite.kind} · {satelliteInfo.satellite.altitudeKm} km</p>
+              <p className="satellite-card__kind">
+                <span
+                  className="satellite-card__dot"
+                  style={{ background: SATELLITE_KIND_COLORS[satelliteInfo.satellite.kind] }}
+                  aria-hidden="true"
+                />
+                {satelliteInfo.satellite.kind} · {satelliteInfo.satellite.altitudeKm} km
+              </p>
               <p className="satellite-card__summary">{satelliteInfo.satellite.summary}</p>
             </div>
           )}

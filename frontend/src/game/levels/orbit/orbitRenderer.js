@@ -16,6 +16,7 @@ import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { circularOrbitAngularSpeed, pointOnCircle } from '../../physics/orbitalMechanics.js'
 import { OUTCOMES, degreesToRadians, satellitePositionAt } from './launchSimulation.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
+import { SATELLITE_KIND_COLORS } from './realSatellites.js'
 
 /** Altitude where the display curve starts to squeeze heights (km). */
 export const ALTITUDE_DISPLAY_SCALE_KM = 1200
@@ -29,6 +30,10 @@ const EARTH_SPRITE_BODY = { x: 16, y: 16, size: 224 }
 const DOT_SPACING_PIXELS = 11
 const DOT_SIZE_PIXELS = 5
 const SATELLITE_SIZE_PIXELS = 10
+/** Before the launch satellites are only small dots of their type's color. */
+const SATELLITE_DOT_RADIUS_PIXELS = 4
+/** The Earth picture turns slowly, one full turn in this many real seconds (only a visual effect). */
+const EARTH_SPIN_SECONDS_PER_TURN = 90
 /**
  * The three satellite looks. `image` is the key in scene.images, sizes are in art pixels,
  * `scale` turns them into screen pixels. Animated sheets have more than one frame.
@@ -141,25 +146,37 @@ function drawDottedRing(ctx, view, radius, color, dotSize = 3, spacing = DOT_SPA
   }
 }
 
-function drawEarth(ctx, view, images) {
-  // Thin atmosphere glow just above the surface.
-  drawCircle(ctx, view.centerX, view.centerY, view.earthRadiusPixels + 6, COLORS.atmosphere)
+function drawEarth(ctx, view, images, clockSeconds = 0) {
+  // Thin atmosphere glow just above the surface, breathing a little.
+  const glow = 6 + Math.sin(clockSeconds * 1.2) * 1.5
+  drawCircle(ctx, view.centerX, view.centerY, view.earthRadiusPixels + glow, COLORS.atmosphere)
   if (images.earth?.complete && images.earth.naturalWidth > 0) {
     const scale = images.earth.naturalWidth / 256
     const size = view.earthRadiusPixels * 2
+    // Seen from above the North Pole the Earth turns counterclockwise.
+    const spin = -((clockSeconds / EARTH_SPIN_SECONDS_PER_TURN) % 1) * Math.PI * 2
     ctx.save()
     ctx.beginPath()
     ctx.arc(view.centerX, view.centerY, view.earthRadiusPixels, 0, Math.PI * 2)
     ctx.clip()
+    ctx.translate(view.centerX, view.centerY)
+    ctx.rotate(spin)
     ctx.drawImage(
       images.earth,
       EARTH_SPRITE_BODY.x * scale, EARTH_SPRITE_BODY.y * scale, EARTH_SPRITE_BODY.size * scale, EARTH_SPRITE_BODY.size * scale,
-      view.centerX - size / 2, view.centerY - size / 2, size, size,
+      -size / 2, -size / 2, size, size,
     )
     ctx.restore()
   } else {
     drawCircle(ctx, view.centerX, view.centerY, view.earthRadiusPixels, '#2f7be0')
   }
+  // Night side: a fixed shadow, so the turning surface reads as a round, moving planet.
+  const r = view.earthRadiusPixels
+  const shade = ctx.createLinearGradient(view.centerX - r, view.centerY - r, view.centerX + r, view.centerY + r)
+  shade.addColorStop(0, 'rgba(0, 0, 0, 0)')
+  shade.addColorStop(0.55, 'rgba(0, 0, 0, 0.05)')
+  shade.addColorStop(1, 'rgba(0, 0, 20, 0.5)')
+  drawCircle(ctx, view.centerX, view.centerY, r, shade)
 }
 
 /**
@@ -191,6 +208,15 @@ function drawSatelliteSprite(ctx, screen, type, image, clockSeconds, index) {
     frame * type.frameWidth, 0, type.frameWidth, type.frameHeight,
     Math.round(screen.x - width / 2), Math.round(screen.y - height / 2), width, height,
   )
+}
+
+/** Before the launch: each satellite is only a small dot in the color of its type. */
+function drawSatelliteDots(ctx, view, satellites, timeSeconds) {
+  for (const satellite of satellites) {
+    const world = satellitePositionAt(satellite, timeSeconds)
+    const screen = worldToScreen(view, world.x, world.y)
+    drawCircle(ctx, screen.x, screen.y, SATELLITE_DOT_RADIUS_PIXELS, SATELLITE_KIND_COLORS[satellite.kind] ?? COLORS.satellite)
+  }
 }
 
 function drawSatellites(ctx, view, satellites, timeSeconds, images, clockSeconds) {
@@ -371,8 +397,11 @@ export function drawOrbitScene(ctx, view, scene) {
   ctx.imageSmoothingEnabled = false
 
   const simTime = scene.flight?.simTime ?? 0
-  drawSatellites(ctx, view, scene.satellites, simTime, scene.images, scene.clockSeconds)
-  drawEarth(ctx, view, scene.images)
+  // The satellites show up for real once the rocket is launched; before that they are colored dots.
+  const launched = scene.step === 'flight' || scene.step === 'result'
+  if (launched) drawSatellites(ctx, view, scene.satellites, simTime, scene.images, scene.clockSeconds)
+  else drawSatelliteDots(ctx, view, scene.satellites, simTime)
+  drawEarth(ctx, view, scene.images, scene.clockSeconds)
   drawOrbitRings(ctx, view, scene.orbits, scene.selectedOrbitId, scene.step)
   if (scene.step !== 'site') drawArrivalMarker(ctx, view, scene.arrival)
 
