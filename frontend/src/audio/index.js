@@ -1,5 +1,6 @@
 // Music, ambience and sound effects. Import from here:
 //   import { useSoundtrack, MUSIC, AMBIENCE, SFX, playSfx } from '../audio';
-export { setTrack, setChannelVolume, playSfx } from './audioManager.js';
+export { setTrack, setChannelVolume, playSfx, effectsLoudness } from './audioManager.js';
+export { playSynth, SYNTH } from './synth.js';
 export { useSoundtrack, useAudioVolumes, AudioVolumeSync } from './useAudio.js';
 export { MUSIC, AMBIENCE, SFX } from './tracks.js';

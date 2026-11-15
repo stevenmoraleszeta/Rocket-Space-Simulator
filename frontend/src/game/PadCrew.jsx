@@ -21,10 +21,9 @@ export function PadCrew({ scrub = false }) {
           return (
             <span key={person.job} className="crew__mover" style={{ left: person.left, bottom: person.bottom }}>
               <span className="crew__bubble" role="status">No astronauts!</span>
-              <span
-                className={`engineer engineer--${person.job} is-saying-no`}
-                style={{ backgroundImage: `url(${sheet})` }}
-              />
+              <span className={`engineer engineer--${person.job} is-saying-no`}>
+                <span className="engineer__sheet" style={{ backgroundImage: `url(${sheet})` }} />
+              </span>
             </span>
           );
         }
@@ -36,10 +35,9 @@ export function PadCrew({ scrub = false }) {
               className={`crew__mover is-leaving-${person.leaves}`}
               style={{ left: person.left, bottom: person.bottom, animationDelay: person.delay }}
             >
-              <span
-                className={person.leaves === 'left' ? 'engineer engineer--walk is-flip' : 'engineer engineer--walk'}
-                style={{ backgroundImage: `url(${sheet})` }}
-              />
+              <span className={person.leaves === 'left' ? 'engineer engineer--walk is-flip' : 'engineer engineer--walk'}>
+                <span className="engineer__sheet" style={{ backgroundImage: `url(${sheet})` }} />
+              </span>
             </span>
           );
         }
@@ -49,10 +47,12 @@ export function PadCrew({ scrub = false }) {
             className={person.patrol ? 'crew__mover is-patrol' : 'crew__mover'}
             style={{ left: person.left, bottom: person.bottom }}
           >
-            <span
-              className={person.flip ? `engineer engineer--${person.job} is-flip` : `engineer engineer--${person.job}`}
-              style={{ backgroundImage: `url(${sheet})`, animationDelay: person.delay }}
-            />
+            <span className={person.flip ? `engineer engineer--${person.job} is-flip` : `engineer engineer--${person.job}`}>
+              <span
+                className="engineer__sheet"
+                style={{ backgroundImage: `url(${sheet})`, animationDelay: person.delay }}
+              />
+            </span>
           </span>
         );
       })}

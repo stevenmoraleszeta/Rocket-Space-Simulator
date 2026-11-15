@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { AppLogo } from './brand/AppLogo.jsx'
-import { MissionSelect, ProgressProvider, SpaceBackground } from './levels'
+import { MISSIONS, MissionSelect, ProgressProvider, SpaceBackground } from './levels'
 import { MissionFlow } from './game/MissionFlow.jsx'
 import { SettingsMenu, SettingsProvider } from './settings'
 import { AMBIENCE, AudioVolumeSync, MUSIC, useSoundtrack } from './audio'
@@ -30,7 +30,7 @@ export default function App() {
     return (
       <SpaceBackground>
         <div className="brand-splash">
-          <AppLogo size={96} wordmark />
+          <AppLogo size={96} wordmark bare />
           <p className="brand-splash__status">Loading…</p>
         </div>
       </SpaceBackground>
@@ -42,7 +42,12 @@ export default function App() {
       <AudioVolumeSync />
       <ProgressProvider userId={session.uid} storage={progressStorage ?? undefined}>
         {mission ? (
-          <MissionFlow key={mission.id} mission={mission} onExit={() => setMission(null)} />
+          <MissionFlow
+            key={mission.id}
+            mission={mission}
+            onExit={() => setMission(null)}
+            onNextMission={() => setMission(MISSIONS.find((item) => item.id === 'mars') ?? null)}
+          />
         ) : (
           <>
             <MenuSoundtrack />

@@ -10,17 +10,17 @@ It handles:
 - **saving progress** (Firestore for the signed-in player, with a copy in localStorage),
 - the **selection screen** and the **mission card** with a "Launch!" button.
 
-Everything else (gameplay, results screen, menus, stats) belongs to other parts of the project.
+Mission 1 gameplay stays in `src/game/`. Mission 2 uses the same hangar (`GameScreen.jsx`, with the Moon parts), then `src/game/levels/moon/MoonLaunchLevel.jsx`: pick a base on the polar Earth map, accept, then choose the launch day (a slider over the Moon phase on each arrival day) and hour. Earth turns with the real sidereal time, the Moon sits on its real orbit, and a corner card shows its real phase, from above and from Earth. Changing the day glides everything to its new place. The player drags the dotted path like mission 1; the path is a real Earth–Moon gravity simulation (`moonTransfer.js`). Satellites and debris clouds follow modeled orbits, not live tracking; flying through one damages the ship and the object it hit. A good arrival plays the landing mini-game (`MoonLanding.jsx`) and three lunar orbit events (`moonOrbitEvents.js`, some hands-on), then the ship flies home on a return path found with the same gravity simulation (`simulateReturn`), shown while aiming as "WAY HOME". The flight runs on an even clock shown at the top of the map. Brighter Moon on arrival day gives better maps.
 
 ## Running it
 
 ```bash
 npm install
-npm run dev     # demo at http://localhost:5173
-npm test        # 15 tests for the progression logic
+npm run dev     # game at http://localhost:5173
+npm run test:moon
 ```
 
-The demo replaces gameplay with a screen where you pick how the mission ends (failed, 65 %, 85 % or 100 %), so unlocking and stars can be tested.
+Mission 2 is temporarily available from the start. Mission 3 still unlocks after Mission 2 is completed.
 
 ## Structure
 
@@ -40,6 +40,15 @@ src/levels/
     └── StarRating.jsx
 src/levels/assets/
 └── sprites.js              ← plug the art in here
+src/game/levels/moon/
+├── MoonLaunchLevel.jsx     ← base map, launch day, aim, flight, orbit events, result
+├── MoonPhaseCard.jsx       ← corner card: the Moon phase on the chosen date
+├── MoonEventCard.jsx       ← pop-up for one lunar orbit event (tap / dial actions)
+├── MoonLanding.jsx         ← landing mini-game
+├── moonTransfer.js         ← Earth–Moon flight, Sun and Moon positions, satellites and junk
+├── moonScene.js            ← canvas drawing of the Earth–Moon map
+├── moonOrbitEvents.js      ← lunar orbit events, adapted to the hangar parts
+└── moonLaunchPlanning.js   ← Moon orbit, lunar phase, sidereal time
 ```
 
 ## Rules

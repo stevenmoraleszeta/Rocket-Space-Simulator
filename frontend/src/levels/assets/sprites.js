@@ -25,6 +25,7 @@ import moon from './moon.svg';
 import mars from './mars.svg';
 
 import space from '../../assets/images/backgrounds/space.svg';
+import spaceRaw from '../../assets/images/backgrounds/space.svg?raw';
 import lock from '../../assets/images/items/lock.svg';
 
 export const SPRITES = {
@@ -33,7 +34,9 @@ export const SPRITES = {
     moon: { src: moon, frames: 1, pixelArt: true },
     mars: { src: mars, frames: 1, pixelArt: true },
   },
-  background: { src: space, mode: 'cover', pixelArt: true },
+  // raw: the SVG text, so SpaceBackground can split its twinkling stars and shooting stars
+  // into their own layers (see lib/svgLayers.js) instead of redrawing the whole sky each frame.
+  background: { src: space, raw: spaceRaw, mode: 'cover', pixelArt: true },
   // Lock shown over locked planets. No image means the planet stays unmarked.
   lock: { src: lock, pixelArt: true },
 };

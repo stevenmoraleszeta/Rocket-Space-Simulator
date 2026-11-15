@@ -47,6 +47,7 @@ import {
   scoreOrbitInsertion,
 } from './orbitTargets.js'
 import { REAL_SATELLITES, SATELLITE_KIND_COLORS } from './realSatellites.js'
+import { useUiScale } from '../../../lib/uiScale.js'
 import '../../game.css'
 import './orbitalLaunch.css'
 
@@ -149,7 +150,13 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const [telemetry, setTelemetry] = useState(null)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600, pixelRatio: 1 })
 
-  const view = useMemo(() => createView(canvasSize.width, canvasSize.height), [canvasSize])
+  // The scene is drawn in design pixels: the canvas box divided by the UI scale,
+  // so labels, satellites and lines grow and shrink with the window like the rest of the UI.
+  const uiScale = useUiScale()
+  const view = useMemo(
+    () => createView(canvasSize.width / uiScale, canvasSize.height / uiScale),
+    [canvasSize, uiScale],
+  )
   const site = LAUNCH_SITES.find((candidate) => candidate.id === siteId) ?? null
   // First level: no orbit choice. The satellite always aims for the hardest arrival orbit.
   const orbit = useMemo(() => hardestOrbit(), [])
@@ -319,6 +326,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       images,
       finishFlight,
       canvasSize,
+      uiScale,
       // Only a launch stopped on the ground or in the liftoff scene never flew on the map.
       // Failures timed on the trip (atSeconds) did fly, so their path, fall and blast stay drawn.
       blewUp: Boolean(result?.failure) && result.failure.atSeconds == null,
@@ -352,7 +360,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       const current = sceneRef.current
       if (canvas && current) {
         const ctx = canvas.getContext('2d')
-        const ratio = current.canvasSize.pixelRatio
+        const ratio = current.canvasSize.pixelRatio * current.uiScale
         ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
 
         let flight = null
@@ -434,7 +442,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   // ---------------------------------------------------------------- input
   const pointerPosition = (event) => {
     const box = canvasRef.current.getBoundingClientRect()
-    return { x: event.clientX - box.left, y: event.clientY - box.top }
+    return { x: (event.clientX - box.left) / uiScale, y: (event.clientY - box.top) / uiScale }
   }
 
   const selectSite = (id) => {
@@ -640,7 +648,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
               const side = position.x >= view.centerX ? 'right' : 'left'
               const selected = candidate.id === siteId
               const className = `orbit-site orbit-site--${side}${selected ? ' is-selected' : ''}`
-              const style = { left: position.x, top: position.y }
+              const style = { left: position.x * uiScale, top: position.y * uiScale }
               if (step !== 'site') {
                 return (
                   <span key={candidate.id} className={className} style={style}>

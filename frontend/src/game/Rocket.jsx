@@ -76,6 +76,8 @@ export function Rocket({
       {/* What rides inside, in a speech bubble beside the closed hull */}
       {open && interior.length > 0 && (
         <div className="rocket__bubble" aria-label="Inside the rocket">
+          <div className="rocket__bubble-box">
+          <div className="rocket__bubble-list">
           {interior.map((part) => (
             <span key={part.id} className="rocket__cargo-row">
               <img
@@ -87,8 +89,12 @@ export function Rocket({
               <span className="rocket__qty">×{partCount(equipped, part.id)}</span>
             </span>
           ))}
+          </div>
+          </div>
         </div>
       )}
+      {/* The sprites carry the shadow; the bubble stays outside it so scrolling it is cheap */}
+      <div className="rocket__body">
       {lit && stage === 'separating' ? (
         <span className="rocket__layer rocket__layer--once" style={rowStyle(ROCKET.separation)} />
       ) : lit ? (
@@ -130,6 +136,7 @@ export function Rocket({
           <span key={part.id} className="rocket__layer" style={sheetStyle(part, lit)} />
         ),
       )}
+      </div>
     </div>
   );
 }

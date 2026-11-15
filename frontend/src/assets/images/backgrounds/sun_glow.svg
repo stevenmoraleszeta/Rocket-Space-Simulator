@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="1440" height="810" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges">
+  <!-- The sun's soft glow for launch_pad.svg: only the parts that show around the sun.
+       It sits on its own layer over the pad and fades in and out with CSS (.stage__glow). -->
+  <g fill="#fff6d8">
+    <rect x="50" y="22" width="4" height="10"/>
+    <rect x="80" y="22" width="4" height="10"/>
+    <rect x="62" y="10" width="10" height="4"/>
+    <rect x="62" y="40" width="10" height="4"/>
+  </g>
+</svg>

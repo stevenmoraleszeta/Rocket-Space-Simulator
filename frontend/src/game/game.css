@@ -47,13 +47,56 @@
   image-rendering: pixelated;
 }
 
+/* The sun's glow over the pad picture, on its own layer: fading it only changes its opacity,
+   so the big pad picture is never redrawn (that made scrolling the hangar panels lag). */
+.stage__glow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+  opacity: 0.3;
+  will-change: opacity;
+  animation: sun-glow 4s ease-in-out infinite alternate;
+}
+
+@keyframes sun-glow {
+  from { opacity: 0.2; }
+  to { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage__glow { animation: none; }
+}
+
 /* Clouds drift across the pad sky. Each lane is as wide as the frame, so
    translateX(100%) carries its cloud from just off the left edge to past the right. */
 /* Waving flag on its pole beside the communications station (see PadFlag.jsx). */
 .pad-flag {
   position: absolute;
-  height: auto;
+  display: block;
+  overflow: hidden;
+}
+
+/* All the waving frames side by side; sliding one frame at a time (steps) shows them in turn.
+   A transform only moves the strip on the GPU, nothing is redrawn. */
+.pad-flag__strip {
+  display: block;
+  width: calc(100% * var(--frames, 6));
+  height: 100%;
+  max-width: none;
   image-rendering: pixelated;
+  animation: flag-wave 0.84s steps(var(--frames, 6)) infinite;
+  will-change: transform;
+}
+
+@keyframes flag-wave {
+  to { transform: translateX(-100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pad-flag__strip { animation: none; }
 }
 
 .clouds {
@@ -104,10 +147,10 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
   /* Leave room for the Settings button fixed in the top-right corner (about 170 px + gaps). */
-  padding-right: 204px;
+  padding-right: 12.75rem;
 }
 
 .game__back {
@@ -116,10 +159,10 @@
   z-index: 0;
   justify-self: start;
   font-family: var(--ms-font-pixel);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.6;
-  min-height: 48px;
-  padding: 12px 16px 16px;
+  min-height: 3rem;
+  padding: 0.75rem 1rem 1rem;
   border-radius: 0;
   border: 0;
   background: transparent;
@@ -181,7 +224,7 @@
 .game__num {
   font-family: var(--ms-font-pixel);
   color: var(--ms-accent);
-  font-size: 10px;
+  font-size: 0.625rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -195,10 +238,10 @@
 }
 
 .game__mission h1 {
-  margin: 8px 0 0;
+  margin: 0.5rem 0 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
-  font-size: clamp(14px, 2vw, 22px);
+  font-size: clamp(0.875rem, 2vw, 1.375rem);
   line-height: 1.4;
   text-shadow: var(--px) var(--px) 0 var(--px-ink);
 }
@@ -206,7 +249,7 @@
 .game__place {
   justify-self: end;
   font-family: var(--ms-font-pixel);
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--ms-muted);
 }
 
@@ -219,21 +262,55 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: 0.5rem;
   flex: 1;
   min-height: 0;
   box-sizing: border-box;
   margin: 0;
-  padding: 4px 16px 12px;
+  padding: 0.25rem 1rem 0.75rem;
   justify-content: safe center;
   overflow: auto;
+  overscroll-behavior: contain;
   pointer-events: auto;
+  /* Own layer, so the browser scrolls it on the GPU instead of redrawing it every frame */
+  will-change: transform;
 }
+
+/* Wide screens: the panel is only as wide as its column on the right, so it never covers
+   the rocket and its cargo bubble (both stay scrollable and clickable). */
+@media (min-width: 721px) {
+  .bay {
+    align-self: flex-end;
+    width: min(100%, 348px);
+    scrollbar-gutter: stable;
+  }
+}
+
+/* Wide screens: the panel starts at the top of the screen, beside the mission title, so more
+   of it fits before it has to scroll. The place name moves left to stay out of its way. */
+@media (min-width: 1100px) {
+  .game--pad .bay {
+    margin-top: -64px;
+    /* Clear the floating Settings button (top right, about 50px tall), so Story sits
+       right on top of SUPPLIES without going under it */
+    padding-top: 56px;
+  }
+
+  .game--pad .game__place {
+    margin-right: 150px;
+  }
+}
+
+/* Blocky pixel scrollbar for the panel, in the SUPPLIES frame colors */
+.bay::-webkit-scrollbar { width: 9px; }
+.bay::-webkit-scrollbar-track { background: rgba(7, 10, 32, 0.6); }
+.bay::-webkit-scrollbar-thumb { background: #7d9cf0; box-shadow: inset -3px -3px 0 #3f5fb8; border-radius: 0; }
+.bay::-webkit-scrollbar-button { display: none; }
 
 .pad-story {
   position: relative;
   z-index: 3;
-  width: min(300px, 100%);
+  width: min(18.75rem, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -250,11 +327,11 @@
   isolation: isolate;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   width: auto;
-  min-height: 52px;
+  min-height: 3.25rem;
   flex: none;
-  padding: 0 14px var(--px) 10px;
+  padding: 0 0.875rem var(--px) 0.625rem;
   border: 0;
   background: transparent;
   color: var(--ms-yellow);
@@ -314,8 +391,8 @@
 .bulb__icon {
   position: relative;
   z-index: 1;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   flex: none;
   display: block;
 }
@@ -336,14 +413,14 @@
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  padding: 24px;
+  padding: 1.5rem;
   background: rgba(5, 8, 25, 0.78);
 }
 
 .brief-shell {
   display: flex;
   flex-direction: column;
-  width: min(860px, 100%);
+  width: min(53.75rem, 100%);
   min-height: 0;
   max-height: 100%;
   filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink));
@@ -358,7 +435,7 @@
   min-height: 0;
   max-height: 100%;
   margin: 0;
-  padding: 22px 26px 24px;
+  padding: 1.375rem 1.625rem 1.5rem;
   box-sizing: border-box;
   overflow: hidden;
   background: rgba(11, 16, 48, 0.97);
@@ -372,14 +449,14 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 1rem;
   flex: none;
 }
 
 .brief__kicker {
   margin: 0;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 0.625rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ms-accent);
@@ -387,10 +464,10 @@
 
 .brief__title,
 .brief__hints h3 {
-  margin: 8px 0 0;
+  margin: 0.5rem 0 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.4;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -399,7 +476,7 @@
 
 .brief__hints h3 {
   margin: 0;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .brief__close {
@@ -407,14 +484,14 @@
   isolation: isolate;
   z-index: 0;
   flex: none;
-  min-height: 36px;
+  min-height: 2.25rem;
   margin: 0;
-  padding: 8px 12px 12px;
+  padding: 0.5rem 0.75rem 0.75rem;
   border: 0;
   background: transparent;
   color: var(--ms-text);
   font-family: var(--ms-font-pixel);
-  font-size: 9px;
+  font-size: 0.5625rem;
   line-height: 1.4;
   cursor: pointer;
 }
@@ -456,27 +533,27 @@
 
 .brief__intro {
   flex: none;
-  margin: 14px 0 0;
-  font-size: 22px;
+  margin: 0.875rem 0 0;
+  font-size: 1.375rem;
   line-height: 1.35;
   color: #d7f4ff;
 }
 
 .brief__body {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.85fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(13.75rem, 0.85fr);
+  gap: 1.125rem;
   align-items: stretch;
   flex: 1 1 auto;
   min-height: 0;
-  margin-top: 16px;
+  margin-top: 1rem;
   overflow: auto;
   scrollbar-width: thin;
   scrollbar-color: #5c6894 transparent;
 }
 
 .brief__body::-webkit-scrollbar {
-  width: 8px;
+  width: 0.5rem;
 }
 
 .brief__body::-webkit-scrollbar-thumb {
@@ -486,7 +563,7 @@
 .brief__story {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
   min-width: 0;
 }
 
@@ -496,9 +573,9 @@
 
 .brief__story p {
   margin: 0;
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem;
   background: rgba(255, 255, 255, 0.04);
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1.45;
 }
 
@@ -508,7 +585,7 @@
   display: flex;
   flex-direction: column;
   margin: 0;
-  padding: 14px 16px 16px;
+  padding: 0.875rem 1rem 1rem;
   min-width: 0;
 }
 
@@ -525,23 +602,23 @@
 }
 
 .brief__hints ol {
-  margin: 12px 0 0;
+  margin: 0.75rem 0 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
   counter-reset: clue;
 }
 
 .brief__hints li {
   counter-increment: clue;
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.625rem;
   align-items: start;
   margin: 0;
-  font-size: 17px;
+  font-size: 1.0625rem;
   line-height: 1.4;
 }
 
@@ -549,12 +626,12 @@
   content: counter(clue);
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   background: var(--ms-yellow);
   color: #2a2000;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1;
 }
 
@@ -564,13 +641,13 @@
   z-index: 0;
   pointer-events: auto;
   width: 100%;
-  min-height: 40px;
-  padding: 8px 12px 12px;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem 0.75rem;
   border: 0;
   background: transparent;
   color: #e7f3ee;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1.6;
   cursor: pointer;
 }
@@ -633,14 +710,14 @@
    tells whether a supply is enough. Money is gold, shrinks as you spend, and turns red when
    it is overspent. */
 .meters {
-  --px: 3px;
+  --px: 0.1875rem;
   --outline: #070a20;
   --frame: #3f5fb8;
   --frame-light: #7d9cf0;
   --frame-dark: #1c2a66;
   --panel: #0c1236;
   --panel-line: #0f1740;
-  /* Square corners cut in 3px steps */
+  /* Square corners cut in 0.1875rem steps */
   --pixel-corners: polygon(
     0 calc(var(--px) * 2), var(--px) calc(var(--px) * 2), var(--px) var(--px), calc(var(--px) * 2) var(--px), calc(var(--px) * 2) 0,
     calc(100% - var(--px) * 2) 0, calc(100% - var(--px) * 2) var(--px), calc(100% - var(--px)) var(--px), calc(100% - var(--px)) calc(var(--px) * 2), 100% calc(var(--px) * 2),
@@ -649,7 +726,7 @@
   );
   position: relative;
   pointer-events: auto;
-  width: min(300px, 100%);
+  width: min(18.75rem, 100%);
   box-sizing: border-box;
   padding: 0;
   color: #f2f4ff;
@@ -659,7 +736,7 @@
 .meters__head {
   display: flex;
   align-items: flex-end;
-  height: 27px;
+  height: 1.6875rem;
   margin-bottom: calc(var(--px) * -1);
 }
 
@@ -670,9 +747,9 @@
   margin: 0;
   display: flex;
   align-items: center;
-  height: 27px;
+  height: 1.6875rem;
   box-sizing: border-box;
-  padding: var(--px) 12px 0;
+  padding: var(--px) 0.75rem 0;
   background: var(--frame);
   box-shadow:
     inset 0 var(--px) 0 var(--outline),
@@ -686,22 +763,22 @@
   );
   font-family: var(--ms-font-pixel);
   font-weight: 400;
-  font-size: 10px;
+  font-size: 0.625rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #ffffff;
-  text-shadow: 2px 2px 0 var(--outline);
+  text-shadow: 0.125rem 0.125rem 0 var(--outline);
 }
 
 /* Rest of the top edge: a dark band with three light pixel blocks on the right */
 .meters__stripes {
   flex: 1;
-  height: 15px;
+  height: 0.9375rem;
   margin-left: calc(var(--px) * -1);
   background:
-    linear-gradient(var(--frame-light), var(--frame-light)) right 30px center / 6px 6px no-repeat,
-    linear-gradient(var(--frame-light), var(--frame-light)) right 20px center / 6px 6px no-repeat,
-    linear-gradient(var(--frame-light), var(--frame-light)) right 10px center / 6px 6px no-repeat,
+    linear-gradient(var(--frame-light), var(--frame-light)) right 1.875rem center / 0.375rem 0.375rem no-repeat,
+    linear-gradient(var(--frame-light), var(--frame-light)) right 1.25rem center / 0.375rem 0.375rem no-repeat,
+    linear-gradient(var(--frame-light), var(--frame-light)) right 0.625rem center / 0.375rem 0.375rem no-repeat,
     var(--frame);
   box-shadow:
     inset 0 var(--px) 0 var(--outline),
@@ -714,12 +791,12 @@
    One grid for every row, so icons, labels, bars and values line up in columns. */
 .meters__grid {
   display: grid;
-  grid-template-columns: 20px max-content minmax(60px, 1fr) max-content;
+  grid-template-columns: 1.25rem max-content minmax(3.75rem, 1fr) max-content;
   align-items: center;
-  gap: 7px 8px;
-  padding: 15px 15px 16px;
+  gap: 0.4375rem 0.5rem;
+  padding: 0.9375rem 0.9375rem 1rem;
   background:
-    repeating-linear-gradient(180deg, var(--panel) 0 3px, var(--panel-line) 3px 6px);
+    repeating-linear-gradient(180deg, var(--panel) 0 0.1875rem, var(--panel-line) 0.1875rem 0.375rem);
   box-shadow:
     inset 0 0 0 var(--px) var(--outline),
     inset var(--px) var(--px) 0 var(--px) var(--frame-light),
@@ -751,36 +828,36 @@
 
 /* Pixel icon on the left so younger players can tell the meters apart. */
 .meter__icon {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
   image-rendering: pixelated;
 }
 
 .meter__label {
   font-family: var(--ms-font-pixel);
-  font-size: 8px;
+  font-size: 0.5rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #dfe5ff;
-  text-shadow: 1px 1px 0 var(--outline);
+  text-shadow: 0.0625rem 0.0625rem 0 var(--outline);
 }
 
 /* Bar: a dark pixel slot with 8 square blocks */
 .meter__track {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  gap: 2px;
-  height: 14px;
+  gap: 0.125rem;
+  height: 0.875rem;
   box-sizing: border-box;
-  padding: 3px;
+  padding: 0.1875rem;
   background: #050816;
   box-shadow:
-    inset 0 0 0 2px #26336e,
-    inset 2px 2px 0 2px #050816;
+    inset 0 0 0 0.125rem #26336e,
+    inset 0.125rem 0.125rem 0 0.125rem #050816;
 }
 
 .meter.is-over .meter__track {
-  box-shadow: inset 0 0 0 2px var(--meter);
+  box-shadow: inset 0 0 0 0.125rem var(--meter);
 }
 
 .meter__cell {
@@ -788,34 +865,55 @@
   transition: background-color 0.12s steps(1);
 }
 
-/* Lit block: flat color with a 2px light top and a 2px dark bottom, no blur */
+/* Lit block: flat color with a 0.125rem light top and a 0.125rem dark bottom, no blur */
 .meter__cell.is-lit {
   background: var(--meter);
   box-shadow:
-    inset 0 2px 0 var(--meter-light),
-    inset 0 -2px 0 var(--meter-dark);
+    inset 0 0.125rem 0 var(--meter-light),
+    inset 0 -0.125rem 0 var(--meter-dark);
 }
 
 .meter__value {
   font-family: var(--ms-font-pixel);
-  font-size: 8px;
+  font-size: 0.5rem;
   line-height: 1.4;
   text-align: right;
   white-space: nowrap;
   color: #ffffff;
-  text-shadow: 1px 1px 0 var(--outline);
+  text-shadow: 0.0625rem 0.0625rem 0 var(--outline);
 }
 
 .meter.is-over .meter__value {
   color: var(--meter);
 }
 
+.meters__hint {
+  margin: 0.375rem 0 0;
+  color: #9aa3c4;
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+/* A supply without a pixel icon shows its emoji in the same spot */
+.meter__icon--emoji {
+  display: grid;
+  place-items: center;
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
 .rocket {
-  --scale: 7;
+  --scale: calc(7 * var(--ui, 1));
   position: relative;
   width: calc(32px * var(--scale));
   height: calc(32px * var(--scale));
-  filter: drop-shadow(0 12px 0 rgba(0, 0, 0, 0.35));
+}
+
+/* Sprite stack with the ground shadow (the cargo bubble sits outside it) */
+.rocket__body {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(0 0.75rem 0 rgba(0, 0, 0, 0.35));
 }
 
 /* Preparation shows a larger rocket with the payload bay cut open. The scale is kept small
@@ -823,7 +921,7 @@
    on screen; shorter screens step it down further (see the max-height queries below). */
 .rocket--open,
 .prep {
-  --scale: 20;
+  --scale: calc(20 * var(--ui, 1));
 }
 
 .prep {
@@ -897,25 +995,43 @@
   transform-origin: bottom center;
 }
 
+/* One engineer: a 16×24 window onto the sprite sheet (4 frames × 4 jobs). The sheet inside
+   slides one frame at a time with a transform, so the GPU animates it without repainting. */
 .engineer {
+  position: relative;
   display: block;
   width: 16px;
   height: 24px;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
+  overflow: hidden;
   transform: scale(calc(var(--scale) * 0.34));
   transform-origin: bottom center;
+}
+
+.engineer__sheet {
+  position: absolute;
+  left: 0;
+  top: var(--row, 0px);
+  width: 64px;
+  height: 96px;
+  background-repeat: no-repeat;
+  background-size: 64px 96px;
+  image-rendering: pixelated;
   animation: crew-work 0.72s steps(4) infinite;
+  will-change: transform;
 }
 
 .engineer.is-flip {
   transform: scale(calc(var(--scale) * -0.34), calc(var(--scale) * 0.34));
 }
 
-.engineer--weld { background-position-y: 0; animation-duration: 0.5s; }
-.engineer--hammer { background-position-y: -24px; animation-duration: 0.84s; }
-.engineer--walk { background-position-y: -48px; animation-duration: 0.44s; }
-.engineer--check { background-position-y: -72px; animation-duration: 0.96s; }
+.engineer--weld { --row: 0px; }
+.engineer--hammer { --row: -24px; }
+.engineer--walk { --row: -48px; }
+.engineer--check { --row: -72px; }
+.engineer--weld .engineer__sheet { animation-duration: 0.5s; }
+.engineer--hammer .engineer__sheet { animation-duration: 0.84s; }
+.engineer--walk .engineer__sheet { animation-duration: 0.44s; }
+.engineer--check .engineer__sheet { animation-duration: 0.96s; }
 
 .crew__mover.is-patrol {
   animation: crew-patrol 6.4s linear infinite;
@@ -940,10 +1056,12 @@
 
 /* The one who stays shakes "no": turning left and right on the spot. */
 .engineer.is-saying-no {
-  background-position-y: -72px;
-  animation:
-    crew-work 0.96s steps(4) infinite,
-    crew-say-no 0.5s steps(1) 0.6s infinite;
+  --row: -72px;
+  animation: crew-say-no 0.5s steps(1) 0.6s infinite;
+}
+
+.engineer.is-saying-no .engineer__sheet {
+  animation-duration: 0.96s;
 }
 
 @keyframes crew-say-no {
@@ -986,8 +1104,8 @@
 }
 
 @keyframes crew-work {
-  from { background-position-x: 0; }
-  to { background-position-x: -64px; }
+  from { transform: translateX(0); }
+  to { transform: translateX(-64px); }
 }
 
 @keyframes crew-patrol {
@@ -1012,55 +1130,127 @@
 }
 
 /* Speech bubble beside the upper hull (column 21 of the 32 grid) listing what rides inside.
-   The tail on its left edge points at the rocket. */
+   Pixel-art like the SUPPLIES panel: stepped corners and a 3-layer bevel, with a stepped
+   pixel tail on its left pointing at the rocket. The list scrolls down when many things
+   ride along, so it never runs over the rocket. */
 .rocket__bubble {
+  --px: 3px;
+  --outline: #070a20;
+  --frame: #3f5fb8;
+  --frame-light: #7d9cf0;
+  --frame-dark: #1c2a66;
+  --panel: #0c1236;
+  --panel-line: #0f1740;
   position: absolute;
   z-index: 4;
   left: calc(100% * 22 / 32);
   top: calc(100% * 4 / 32);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  background: #fff;
-  color: #04213a;
-  border: 3px solid #14182a;
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  padding: 0 var(--px) var(--px) calc(var(--px) * 4);
+  pointer-events: auto;
+  color: #f2f4ff;
   white-space: nowrap;
+  /* Hard pixel shadow drawn as a flat block behind the box (a filter here would repaint
+     the whole bubble on every scroll and every astronaut frame, which made it lag) */
+  background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)) no-repeat
+    calc(var(--px) * 5) var(--px) / calc(100% - var(--px) * 5) calc(100% - var(--px));
 }
 
+/* Tail: stair-stepped pixel triangle, outline color with the frame color inside */
 .rocket__bubble::before,
 .rocket__bubble::after {
   content: '';
   position: absolute;
-  top: 18px;
-  border-style: solid;
-  border-color: transparent;
-}
-
-/* Tail: dark outline triangle with a white one on top */
-.rocket__bubble::before {
-  left: -18px;
-  border-width: 9px 15px 9px 0;
-  border-right-color: #14182a;
+  left: 0;
+  top: 1.125rem;
+  width: calc(var(--px) * 5);
+  height: calc(var(--px) * 7);
+  background: var(--outline);
+  clip-path: polygon(
+    100% 0, 60% 0, 60% calc(var(--px) * 1), 40% calc(var(--px) * 1), 40% calc(var(--px) * 2),
+    20% calc(var(--px) * 2), 20% calc(var(--px) * 3), 0 calc(var(--px) * 3), 0 calc(var(--px) * 4),
+    20% calc(var(--px) * 4), 20% calc(var(--px) * 5), 40% calc(var(--px) * 5), 40% calc(var(--px) * 6),
+    60% calc(var(--px) * 6), 60% 100%, 100% 100%
+  );
 }
 
 .rocket__bubble::after {
-  left: -12px;
-  top: 21px;
-  border-width: 6px 10px 6px 0;
-  border-right-color: #fff;
+  left: var(--px);
+  top: calc(1.125rem + var(--px));
+  width: calc(var(--px) * 4);
+  height: calc(var(--px) * 5);
+  background: var(--frame);
+  clip-path: polygon(
+    100% 0, 50% 0, 50% calc(var(--px) * 1), 25% calc(var(--px) * 1), 25% calc(var(--px) * 2),
+    0 calc(var(--px) * 2), 0 calc(var(--px) * 3), 25% calc(var(--px) * 3), 25% calc(var(--px) * 4),
+    50% calc(var(--px) * 4), 50% 100%, 100% 100%
+  );
 }
+
+/* The framed box (does not scroll, so rows never slide over the frame). The frame is drawn
+   on a layer behind, so the scrolling list is not inside a clip-path (that made it lag). */
+.rocket__bubble-box {
+  position: relative;
+  isolation: isolate;
+  padding: 15px 12px 15px 15px;
+}
+
+.rocket__bubble-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: repeating-linear-gradient(180deg, var(--panel) 0 3px, var(--panel-line) 3px 6px);
+  box-shadow:
+    inset 0 0 0 var(--px) var(--outline),
+    inset var(--px) var(--px) 0 var(--px) var(--frame-light),
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px) var(--frame-dark),
+    inset 0 0 0 calc(var(--px) * 3) var(--frame),
+    inset 0 0 0 calc(var(--px) * 4) var(--outline);
+  clip-path: polygon(
+    0 calc(var(--px) * 2), var(--px) calc(var(--px) * 2), var(--px) var(--px), calc(var(--px) * 2) var(--px), calc(var(--px) * 2) 0,
+    calc(100% - var(--px) * 2) 0, calc(100% - var(--px) * 2) var(--px), calc(100% - var(--px)) var(--px), calc(100% - var(--px)) calc(var(--px) * 2), 100% calc(var(--px) * 2),
+    100% calc(100% - var(--px) * 2), calc(100% - var(--px)) calc(100% - var(--px) * 2), calc(100% - var(--px)) calc(100% - var(--px)), calc(100% - var(--px) * 2) calc(100% - var(--px)), calc(100% - var(--px) * 2) 100%,
+    calc(var(--px) * 2) 100%, calc(var(--px) * 2) calc(100% - var(--px)), var(--px) calc(100% - var(--px)), var(--px) calc(100% - var(--px) * 2), 0 calc(100% - var(--px) * 2)
+  );
+}
+
+/* The list: about four rows tall, then it scrolls. Blocky pixel scrollbar. */
+.rocket__bubble-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 156px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+}
+
+/* Firefox: thin bar in the frame colors */
+@supports not selector(::-webkit-scrollbar) {
+  .rocket__bubble-list {
+    scrollbar-width: thin;
+    scrollbar-color: var(--frame-light) var(--outline);
+  }
+}
+
+.rocket__bubble-list::-webkit-scrollbar { width: 9px; }
+.rocket__bubble-list::-webkit-scrollbar-track { background: var(--outline); }
+.rocket__bubble-list::-webkit-scrollbar-thumb {
+  background: var(--frame-light);
+  box-shadow: inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--frame);
+  border-radius: 0;
+}
+.rocket__bubble-list::-webkit-scrollbar-button { display: none; }
 
 .rocket__cargo-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .rocket__cargo {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   object-fit: contain;
   image-rendering: pixelated;
 }
@@ -1079,17 +1269,19 @@
 
 .rocket__cargo-name {
   font-family: var(--ms-font-pixel);
-  font-size: 12px;
+  font-size: 0.75rem;
+  color: #ffffff;
+  text-shadow: 0.125rem 0.125rem 0 var(--outline, #070a20);
 }
 
 .rocket__qty {
   margin-left: auto;
   font-family: var(--ms-font-pixel);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.4;
   color: #04213a;
   background: var(--ms-yellow);
-  padding: 1px 4px;
+  padding: 0.0625rem 0.25rem;
 }
 
 /* Launch: the rocket rises from below the screen to its spot, then hovers. */
@@ -1106,7 +1298,7 @@
 
 @keyframes hover {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-0.5rem); }
 }
 
 /* Liftoff from the pad: the engine lights and shakes, then the rocket climbs
@@ -1136,7 +1328,7 @@
 
 .bay[inert] {
   opacity: 0;
-  transform: translateX(40px);
+  transform: translateX(2.5rem);
 }
 
 /* Sprite-sheet loop: steps through --frames cells of one 32px row, from cell --first. */
@@ -1164,7 +1356,8 @@
   to { background-position: -256px 0; }
 }
 
-.rocket.is-exploding { filter: none; }
+.rocket.is-exploding,
+.rocket.is-exploding .rocket__body { filter: none; }
 
 /* On the pad every rocket uses the pad scale (.prep): standing still after a called-off
    launch, straining, or blowing up, it stays the same size and in the same place. */
@@ -1287,11 +1480,11 @@
 }
 
 .dock {
-  width: min(300px, 100%);
+  width: min(18.75rem, 100%);
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 8px;
+  gap: 0.5rem;
   pointer-events: auto;
 }
 
@@ -1301,7 +1494,7 @@
   padding: 0;
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 0.625rem;
   width: 100%;
 }
 
@@ -1314,7 +1507,7 @@
 
 /* Many parts (Moon, Mars): four per row. Stronger than ".parts > li" further down. */
 .parts.parts--wrap > li {
-  flex: 0 0 calc((100% - 24px) / 4);
+  flex: 0 0 calc((100% - 1.5rem) / 4);
 }
 
 .part-btn,
@@ -1364,8 +1557,8 @@
 .part-btn {
   display: grid;
   place-items: center;
-  width: 68px;
-  height: 72px;
+  width: 4.25rem;
+  height: 4.5rem;
   padding: 0 0 var(--px);
 }
 
@@ -1405,50 +1598,50 @@
 
 .part-btn {
   width: 100%;
-  height: 62px;
+  height: 3.875rem;
 }
 
 .part-btn::after {
   background: #0c1236;
   box-shadow:
-    inset 0 0 0 3px #3f5fb8,
-    inset 5px 5px 0 #1c2a66;
+    inset 0 0 0 0.1875rem #3f5fb8,
+    inset 0.3125rem 0.3125rem 0 #1c2a66;
 }
 
 .part-btn.is-on::after,
 .part-btn.is-open::after {
   box-shadow:
-    inset 0 0 0 3px #ffc81e,
-    inset 5px 5px 0 #4a3a10;
+    inset 0 0 0 0.1875rem #ffc81e,
+    inset 0.3125rem 0.3125rem 0 #4a3a10;
 }
 
 .part-btn .part__icon {
   --scale: 1.5;
-  width: 48px;
-  height: 48px;
+  width: 3rem;
+  height: 3rem;
 }
 
 .part-btn .part__photo {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 /* Parts sit on different rows of the rocket cell; --shift-y (parts.js iconShiftY) centers each one. */
 .part__icon .rocket__layer {
-  transform: scale(var(--scale)) translateY(calc(var(--shift-y, 0) * 1px));
+  transform: scale(var(--scale)) translateY(calc(var(--shift-y, 0) * 0.0625rem));
 }
 
 .part-btn__qty {
   position: absolute;
   z-index: 2;
-  right: 2px;
-  bottom: 8px;
-  min-width: 14px;
-  padding: 0 3px;
+  right: 0.125rem;
+  bottom: 0.5rem;
+  min-width: 0.875rem;
+  padding: 0 0.1875rem;
   background: #c6b36a;
   color: #241c08;
   font-family: var(--ms-font-pixel);
-  font-size: 9px;
+  font-size: 0.5625rem;
   line-height: 1.4;
   text-align: center;
 }
@@ -1457,7 +1650,7 @@
   position: relative;
   isolation: isolate;
   box-sizing: border-box;
-  padding: 10px 12px 12px;
+  padding: 0.625rem 0.75rem 0.75rem;
 }
 
 .part-dialog::before {
@@ -1476,49 +1669,107 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 0.5rem;
+}
+
+/* The tapped part's icon at the start of the card's title row */
+.part-dialog__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: #1c2458;
+  clip-path: var(--px-clip);
+  overflow: hidden;
+}
+
+.part-dialog__icon .part__icon {
+  --scale: 1.3;
+  width: 42px;
+  height: 42px;
+}
+
+.part-dialog__icon .part__photo {
+  width: 34px;
+  height: 34px;
+}
+
+.part-dialog__head .part-dialog__title {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Wide screens: the card pops out beside the panel, level with the tapped part, and its
+   pixel tail on the right points at it. Placed by usePopoutPlace in GameScreen.jsx. */
+.part-dialog--popout {
+  --px-edge-dim: #10162f;
+  position: fixed;
+  z-index: 30;
+  width: 300px;
+  filter: none;
+  animation: part-pop 0.18s steps(3) both;
+}
+
+.part-dialog--popout::after {
+  content: "";
+  position: absolute;
+  top: var(--tail-y, 20px);
+  right: -12px;
+  width: 12px;
+  height: 18px;
+  background: #5c6894;
+  clip-path: polygon(
+    0 0, 33% 0, 33% 17%, 66% 17%, 66% 33%, 100% 33%,
+    100% 66%, 66% 66%, 66% 83%, 33% 83%, 33% 100%, 0 100%
+  );
+}
+
+@keyframes part-pop {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: none; }
 }
 
 .part-dialog__title {
   margin: 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1.5;
 }
 
 .part-dialog__close {
   flex: none;
-  min-height: 28px;
-  padding: 4px 8px 8px;
-  font-size: 8px;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.5rem 0.5rem;
+  font-size: 0.5rem;
   line-height: 1.4;
 }
 
 .part-dialog__blurb {
-  margin: 8px 0 0;
+  margin: 0.5rem 0 0;
   color: #b7bedd;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.3;
 }
 
 .part-dialog .part__tags {
-  margin-top: 6px;
+  margin-top: 0.375rem;
 }
 
 .part-dialog__stepper {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 0.625rem;
+  margin-top: 0.625rem;
 }
 
 .step-btn {
-  width: 36px;
-  height: 40px;
+  width: 2.25rem;
+  height: 2.5rem;
   padding: 0 0 var(--px);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1;
 }
 
@@ -1559,16 +1810,16 @@
 .part-dialog__count {
   min-width: 3.2em;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 0.625rem;
   text-align: center;
 }
 
 .part__icon {
-  --scale: 1.6;
+  --scale: calc(1.6 * var(--ui, 1));
   position: relative;
   z-index: 1;
-  width: 52px;
-  height: 52px;
+  width: 3.25rem;
+  height: 3.25rem;
   flex: none;
   overflow: hidden;
   background: transparent;
@@ -1577,8 +1828,8 @@
 .part__photo {
   position: relative;
   z-index: 1;
-  width: 48px;
-  height: 48px;
+  width: 3rem;
+  height: 3rem;
   padding: 0;
   box-sizing: border-box;
   object-fit: contain;
@@ -1592,39 +1843,39 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
   min-width: 0;
   flex: 1;
 }
 
 .part__name {
   font-family: var(--ms-font-pixel);
-  font-size: 11px;
+  font-size: 0.6875rem;
   line-height: 1.4;
 }
 
 .part__blurb {
   color: var(--ms-muted);
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .part__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 0;
-  margin-top: 2px;
+  gap: 0.125rem 0;
+  margin-top: 0.125rem;
 }
 
 .part__tag {
   font-family: var(--ms-font);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.2;
   color: #b7bedd;
 }
 
 .part__tag + .part__tag::before {
   content: "·";
-  margin: 0 6px;
+  margin: 0 0.375rem;
   color: var(--ms-line);
 }
 
@@ -1639,8 +1890,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  padding: 12px 16px 32px;
+  gap: 1.125rem;
+  padding: 0.75rem 1rem 2rem;
 }
 
 /* The rocket keeps its full size and rises in front of the supplies panel. */
@@ -1657,7 +1908,7 @@
     grid-template-rows: auto 1fr auto;
     align-items: center;
     justify-items: center;
-    column-gap: 48px;
+    column-gap: 3rem;
   }
 
   .flight__status {
@@ -1696,7 +1947,7 @@
   }
 
   .flight .rocket {
-    --scale: 4;
+    --scale: calc(4 * var(--ui, 1));
   }
 }
 
@@ -1738,7 +1989,7 @@
 .flight__status {
   margin: 0;
   font-family: var(--ms-font-pixel);
-  font-size: clamp(12px, 2vw, 16px);
+  font-size: clamp(0.75rem, 2vw, 1rem);
   line-height: 1.6;
   text-align: center;
   text-shadow: var(--px) var(--px) 0 var(--px-ink);
@@ -1771,25 +2022,25 @@
   .meters,
   .pad-story,
   .parts--wrap {
-    width: min(300px, 100%);
+    width: min(18.75rem, 100%);
   }
 
   .meters__grid {
-    grid-template-columns: 18px max-content minmax(48px, 1fr) max-content;
-    column-gap: 6px;
+    grid-template-columns: 1.125rem max-content minmax(3rem, 1fr) max-content;
+    column-gap: 0.375rem;
   }
 
   .meter__icon {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
   }
 
   .brief-modal {
-    padding: 12px;
+    padding: 0.75rem;
   }
 
   .brief {
-    padding: 16px 16px 18px;
+    padding: 1rem 1rem 1.125rem;
   }
 
   .brief__body {
@@ -1797,44 +2048,23 @@
   }
 
   .brief__intro {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 
   .rocket {
-    --scale: 5;
+    --scale: calc(5 * var(--ui, 1));
   }
 
   .rocket--open,
   .prep {
-    --scale: 11;
-  }
-}
-
-@media (max-height: 1100px) and (min-width: 721px) {
-  .rocket--open,
-  .prep {
-    --scale: 16;
+    --scale: calc(11 * var(--ui, 1));
   }
 }
 
 @media (max-height: 900px) and (min-width: 721px) {
   .rocket--open,
   .prep {
-    --scale: 14;
-  }
-}
-
-@media (max-height: 760px) and (min-width: 721px) {
-  .rocket--open,
-  .prep {
-    --scale: 12;
-  }
-}
-
-@media (max-height: 620px) and (min-width: 721px) {
-  .rocket--open,
-  .prep {
-    --scale: 10;
+    --scale: calc(16 * var(--ui, 1));
   }
 }
 
@@ -1849,6 +2079,7 @@
   .rocket__shell-half,
   .rocket__shell-flash,
   .engineer,
+  .engineer__sheet,
   .crew__mover.is-patrol {
     animation: none;
   }
@@ -1878,4 +2109,14 @@
 .launch-failed__hint {
   margin: 0 0 20px;
   color: var(--ms-muted, #b9c2ec);
+}
+
+/* The bay spans the whole screen under the HUD. Let clicks through its empty parts,
+   so Laika on the pad (PadLaika.jsx) can be tapped. */
+.game--pad .bay {
+  pointer-events: none;
+}
+
+.game--pad .bay > :not(.pad-story) {
+  pointer-events: auto;
 }

@@ -2,15 +2,19 @@
  * After a mission is launched the player fits the rocket on Earth,
  * then presses Launch and the flight begins.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { SpaceBackground, useProgress } from '../levels';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
+import sunGlow from '../assets/images/backgrounds/sun_glow.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
 import { EMPTY_LOADOUT, partCount, partMax, partsForMission } from './parts.js';
 import { METER_ICONS } from './meterIcons.js';
 import { PadClouds } from './PadClouds.jsx';
 import { PadFlag } from './PadFlag.jsx';
 import { PadCrew } from './PadCrew.jsx';
+import { LaikaStory, PadLaika } from './PadLaika.jsx';
+import { MissionChecklist } from './MissionChecklist.jsx';
+import { FunFactToast } from './FunFactToast.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
 import { LaunchSequence } from './LaunchSequence.jsx';
 import { flightNotes } from './flightSummary.js';
@@ -50,6 +54,9 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
   const [phase, setPhase] = useState('assemble');
   const [storyOpen, setStoryOpen] = useState(true);
   const [openPart, setOpenPart] = useState(null);
+  const [partAnchor, setPartAnchor] = useState(null);
+  const sidePopout = useWideScreen();
+  const [laikaTalking, setLaikaTalking] = useState(false);
   const [equipped, setEquipped] = useState(initialEquipped ?? EMPTY_LOADOUT);
   const [flightSeconds, setFlightSeconds] = useState(0);
   const [flightHeld, setFlightHeld] = useState(false);
@@ -268,6 +275,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
       <div className="stage">
         <div className="stage__frame">
           <img className="stage__bg" src={launchPad} alt="" />
+          <img className="stage__glow" src={sunGlow} alt="" />
           <PadClouds />
           <PadFlag />
           <div className="stage__mount">
@@ -278,9 +286,16 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
               <PadCrew />
             </div>
           </div>
+          <PadLaika talking={laikaTalking} onTalk={() => setLaikaTalking(true)} />
         </div>
       </div>
       {hud}
+      {/* Packing checklist: top left over the pad, clear of the supplies column on the right. */}
+      {!launching && (
+        <div className="game__checklist">
+          <MissionChecklist mission={mission} equipped={equipped} onOpenPart={(id, button) => { setOpenPart(id); setPartAnchor(button); }} />
+        </div>
+      )}
       <div className="bay" inert={launching}>
         <div className="pad-story">
           <button
@@ -312,7 +327,10 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
                     aria-expanded={open}
                     aria-controls={open ? 'part-dialog' : undefined}
                     aria-label={`${part.name}. ${count} packed.`}
-                    onClick={() => setOpenPart(open ? null : part.id)}
+                    onClick={(event) => {
+                      setOpenPart(open ? null : part.id);
+                      setPartAnchor(open ? null : event.currentTarget);
+                    }}
                   >
                     <PartIcon part={part} lit />
                     {count > 0 && <span className="part-btn__qty">{count}</span>}
@@ -321,7 +339,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
               );
             })}
           </ul>
-          {openPart && (
+          {openPart && !sidePopout && (
             <PartDialog
               part={catalog.find((part) => part.id === openPart)}
               count={partCount(equipped, openPart)}
@@ -340,9 +358,21 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           </button>
         </div>
       </div>
+      {openPart && sidePopout && !launching && (
+        <PartDialog
+          part={catalog.find((part) => part.id === openPart)}
+          count={partCount(equipped, openPart)}
+          creditsLeft={creditsLeft}
+          onChange={changeCount}
+          onClose={() => setOpenPart(null)}
+          anchor={partAnchor}
+        />
+      )}
       {storyOpen && (
         <Briefing mission={mission} onClose={() => setStoryOpen(false)} />
       )}
+      {laikaTalking && !launching && <LaikaStory onClose={() => setLaikaTalking(false)} />}
+      <FunFactToast paused={launching || storyOpen || laikaTalking} />
     </div>
   );
 }
@@ -413,10 +443,69 @@ function BulbIcon() {
   );
 }
 
-/** Detail for one part. Opens on the right, next to the icon row. */
-function PartDialog({ part, count, creditsLeft, onChange, onClose }) {
+/** True on screens wide enough to show the part card beside the panel. */
+const SIDE_POPOUT_QUERY = '(min-width: 721px)';
+function useWideScreen() {
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia(SIDE_POPOUT_QUERY).matches);
+  useEffect(() => {
+    const query = window.matchMedia(SIDE_POPOUT_QUERY);
+    const update = () => setWide(query.matches);
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  return wide;
+}
+
+/** Gap between the card and the panel, where the card's tail points at the tapped part. */
+const POPOUT_GAP = 16;
+
+/**
+ * Keeps the card beside the panel, level with the tapped part button (anchor), and inside the
+ * screen. It follows the button when the panel scrolls or the window changes size.
+ */
+function usePopoutPlace(cardRef, anchor) {
+  const [place, setPlace] = useState(null);
+  useLayoutEffect(() => {
+    if (!anchor) return undefined;
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const card = cardRef.current;
+        if (!card) return;
+        const button = anchor.getBoundingClientRect();
+        const panel = (anchor.closest('.dock') ?? anchor).getBoundingClientRect();
+        const height = card.offsetHeight;
+        const middle = button.top + button.height / 2;
+        const top = Math.max(8, Math.min(window.innerHeight - height - 8, middle - 36));
+        const tail = Math.max(14, Math.min(height - 28, middle - top - 9));
+        setPlace({ right: window.innerWidth - panel.left + POPOUT_GAP, top, tail });
+      });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    const observer = new ResizeObserver(update);
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+      observer.disconnect();
+    };
+  }, [anchor, cardRef]);
+  return place;
+}
+
+/**
+ * Detail for one part, with its icon. On wide screens (anchor given) it pops out beside the
+ * panel, level with the tapped part, with a tail pointing at it; on phones it sits under the icons.
+ */
+function PartDialog({ part, count, creditsLeft, onChange, onClose, anchor = null }) {
   const [denied, setDenied] = useState(false);
   const denyTimer = useRef(null);
+  const cardRef = useRef(null);
+  const place = usePopoutPlace(cardRef, anchor);
 
   useEffect(() => () => clearTimeout(denyTimer.current), []);
   useEffect(() => setDenied(false), [part?.id]);
@@ -440,12 +529,22 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose }) {
 
   return (
     <section
-      className="part-dialog"
+      ref={cardRef}
+      className={anchor ? 'part-dialog part-dialog--popout' : 'part-dialog'}
       id="part-dialog"
       role="dialog"
       aria-labelledby="part-dialog-title"
+      style={anchor ? {
+        right: place?.right ?? 0,
+        top: place?.top ?? 0,
+        '--tail-y': `${place?.tail ?? 20}px`,
+        visibility: place ? 'visible' : 'hidden',
+      } : undefined}
     >
       <div className="part-dialog__head">
+        <span className="part-dialog__icon" aria-hidden="true">
+          <PartIcon part={part} lit />
+        </span>
         <h2 id="part-dialog-title" className="part-dialog__title">{part.name}</h2>
         <button type="button" className="part-dialog__close" onClick={onClose}>
           Close
@@ -487,7 +586,7 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose }) {
 /** Blocks in each supply bar. */
 const METER_CELLS = 8;
 
-function Meters({ meters }) {
+export function Meters({ meters }) {
   return (
     <section className="meters" aria-label="Rocket supplies">
       <header className="meters__head">
@@ -505,7 +604,10 @@ function Meters({ meters }) {
               className={`meter meter--${meter.id}${meter.bar && meter.tone === 'over' ? ' is-over' : ''}`}
             >
               {METER_ICONS[meter.id] && <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />}
-              <span className="meter__label">{meter.label}</span>
+              {!METER_ICONS[meter.id] && meter.icon && (
+                <span className="meter__icon meter__icon--emoji" aria-hidden="true">{meter.icon}</span>
+              )}
+              <span className="meter__label" title={meter.tooltip}>{meter.label}</span>
               <div
                 className="meter__track"
                 role="meter"

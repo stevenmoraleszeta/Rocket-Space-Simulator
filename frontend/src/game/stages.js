@@ -7,7 +7,8 @@
  * Mapping between the game design levels and the missions:
  *   Mission 'earth' -> Level 2 (build: GameScreen.jsx, then launch to orbit:
  *                      levels/orbit/OrbitalLaunchLevel.jsx)
- *   Mission 'moon'  -> Level 2, then the coast to the Moon (levels/moon/MoonTransitLevel.jsx)
+ *   Mission 'moon'  -> Level 2 (hangar), then Level 3: base, launch day, aim and the trip to the Moon
+ *                      (levels/moon/MoonLaunchLevel.jsx)
  *   Mission 'mars'  -> Level 2, then Level 4 (launch to Mars: levels/marsLaunch/MarsLaunchLevel.jsx)
  *
  * Level 1 (preparation) is still being designed, so it is not in any flow yet.

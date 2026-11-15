@@ -58,39 +58,61 @@ export const MISSIONS = [
     // 2 credits are left. The cheapest extra part costs 14.
     // Mass 98 of 102. 6,518 s = a 10 minute climb + one 98.6 minute loop at 700 km.
     loadout: { budget: 124, mass: 102, energy: 40, heat: 20, thrust: 40, minCrew: 1, durationSeconds: 6518 },
+    // Hangar checklist (MissionChecklist.jsx): pictures with a check or a cross.
+    checklist: {
+      required: [
+        { part: 'shield', why: 'The climb through the air gets very hot. Without it the rocket burns.' },
+        { part: 'boosters', why: 'The main engine alone cannot lift the rocket off the pad.' },
+        { part: 'astronaut', why: 'Someone has to fly the rocket.' },
+        { part: 'food', why: 'The crew gets weak without food, and mission control calls them home.' },
+      ],
+      recommended: [],
+    },
   },
   {
     id: 'moon',
     number: 2,
     planet: 'moon',
-    title: 'Moon Explorer',
-    place: 'The Moon',
-    goal: 'Fly to the Moon and look for ice where it is dark.',
+    title: 'Moon Mapper',
+    place: 'Lunar orbit',
+    goal: 'Fly a crew to the Moon, slow down into orbit, and map the dark craters.',
     intro: 'A long trip to the Moon.',
     story: [
-      'You fly to the Moon to look for ice in the dark.',
-      'Apollo 11 took 8 days. Apollo 17 took about 12.',
-      'The crew eats and drinks every day. After the first day, someone can feel sick.',
-      'People breathe out a gas. On a long trip that gas has to be cleaned.',
-      'Going up is hot, and the Moon is much farther than one loop around Earth.',
-      'The Moon has almost no air. A ship that is still going fast at the end will crash.',
+      'You fly a crew to the Moon and map it from orbit.',
+      'Pick a base on Earth. Then pick the day: the Moon moves around Earth every day.',
+      'Drag the dotted line to the Moon. Fly around satellites and space junk.',
+      'The crew eats, drinks, and breathes for days. Pack enough for the whole trip.',
+      'The Moon has almost no air. Only a rocket engine can slow the ship down there.',
     ],
     hints: [
-      'Food and water for 8 days do not last 12. One person is not two people.',
-      'The gas the crew breathes out has to be cleaned, or the cabin turns bad.',
-      'Almost no air means nothing up there can catch the ship.',
+      'The Moon is about 384,400 km away. The trip takes about 5 days.',
+      'Space junk can break the computer and lose data. A shield helps.',
+      'Hitting a satellite hurts it, and it hurts your ship too.',
+      'The gas the crew breathes out has to be cleaned on a long trip.',
       'The ice is in a crater the Sun never reaches. Something has to roll in and look.',
-      'One path lasts 12 days and meets a storm from the Sun. Another loses the radio at the south pole.',
-      'The middle of the road is almost empty. A high or low road can meet a rock.',
     ],
-    funFact: 'Apollo 11 flew for 8 days. In 2009 NASA found ice in a dark crater at the south pole.',
+    funFact: 'Apollo 11 took about 3 days to reach the Moon. In 2009 NASA found ice in a dark crater at the south pole.',
     passPct: 60,
-    // Quiet 8-day pack: shield, boosters, 1 food, 1 water, medicine, 1 crew,
-    // air filter, lander, ice rover = 208 cr, 136 kg, 33 energy.
-    // The south pole adds the radio (18 cr, 5 kg).
-    // The 12-day storm adds a second food, a second water, and the shelter:
-    // 264 cr, 164 kg, 35 energy. 266 cr and 166 kg leave no room for the radio as well.
+    // A crew of at least 1 for up to 8 days: shield, boosters, food, water, medicine, filter, lander.
     loadout: { budget: 266, mass: 166, energy: 40, heat: 30, thrust: 55, minCrew: 1, durationSeconds: 8 * 86400 },
+    checklist: {
+      required: [
+        { part: 'shield', why: 'The climb through the air gets very hot. Without it the rocket burns.' },
+        { part: 'boosters', why: 'The main engine alone cannot lift the rocket off the pad.' },
+        { part: 'astronaut', why: 'Someone has to fly the ship to the Moon.' },
+        { part: 'food', why: 'The trip lasts days. A hungry crew cannot keep going.' },
+        { part: 'water', why: 'Each person drinks about 2.5 kg of water a day.' },
+        { part: 'medicine', why: 'On a long trip people can feel space sick.' },
+        { part: 'filter', why: 'People breathe out a gas that fills the cabin in about 2 days.' },
+        { part: 'lander', why: 'The Moon has almost no air. Only an engine can slow the ship down there.' },
+      ],
+      recommended: [
+        { part: 'fuel', why: 'Extra fuel fixes the path on the way: the yellow ring at the Moon gets bigger.' },
+        { part: 'antenna', why: 'Behind the Moon the radio goes quiet. The dish keeps your maps safe.' },
+        { part: 'shelter', why: 'If the Sun throws a storm, the crew has a safe room.' },
+        { part: 'prospector', why: 'It can drive into a dark crater and find ice: big science bonus.' },
+      ],
+    },
   },
   {
     id: 'mars',
