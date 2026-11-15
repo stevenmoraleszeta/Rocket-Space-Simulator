@@ -302,3 +302,12 @@ img.ms-planet { object-fit: contain; user-select: none; }
 @media (max-width: 720px) {
   .ms-path { grid-template-columns: 1fr; }
 }
+
+/* The stars under each planet are pixel sprites now (PixelIcon): same outline and hard shadow. */
+.ms-stop .ms-stars .pixel-icon {
+  filter:
+    drop-shadow(-0.0625rem 0 0 #05061a)
+    drop-shadow(0.0625rem 0 0 #05061a)
+    drop-shadow(0 -0.0625rem 0 #05061a)
+    drop-shadow(0.1875rem 0.1875rem 0 #05061a);
+}
