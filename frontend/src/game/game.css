@@ -771,6 +771,34 @@
   height: calc(32px * var(--scale));
 }
 
+/* Launch umbilical tower (LaunchTower.jsx): drawn in rocket sprite pixels, behind the rocket. */
+.tower {
+  position: absolute;
+  z-index: 0;
+  left: calc(var(--tower-x) * var(--scale) * 1px);
+  top: calc(var(--tower-y) * var(--scale) * 1px);
+  width: calc(var(--tower-w) * var(--scale) * 1px);
+  height: calc(var(--tower-h) * var(--scale) * 1px);
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Before liftoff the arms swing back into the tower, in pixel steps. */
+.tower.is-launching .tower__arm {
+  transform-box: fill-box;
+  transform-origin: right center;
+  animation: tower-arm-retract 0.6s steps(5) forwards;
+}
+
+.tower.is-launching .tower__arm--crew { animation-delay: 0s; }
+.tower.is-launching .tower__arm--stage { animation-delay: 0.08s; }
+.tower.is-launching .tower__arm--core { animation-delay: 0.16s; }
+
+@keyframes tower-arm-retract {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0.15); }
+}
+
 /* Deck starts at source row 8, so the clamps overlap the fins and the nozzle rests on the pad. */
 .prep__base {
   position: absolute;

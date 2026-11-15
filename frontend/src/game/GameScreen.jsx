@@ -10,6 +10,7 @@ import { EMPTY_LOADOUT, PARTS, partCount, partMax } from './parts.js';
 import { METER_ICONS } from './meterIcons.js';
 import { PadClouds } from './PadClouds.jsx';
 import { PadCrew } from './PadCrew.jsx';
+import { LaunchTower } from './LaunchTower.jsx';
 import { ASCENT_MS, AscentScene } from './AscentScene.jsx';
 import { PartIcon, Rocket } from './Rocket.jsx';
 import { partTags, rocketStatus } from './stats.js';
@@ -137,6 +138,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           <PadClouds />
           <div className="stage__mount">
             <div className="prep">
+              <LaunchTower launching={launching} />
               <img className="prep__base" src={launchBase} alt="" />
               <Rocket equipped={equipped} open={!launching} launching={launching} />
               <PadCrew />
