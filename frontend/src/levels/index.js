@@ -7,5 +7,6 @@ export { ProgressProvider, useProgress } from './ProgressContext.jsx';
 export { MissionSelect, MissionCard } from './components/MissionSelect.jsx';
 export { Planet } from './components/Planet.jsx';
 export { SpaceBackground } from './components/SpaceBackground.jsx';
+export { BlackHoleBackground } from './components/BlackHoleBackground.jsx';
 export { SPRITES } from './assets/sprites.js';
 export { StarRating } from './components/StarRating.jsx';

@@ -12,7 +12,7 @@ import { statSheet } from '../record.js';
 import { Planet } from './Planet.jsx';
 import { HistoryBoard, RankBadge, RecordButtons, StatsBoard } from './PlayerBoards.jsx';
 import { StarRating } from './StarRating.jsx';
-import { SpaceBackground } from './SpaceBackground.jsx';
+import { BlackHoleBackground } from './BlackHoleBackground.jsx';
 import { SPRITES } from '../assets/sprites.js';
 import { SettingsMenu } from '../../settings/SettingsMenu.jsx';
 import { AppLogo } from '../../brand/AppLogo.jsx';
@@ -28,17 +28,17 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
 
   if (loading) {
     return (
-      <SpaceBackground>
+      <BlackHoleBackground>
         <div className="brand-splash">
           <AppLogo size={96} wordmark bare />
           <p className="brand-splash__status">Loading…</p>
         </div>
-      </SpaceBackground>
+      </BlackHoleBackground>
     );
   }
 
   return (
-    <SpaceBackground>
+    <BlackHoleBackground>
     <div className="ms-select">
       <div className="ms-bar">
         <RankBadge stars={totalStars} />
@@ -134,7 +134,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
         />
       )}
     </div>
-    </SpaceBackground>
+    </BlackHoleBackground>
   );
 }
 

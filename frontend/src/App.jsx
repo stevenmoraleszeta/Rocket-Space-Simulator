@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { AppLogo } from './brand/AppLogo.jsx'
-import { MISSIONS, MissionSelect, ProgressProvider, SpaceBackground } from './levels'
+import { BlackHoleBackground, MISSIONS, MissionSelect, ProgressProvider } from './levels'
 import { MissionFlow } from './game/MissionFlow.jsx'
 import { SettingsMenu, SettingsProvider } from './settings'
 import { AMBIENCE, AudioVolumeSync, MUSIC, useSoundtrack } from './audio'
@@ -28,12 +28,12 @@ export default function App() {
 
   if (!session.ready) {
     return (
-      <SpaceBackground>
+      <BlackHoleBackground>
         <div className="brand-splash">
           <AppLogo size={96} wordmark bare />
           <p className="brand-splash__status">Loading…</p>
         </div>
-      </SpaceBackground>
+      </BlackHoleBackground>
     )
   }
 
