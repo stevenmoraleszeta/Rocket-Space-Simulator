@@ -219,6 +219,7 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
       equipped,
       mission,
       aimPoint,
+      draw: drawMoonScene,
     }
   })
 
@@ -276,7 +277,7 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
             )
           }
         }
-        drawMoonScene(ctx, current.view, {
+        current.draw(ctx, current.view, {
           step: current.step,
           images: current.images,
           window: current.cruise,
@@ -298,7 +299,7 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
   }
 
   const tappedFact = (point) => {
-    const sunY = cruise?.storm ? -0.28 : -0.48
+    const sunY = cruise?.storm ? -0.1 : -0.24
     const facts = [
       ...MOON_BODIES.map((body) => ({ ...body, x: body.t })),
       ...MOON_LANDMARKS,
@@ -306,7 +307,7 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
       {
         id: 'sun',
         name: 'The Sun',
-        x: 0.5,
+        x: 0.86,
         y: sunY,
         summary: cruise?.storm
           ? 'In August 1972 the Sun threw a storm of fast particles. No crew was in space. A safe room is how a ship rides one out.'

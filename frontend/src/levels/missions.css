@@ -92,9 +92,20 @@ img.ms-planet { object-fit: contain; user-select: none; }
 .ms-stars { letter-spacing: .1em; color: #444d82; line-height: 1; }
 .ms-stars .on { color: var(--ms-yellow); }
 
-/* Mission card */
-.ms-modal { position: fixed; inset: 0; background: rgba(5,8,25,.82); display: grid; place-items: center; padding: 16px; z-index: 50; }
-.ms-card { position: relative; isolation: isolate; font-family: var(--ms-font); color: var(--ms-text); width: min(480px, 100%); background: transparent; border: 0; border-radius: 0; padding: 24px; text-align: center; animation: ms-pop .2s steps(3, end); max-height: 100%; overflow: auto; }
+/* Mission card. The overlay scrolls only as a fallback; a short card stays centered. */
+.ms-modal {
+  position: fixed; inset: 0; z-index: 50; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center;
+  height: 100dvh; max-height: 100dvh;
+  padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  background: rgba(5,8,25,.82); overflow: auto; overscroll-behavior: contain;
+}
+.ms-card {
+  position: relative; isolation: isolate; box-sizing: border-box;
+  flex: 0 1 auto; width: min(480px, 100%); max-width: 100%; min-width: 0; margin-block: auto;
+  font-family: var(--ms-font); color: var(--ms-text); background: transparent; border: 0; border-radius: 0;
+  padding: 24px; text-align: center; animation: ms-pop .2s steps(3, end);
+}
 .ms-card::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ms-panel); clip-path: var(--px-clip); box-shadow: inset var(--px) var(--px) 0 var(--px-edge), inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--px-edge-dim); }
 .ms-card__num { font-family: var(--ms-font-pixel); margin-top: 8px; color: var(--ms-accent); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
 .ms-card h2 { font-family: var(--ms-font-pixel); font-weight: 400; font-size: 20px; line-height: 1.4; margin: 10px 0 14px; }
@@ -135,15 +146,26 @@ img.ms-planet { object-fit: contain; user-select: none; }
 .ms-rank__name { margin: 4px 0 0; font-family: var(--ms-font-pixel); font-size: 13px; line-height: 1.5; color: var(--ms-yellow); }
 .ms-rank__cheer, .ms-rank__next { margin: 6px 0 0; font-size: 17px; line-height: 1.35; color: var(--ms-muted); }
 
-.ms-card--wide { width: min(760px, 100%); text-align: left; }
-.ms-card--wide h2 { text-align: center; }
-.ms-board__lead, .ms-board__next { margin: 0 0 16px; font-size: 18px; line-height: 1.35; color: var(--ms-muted); text-align: center; }
+.ms-card--wide {
+  width: min(720px, 100%); text-align: left;
+  display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+  max-height: calc(100dvh - max(12px, env(safe-area-inset-top, 0px)) - max(12px, env(safe-area-inset-bottom, 0px)));
+  padding: 20px 20px 16px;
+}
+.ms-card--wide h2 { text-align: center; margin-top: 0; }
+.ms-board__head { flex: none; }
+.ms-board__body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ms-accent) transparent; }
+.ms-board__body::-webkit-scrollbar { width: 10px; }
+.ms-board__body::-webkit-scrollbar-track { background: transparent; }
+.ms-board__body::-webkit-scrollbar-thumb { background: var(--ms-accent); border: 2px solid transparent; background-clip: padding-box; }
+.ms-card--wide .ms-card__actions { flex: none; margin-top: 16px; }
+.ms-board__lead, .ms-board__next { margin: 0 0 16px; font-size: 18px; line-height: 1.35; color: var(--ms-muted); text-align: center; overflow-wrap: break-word; }
 .ms-board__next { margin: 16px 0 0; }
 
 .ms-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .ms-log__row { display: grid; grid-template-columns: 72px 1fr; gap: 14px; align-items: center; }
-.ms-log__num { margin: 0; font-family: var(--ms-font-pixel); font-size: 10px; line-height: 1.6; color: var(--ms-accent); }
-.ms-log__title { margin: 4px 0; font-family: var(--ms-font-pixel); font-size: 13px; font-weight: 400; line-height: 1.45; }
+.ms-log__num { margin: 0; font-family: var(--ms-font-pixel); font-size: 10px; line-height: 1.6; color: var(--ms-accent); overflow-wrap: break-word; }
+.ms-log__title { margin: 4px 0; font-family: var(--ms-font-pixel); font-size: 13px; font-weight: 400; line-height: 1.45; overflow-wrap: break-word; }
 .ms-log__line { margin: 6px 0 0; font-size: 17px; line-height: 1.35; color: var(--ms-muted); }
 .ms-log__row--locked .ms-log__title, .ms-log__row--locked .ms-log__num { color: var(--ms-muted); }
 .ms-log__older { margin: 0 0 14px; font-size: 17px; line-height: 1.35; color: var(--ms-yellow); text-align: center; }

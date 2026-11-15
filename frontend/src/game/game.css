@@ -231,7 +231,7 @@
 .pad-story {
   position: relative;
   z-index: 3;
-  width: min(320px, 100%);
+  width: min(480px, 100%);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -629,7 +629,7 @@
   position: relative;
   isolation: isolate;
   pointer-events: auto;
-  width: min(320px, 100%);
+  width: min(480px, 100%);
   box-sizing: border-box;
   padding: 10px 12px 12px;
   border-radius: 0;
@@ -1131,7 +1131,7 @@
 }
 
 .dock {
-  width: min(320px, 100%);
+  width: min(480px, 100%);
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1151,7 +1151,8 @@
 
 .parts--wrap {
   flex-wrap: wrap;
-  width: min(400px, 100%);
+  justify-content: flex-start;
+  width: min(480px, 100%);
 }
 
 .part-btn,

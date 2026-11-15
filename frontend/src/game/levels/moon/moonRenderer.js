@@ -140,12 +140,12 @@ export function drawMoonScene(ctx, view, scene) {
   const { images, window: cruise, prediction, bodies, flight, aimPoint } = scene
   ctx.clearRect(0, 0, view.width, view.height)
 
-  drawBand(ctx, view, 0.09, 0.16, 'rgba(255, 93, 115, 0.16)')
-  drawBand(ctx, view, 0.19, 0.3, 'rgba(120, 150, 255, 0.14)')
+  drawBand(ctx, view, 0.08, 0.14, 'rgba(255, 93, 115, 0.22)')
+  drawBand(ctx, view, 0.2, 0.32, 'rgba(120, 150, 255, 0.2)')
   drawDust(ctx, view)
 
-  const sunY = cruise?.storm ? -0.28 : -0.48
-  const sun = worldToScreen(view, 0.5, sunY)
+  const sunY = cruise?.storm ? -0.1 : -0.24
+  const sun = worldToScreen(view, 0.86, sunY)
   drawImage(ctx, images.sun, sun.x, sun.y, cruise?.storm ? 52 : 40)
 
   if (cruise) drawGate(ctx, view, cruise.corridorHalf)
@@ -176,12 +176,11 @@ export function drawMoonScene(ctx, view, scene) {
   }
   drawLabel(ctx, 'Earth', earth.x, earth.y + 42)
   drawLabel(ctx, 'Moon', moon.x, moon.y + 38)
-  const gateLabel = worldToScreen(view, 0.96, (cruise?.corridorHalf ?? 0.1) + 0.08)
+  const gateLabel = worldToScreen(view, 0.84, 0.2)
   drawLabel(ctx, 'Gate', gateLabel.x, gateLabel.y)
-  const inner = worldToScreen(view, 0.125, -0.34)
-  const outer = worldToScreen(view, 0.245, -0.34)
-  drawLabel(ctx, 'Inner belt', inner.x, inner.y)
-  drawLabel(ctx, 'Outer belt', outer.x, outer.y)
+  const dust = MOON_LANDMARKS.find((item) => item.id === 'dust')
+  const dustLabel = worldToScreen(view, dust.x, dust.y - 0.08)
+  drawLabel(ctx, 'Dust', dustLabel.x, dustLabel.y)
 
   if (aimPoint && scene.step === 'aim') {
     ctx.strokeStyle = '#ffd23f'
