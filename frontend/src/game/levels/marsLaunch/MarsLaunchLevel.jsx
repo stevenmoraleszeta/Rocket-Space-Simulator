@@ -453,7 +453,16 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
 
       <div className="orbit-level__body">
         <div className="orbit-stage">
-          {/* Launch bases on the Earth, like mission 1: tap one to choose it. */}
+          <canvas
+            ref={canvasRef}
+            className={`orbit-canvas orbit-canvas--${step === 'aim' ? 'aim' : step}`}
+            aria-label="The Sun, Earth and Mars from above, with space debris, satellites and the predicted path"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+          />
+          {/* Launch bases on the Earth, like mission 1: tap one to choose it. After the canvas, so they sit on top. */}
           {step === 'site' && (
             <div className="orbit-sites">
               {LAUNCH_SITES.map((candidate) => {
@@ -479,15 +488,6 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
               })}
             </div>
           )}
-          <canvas
-            ref={canvasRef}
-            className={`orbit-canvas orbit-canvas--${step === 'aim' ? 'aim' : step}`}
-            aria-label="The Sun, Earth and Mars from above, with space debris, satellites and the predicted path"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-          />
           {hazardCard && (
             <div
               className={`satellite-card${hazardCard.y < 150 ? ' is-below' : ''}`}
