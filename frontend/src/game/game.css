@@ -300,15 +300,25 @@
   display: block;
 }
 
+/* The frame does not scroll, so its pixel background (::before) always covers the text.
+   The text scrolls inside .brief__scroll. */
 .brief {
   position: relative;
   isolation: isolate;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-height: min(38vh, 320px);
   margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.brief__scroll {
+  min-height: 0;
+  overflow: auto;
   padding: 16px 16px 20px;
   box-sizing: border-box;
-  overflow: auto;
 }
 
 .brief::before {

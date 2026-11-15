@@ -230,6 +230,8 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, orbitSu
 function Briefing({ mission }) {
   return (
     <section className="brief" role="dialog" aria-labelledby="brief-title">
+      {/* The frame keeps its background still; only this inner part scrolls */}
+      <div className="brief__scroll">
       <h2 id="brief-title" className="brief__title">Story</h2>
       {mission.intro && <p className="brief__intro">{mission.intro}</p>}
       <div className="brief__story">
@@ -244,6 +246,7 @@ function Briefing({ mission }) {
             <li key={hint}>{hint}</li>
           ))}
         </ol>
+      </div>
       </div>
     </section>
   );
