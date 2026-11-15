@@ -248,7 +248,9 @@ function drawRocket(ctx, view, images, here, ahead, site) {
   ctx.save()
   ctx.translate(Math.round(a.x), Math.round(a.y))
   ctx.rotate(Math.atan2(b.y - a.y, b.x - a.x) + Math.PI / 2)
-  ctx.drawImage(image, cell, sprite.frameY, sprite.frameWidth, sprite.frameHeight, -ROCKET_PIXELS / 2, -ROCKET_PIXELS / 2, ROCKET_PIXELS, ROCKET_PIXELS)
+  // The upgraded rocket is drawn bigger (rendering/upgradedRocket.js)
+  const pixels = ROCKET_PIXELS * (image.grow ?? 1)
+  ctx.drawImage(image, cell, sprite.frameY, sprite.frameWidth, sprite.frameHeight, -pixels / 2, -pixels / 2, pixels, pixels)
   ctx.restore()
 }
 

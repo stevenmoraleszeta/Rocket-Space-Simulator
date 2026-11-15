@@ -1,4 +1,7 @@
 .game {
+  /* Width of the hangar panel column (Story, SUPPLIES, parts): wide enough for the longest
+     supply line, such as "266 cr left". In rem, so it grows with the UI scale. */
+  --panel-w: 22rem;
   min-height: 100vh;
   font-family: var(--ms-font);
   color: var(--ms-text);
@@ -232,7 +235,7 @@
 .game__engineer {
   margin: 6px 0 0;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1.6;
   color: var(--ms-yellow);
 }
@@ -281,7 +284,9 @@
 @media (min-width: 721px) {
   .bay {
     align-self: flex-end;
-    width: min(100%, 348px);
+    /* The panel column plus the side padding and room for the scrollbar, in the same units
+       as the panel, so it fits at every UI scale */
+    width: min(100%, calc(var(--panel-w) + 2rem + 10px));
     scrollbar-gutter: stable;
   }
 }
@@ -290,14 +295,14 @@
    of it fits before it has to scroll. The place name moves left to stay out of its way. */
 @media (min-width: 1100px) {
   .game--pad .bay {
-    margin-top: -64px;
+    margin-top: -4rem;
     /* Clear the floating Settings button (top right, about 50px tall), so Story sits
        right on top of SUPPLIES without going under it */
-    padding-top: 56px;
+    padding-top: 3.5rem;
   }
 
   .game--pad .game__place {
-    margin-right: 150px;
+    margin-right: 9.375rem;
   }
 }
 
@@ -310,7 +315,7 @@
 .pad-story {
   position: relative;
   z-index: 3;
-  width: min(18.75rem, 100%);
+  width: min(var(--panel-w), 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -401,7 +406,7 @@
   position: relative;
   z-index: 1;
   font-family: var(--ms-font-pixel);
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1.4;
   letter-spacing: 0.04em;
 }
@@ -679,6 +684,85 @@
   transform: translateY(var(--px));
 }
 
+/* Rocket upgrade (Moon and Mars): gold, lit when bought */
+.bay__upgrade {
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+  pointer-events: auto;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 0;
+  background: transparent;
+  color: #fff4c8;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.625rem;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.bay__upgrade::before,
+.bay__upgrade::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  clip-path: var(--px-clip);
+}
+
+.bay__upgrade::before {
+  z-index: -2;
+  inset: var(--px) 0 calc(var(--px) * -1);
+  background: #2a1d06;
+}
+
+.bay__upgrade::after {
+  z-index: -1;
+  inset: 0 0 var(--px);
+  background: #5a4210;
+  box-shadow:
+    inset var(--px) var(--px) 0 #c9a443,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #2a1d06;
+}
+
+.bay__upgrade.is-on {
+  color: #2a1d06;
+}
+
+.bay__upgrade.is-on::after {
+  background: var(--ms-yellow);
+  box-shadow:
+    inset var(--px) var(--px) 0 #fff4c8,
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #8a6a12;
+}
+
+.bay__upgrade:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.bay__upgrade:active:not(:disabled) {
+  transform: translateY(var(--px));
+}
+
+.bay__upgrade:active:not(:disabled)::before {
+  inset: 0;
+}
+
+.bay__upgrade:focus-visible {
+  outline: var(--px) solid var(--ms-yellow);
+  outline-offset: var(--px);
+}
+
+.bay__upgrade-info {
+  font-size: 0.5rem;
+  opacity: 0.9;
+}
+
 .bay__launch:active:not(:disabled)::before {
   inset: 0;
 }
@@ -726,7 +810,7 @@
   );
   position: relative;
   pointer-events: auto;
-  width: min(18.75rem, 100%);
+  width: min(var(--panel-w), 100%);
   box-sizing: border-box;
   padding: 0;
   color: #f2f4ff;
@@ -1321,6 +1405,58 @@
   to { transform: translateY(-160vh); }
 }
 
+/* Called back during the climb (no food, mission 2): it lifts off, slows while still low in
+   the air, hangs there, then lowers itself back onto the pad on its engine. 7s, like
+   TURN_BACK_MS in LaunchSequence. */
+.rocket.is-turning-back {
+  --scale: inherit;
+  animation:
+    pad-shake 0.14s steps(2) 5,
+    pad-turn-back 6.3s 0.7s both;
+}
+
+@keyframes pad-turn-back {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.5); }
+  30% { transform: translateY(-34vh); animation-timing-function: ease-out; }
+  42% { transform: translateY(-40vh); animation-timing-function: ease-in-out; }
+  55% { transform: translateY(-38vh); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+
+/* Mission control's call while the rocket comes back down (yellow, not a "Boom!") */
+.launch-callback {
+  position: fixed;
+  left: 50%;
+  top: 22%;
+  z-index: 6;
+  width: min(520px, calc(100vw - 32px));
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  padding: 14px 20px;
+  border: 3px solid var(--ms-yellow);
+  background: rgba(11, 16, 48, 0.94);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+  text-align: center;
+  animation: launch-boom-in 0.3s steps(3) both;
+}
+
+.launch-callback__title {
+  margin: 0;
+  font-family: var(--ms-font-pixel);
+  font-size: clamp(14px, 2.4vw, 20px);
+  line-height: 1.5;
+  color: var(--ms-yellow);
+  text-transform: uppercase;
+}
+
+.launch-callback__text {
+  margin: 6px 0 0;
+  font-family: var(--ms-font);
+  font-size: 18px;
+  line-height: 1.35;
+  color: #ffffff;
+}
+
 /* While the rocket leaves, the parts panel slides away and stops taking input. */
 .bay {
   transition: opacity 0.4s, transform 0.4s ease-in;
@@ -1362,6 +1498,145 @@
 /* On the pad every rocket uses the pad scale (.prep): standing still after a called-off
    launch, straining, or blowing up, it stays the same size and in the same place. */
 .prep .rocket { --scale: inherit; }
+
+/* ---------------------------------------------------------------- rocket upgrade swap
+   GameScreen: a crane drops its hook onto the nose, hoists the rocket out of the sky ('out'),
+   then lowers the new one and pulls the hook back up ('in'). The bigger rocket scales its
+   sprites by --grow from the nozzle, so it still stands on the same pad. */
+.prep__swap {
+  position: absolute;
+  inset: 0;
+}
+
+/* Upgraded rocket, in every scene: 25% bigger (UPGRADE_GROW) and gold (GOLD in
+   rendering/upgradedRocket.js, which paints the canvas maps the same way). */
+.rocket--grown .rocket__body {
+  transform: scale(1.25);
+  transform-origin: 50% 100%;
+  filter: sepia(0.9) saturate(2.4) brightness(1.04) drop-shadow(0 0.75rem 0 rgba(0, 0, 0, 0.35));
+}
+
+.rocket--grown .rocket__bubble {
+  left: calc(100% * (16 + 6.5 * var(--grow, 1)) / 32);
+  top: calc(100% * (32 - 28 * var(--grow, 1)) / 32);
+}
+
+/* Chain from the top of the screen down to a yellow hook on the nose (sprite row 2) */
+.prep__cable {
+  --cw: max(4px, calc(0.4px * var(--scale)));
+  position: absolute;
+  z-index: 3;
+  left: calc(16px * var(--scale) - var(--cw) / 2);
+  bottom: calc(100% - (32 - 30 * var(--grow, 1)) * var(--scale) * 1px);
+  width: var(--cw);
+  height: 200vh;
+  background: repeating-linear-gradient(#2e3340 0 6px, #7a8194 6px 12px);
+  pointer-events: none;
+}
+
+.prep__cable::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: calc(2px * var(--scale));
+  height: calc(1px * var(--scale));
+  transform: translate(-50%, -30%);
+  background: var(--ms-yellow, #ffd23f);
+  box-shadow:
+    inset 0 calc(-0.25px * var(--scale)) 0 #b8860b,
+    0 0 0 3px #2a1d06;
+}
+
+.prep__swap.is-out {
+  animation: prep-hoist-out 1s 0.4s both;
+}
+
+.prep__swap.is-out .prep__cable {
+  animation: prep-cable-drop 0.4s steps(6) both;
+}
+
+.prep__swap.is-in {
+  animation: prep-hoist-in 1.25s both;
+}
+
+.prep__swap.is-in .prep__cable {
+  animation: prep-cable-up 0.45s 1.25s steps(6) both;
+}
+
+@keyframes prep-cable-drop {
+  from { transform: translateY(-110vh); }
+  to { transform: translateY(0); }
+}
+
+@keyframes prep-cable-up {
+  from { transform: translateY(0); }
+  to { transform: translateY(-110vh); }
+}
+
+/* A little tug, then up and away */
+@keyframes prep-hoist-out {
+  0% { transform: translateY(0); animation-timing-function: ease-out; }
+  15% { transform: translateY(calc(-0.6px * var(--scale))); animation-timing-function: ease-in-out; }
+  25% { transform: translateY(calc(-0.3px * var(--scale))); animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6); }
+  100% { transform: translateY(-130vh); }
+}
+
+/* Down from the sky, slows, touches the pad, a small bounce */
+@keyframes prep-hoist-in {
+  0% { transform: translateY(-130vh); animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1); }
+  78% { transform: translateY(0); animation-timing-function: ease-out; }
+  88% { transform: translateY(calc(-0.6px * var(--scale))); animation-timing-function: ease-in; }
+  100% { transform: translateY(0); }
+}
+
+/* Dust puffs on both sides of the pad when the new rocket touches down */
+.prep__dust {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: calc(100% - 3px * var(--scale));
+  width: calc(20px * var(--scale));
+  height: calc(3px * var(--scale));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.prep__dust::before,
+.prep__dust::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: calc(4px * var(--scale));
+  height: calc(2px * var(--scale));
+  background: #ece6d6;
+  box-shadow:
+    calc(1.5px * var(--scale)) calc(-1px * var(--scale)) 0 #d8d0bd,
+    calc(-1px * var(--scale)) calc(0.5px * var(--scale)) 0 #c9c0aa;
+  opacity: 0;
+}
+
+.prep__dust::before {
+  left: 20%;
+  animation: prep-dust-left 0.6s 0.95s steps(5) both;
+}
+
+.prep__dust::after {
+  right: 20%;
+  animation: prep-dust-right 0.6s 0.95s steps(5) both;
+}
+
+@keyframes prep-dust-left {
+  0% { opacity: 0; transform: translateX(0) scale(0.6); }
+  20% { opacity: 0.95; }
+  100% { opacity: 0; transform: translateX(calc(-6px * var(--scale))) scale(1.2); }
+}
+
+@keyframes prep-dust-right {
+  0% { opacity: 0; transform: translateX(0) scale(0.6); }
+  20% { opacity: 0.95; }
+  100% { opacity: 0; transform: translateX(calc(6px * var(--scale))) scale(1.2); }
+}
 
 /* Why the rocket blew up, over the explosion (LaunchSequence and AscentScene). */
 .launch-boom {
@@ -1480,7 +1755,7 @@
 }
 
 .dock {
-  width: min(18.75rem, 100%);
+  width: min(var(--panel-w), 100%);
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1501,7 +1776,8 @@
 .parts--wrap {
   flex-wrap: wrap;
   justify-content: flex-start;
-  gap: 8px;
+  /* Same unit as the 1.5rem (3 gaps) below, so four always fit at any UI scale */
+  gap: 0.5rem;
   width: 100%;
 }
 
@@ -1615,20 +1891,83 @@
     inset 0.3125rem 0.3125rem 0 #4a3a10;
 }
 
+/* Icons never grow past the button, so narrow screens shrink them instead of cutting them. */
 .part-btn .part__icon {
-  --scale: 1.5;
-  width: 3rem;
-  height: 3rem;
+  width: min(3rem, 100% - 0.5rem, 3.875rem - 0.875rem);
+  height: auto;
+  aspect-ratio: 1;
 }
 
 .part-btn .part__photo {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: min(2.5rem, 100% - 0.75rem);
+  height: auto;
+  aspect-ratio: 1;
 }
 
-/* Parts sit on different rows of the rocket cell; --shift-y (parts.js iconShiftY) centers each one. */
+/* Idle animation: every part icon floats up and down in hard pixel steps, with a tiny
+   squash at the bottom. Each slot gets its own speed and delay so they never move in sync. */
+.part-btn .part__icon,
+.part-btn .part__photo {
+  animation: part-idle var(--idle-dur, 2.4s) steps(1, end) var(--idle-delay, 0s) infinite;
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+
+.parts > li:nth-child(4n + 1) .part-btn { --idle-dur: 2.4s; --idle-delay: 0s; }
+.parts > li:nth-child(4n + 2) .part-btn { --idle-dur: 2.8s; --idle-delay: -0.7s; }
+.parts > li:nth-child(4n + 3) .part-btn { --idle-dur: 2.2s; --idle-delay: -1.3s; }
+.parts > li:nth-child(4n + 4) .part-btn { --idle-dur: 2.6s; --idle-delay: -0.4s; }
+.parts > li:nth-child(n + 5) .part-btn { --idle-delay: -1.9s; }
+.parts > li:nth-child(n + 9) .part-btn { --idle-delay: -1.1s; }
+
+@keyframes part-idle {
+  0%   { transform: translateY(0) scale(1, 1); }
+  12%  { transform: translateY(-0.0625rem) scale(1, 1); }
+  25%  { transform: translateY(-0.125rem) scale(1, 1); }
+  38%  { transform: translateY(-0.1875rem) scale(1, 1); }
+  50%  { transform: translateY(-0.125rem) scale(1, 1); }
+  62%  { transform: translateY(-0.0625rem) scale(1, 1); }
+  75%  { transform: translateY(0) scale(1.06, 0.94); }
+  85%  { transform: translateY(0) scale(1, 1); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+/* Hover / chosen: a quick happy hop */
+.part-btn:hover .part__icon,
+.part-btn:hover .part__photo,
+.part-btn:focus-visible .part__icon,
+.part-btn:focus-visible .part__photo {
+  animation: part-hop 0.5s steps(1, end) infinite;
+}
+
+@keyframes part-hop {
+  0%   { transform: translateY(0) scale(1.08, 0.92); }
+  20%  { transform: translateY(-0.25rem) scale(0.95, 1.06); }
+  40%  { transform: translateY(-0.375rem) scale(1, 1); }
+  60%  { transform: translateY(-0.25rem) scale(1, 1); }
+  80%  { transform: translateY(0) scale(1.08, 0.92); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+/* An equipped part glows softly so it looks "switched on" */
+.part-btn.is-on .part__icon,
+.part-btn.is-on .part__photo {
+  filter: drop-shadow(0 0 0.1875rem rgba(255, 200, 30, 0.55));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .part-btn .part__icon,
+  .part-btn .part__photo {
+    animation: none;
+  }
+}
+
+/* The sprite cell fills its icon box at any size (Rocket.jsx fitSheetStyle). Parts sit on
+   different rows of the cell; --shift-y (parts.js iconShiftY, in sprite pixels) centers each. */
 .part__icon .rocket__layer {
-  transform: scale(var(--scale)) translateY(calc(var(--shift-y, 0) * 0.0625rem));
+  width: 100%;
+  height: 100%;
+  transform: translateY(calc(var(--shift-y, 0) * 100% / 32));
 }
 
 .part-btn__qty {
@@ -1685,7 +2024,6 @@
 }
 
 .part-dialog__icon .part__icon {
-  --scale: 1.3;
   width: 42px;
   height: 42px;
 }
@@ -1706,7 +2044,7 @@
   --px-edge-dim: #10162f;
   position: fixed;
   z-index: 30;
-  width: 300px;
+  width: min(20rem, 45vw);
   filter: none;
   animation: part-pop 0.18s steps(3) both;
 }
@@ -1815,7 +2153,6 @@
 }
 
 .part__icon {
-  --scale: calc(1.6 * var(--ui, 1));
   position: relative;
   z-index: 1;
   width: 3.25rem;
@@ -2022,7 +2359,7 @@
   .meters,
   .pad-story,
   .parts--wrap {
-    width: min(18.75rem, 100%);
+    width: min(var(--panel-w), 100%);
   }
 
   .meters__grid {

@@ -26,13 +26,21 @@ const STRAIN_MS = 1600;
 const EXPLOSION_MS = 2600;
 /** Called off on the pad (no astronaut): the crew walks away and one says "no". */
 const SCRUB_MS = 3800;
+/**
+ * Called back during the climb (not enough food, mission 2): the rocket lifts off, stops while
+ * still low in the air, and comes back down onto the pad. Matches .rocket.is-turning-back.
+ */
+const TURN_BACK_MS = 7000;
+/** Time to read why, with the rocket back on the pad, before the failure screen. */
+const LANDED_BACK_MS = 3000;
 
 export function LaunchSequence({ equipped, hud = null, onDone, failure = null, onFail }) {
   const padFailure = failure?.at === 'pad';
   const scrubbed = failure?.at === 'scrub';
+  const turningBack = failure?.at === 'turnBack';
   // liftoff -> ascent -> space, or straining -> padExplosion, or liftoff -> ascent (overheating),
   // or scrubbed (called off on the ground: nothing lights, nothing blows up)
-  const [phase, setPhase] = useState(scrubbed ? 'scrubbed' : padFailure ? 'straining' : 'liftoff');
+  const [phase, setPhase] = useState(scrubbed ? 'scrubbed' : turningBack ? 'turnBack' : padFailure ? 'straining' : 'liftoff');
 
   useEffect(() => {
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -40,6 +48,12 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
     let next;
     if (phase === 'scrubbed') {
       ms = SCRUB_MS;
+      next = onFail;
+    } else if (phase === 'turnBack') {
+      ms = reduceMotion ? 800 : TURN_BACK_MS;
+      next = () => setPhase('landedBack');
+    } else if (phase === 'landedBack') {
+      ms = LANDED_BACK_MS;
       next = onFail;
     } else if (phase === 'straining') {
       ms = STRAIN_MS;
@@ -86,19 +100,26 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
           <PadClouds />
           <div className="stage__mount">
             <div className="prep">
-              <LaunchTower launching={phase !== 'scrubbed'} />
+              <LaunchTower launching={phase !== 'scrubbed' && phase !== 'landedBack'} />
               <img className="prep__base" src={launchBase} alt="" />
               <Rocket
                 equipped={equipped}
                 launching={phase === 'liftoff'}
                 straining={phase === 'straining'}
                 exploding={phase === 'padExplosion'}
+                turningBack={phase === 'turnBack'}
               />
-              <PadCrew scrub={phase === 'scrubbed'} />
+              <PadCrew scrub={phase === 'scrubbed'} bubble={failure?.bubble} />
             </div>
           </div>
         </div>
       </div>
+      {(phase === 'turnBack' || phase === 'landedBack') && failure && (
+        <div className="launch-callback" role="alert">
+          <p className="launch-callback__title">{phase === 'turnBack' ? 'Come back!' : 'Back on the ground'}</p>
+          <p className="launch-callback__text">{failure.message}</p>
+        </div>
+      )}
       {phase === 'padExplosion' && failure && (
         <div className="launch-boom" role="alert">
           <p className="launch-boom__title">Boom!</p>

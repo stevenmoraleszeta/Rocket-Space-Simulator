@@ -17,6 +17,7 @@ import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../../../audio'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
+import { goldRocketImage, isUpgraded } from '../../rendering/upgradedRocket.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { flightNotes } from '../../flightSummary.js'
@@ -138,7 +139,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     earth: loadImage(ASSETS.earthPlanet.src),
     mars: loadImage(ASSETS.marsPlanet.src),
     sun: loadImage(ASSETS.sun.src),
-    rocket: loadImage(ASSETS.rocketUpperStage.src),
+    rocket: goldRocketImage(ASSETS.rocketUpperStage.src, isUpgraded(equipped)),
     explosion: loadImage(ASSETS.explosion.src),
     satellite: loadImage(ASSETS.commsSatellite.src),
   }))

@@ -351,6 +351,37 @@ button.orbit-site:focus-visible .orbit-site__name { outline: 0.1875rem solid var
 .mission-failed__reason { margin-top: 6px !important; font-size: 19px; line-height: 1.35; font-weight: 700; color: #ffffff; }
 .mission-failed__hint { margin-top: 6px !important; font-size: 17px; line-height: 1.35; color: var(--ms-yellow); }
 
+/* Each kind of failure has its own color (failureLooks.js tone) */
+.mission-failed { --fail: #ff5d73; --fail-dark: #6e1424; }
+.mission-failed.is-called { --fail: #ffd23f; --fail-dark: #6a5410; }
+.mission-failed.is-lost { --fail: #6fb8ff; --fail-dark: #12305a; }
+.mission-failed.is-supplies { --fail: #c79bff; --fail-dark: #3d2266; }
+.mission-failed.is-money { --fail: #ffb547; --fail-dark: #6a3d08; }
+.mission-failed .mission-failed__card { border-color: var(--fail); box-shadow: 0 0 0 6px color-mix(in srgb, var(--fail) 18%, transparent), 6px 6px 0 rgba(0, 0, 0, 0.45); }
+.mission-failed .mission-failed__title { color: var(--fail); text-shadow: 3px 3px 0 var(--fail-dark); }
+.mission-failed .mission-failed__why { border-color: color-mix(in srgb, var(--fail) 60%, transparent); background: color-mix(in srgb, var(--fail) 8%, transparent); }
+.mission-failed .mission-failed__label { color: var(--fail); }
+
+/* The picture of what went wrong, in a pixel frame */
+.mission-failed__art {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin: 10px auto 0;
+  background: color-mix(in srgb, var(--fail) 16%, #0b1030);
+  clip-path: var(--px-clip);
+  box-shadow: inset 4px 4px 0 color-mix(in srgb, var(--fail) 70%, white), inset -4px -4px 0 var(--fail-dark);
+}
+.mission-failed__art span { font-size: 48px; line-height: 1; }
+.mission-failed__art.is-shake span { animation: mission-failed-art-shake 0.5s steps(4) 0.3s 3; }
+.mission-failed__art.is-drift span { animation: mission-failed-art-drift 3s ease-in-out infinite; }
+.mission-failed__art.is-bob span { animation: mission-failed-art-bob 1.4s steps(2, end) infinite; }
+@keyframes mission-failed-art-shake { 25% { transform: translate(-4px, 2px) rotate(-8deg); } 75% { transform: translate(4px, -2px) rotate(8deg); } }
+@keyframes mission-failed-art-drift { 50% { transform: translate(6px, -6px) rotate(12deg); } }
+@keyframes mission-failed-art-bob { 50% { transform: translateY(-4px); } }
+.mission-failed__lose { margin: 8px 0 0; font-family: var(--ms-font-pixel); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #ffffff; opacity: 0.8; }
+
 @keyframes mission-failed-shake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-6px); }
@@ -360,7 +391,8 @@ button.orbit-site:focus-visible .orbit-site__name { outline: 0.1875rem solid var
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mission-failed__title { animation: none; }
+  .mission-failed__title,
+  .mission-failed__art span { animation: none; }
 }
 
 /* Card that follows the cursor over a satellite: it must not catch the pointer itself. */

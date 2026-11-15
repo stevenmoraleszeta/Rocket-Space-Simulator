@@ -100,7 +100,7 @@ export const PARTS = [
     id: 'fuel',
     name: 'Fuel tank',
     blurb: 'Side tanks with more fuel.',
-    missions: ['moon', 'mars'],
+    missions: ['earth', 'moon', 'mars'],
     cost: 26,
     mass: 12,
     // Extra propellant only. The engines are still the boosters.
@@ -159,7 +159,7 @@ export const PARTS = [
     id: 'veggie',
     name: 'Plant locker',
     blurb: 'A small plant locker. The lights use power, and the plants drink water.',
-    missions: ['moon'],
+    missions: ['earth'],
     cost: 32,
     mass: 11,
     // NASA Veggie uses about 70 W. One energy point is 40 W, so this is 80 W.
@@ -229,13 +229,16 @@ export const PARTS = [
   {
     id: 'pantry',
     name: 'Meal locker',
-    blurb: 'A big locker of meals. A cruise of many months needs this and some food packs.',
+    blurb: 'A big locker of meals. A cruise of many months needs some of these. You can pack more than one.',
     missions: ['mars'],
+    stack: true,
+    max: 3,
     cost: 24,
     mass: 10,
     energy: 2,
-    // 180 person-days. Three food packs (24 more) last the 203-day cruise. Two do not.
-    foodDays: 180,
+    // 200 person-days each. Three lockers feed 3 people for the 180-day path (540).
+    // The 203-day cruise needs 609: three lockers and two food packs. One pack is not enough.
+    foodDays: 200,
     src: pantry,
     inside: true,
   },
@@ -261,8 +264,8 @@ export const PARTS = [
     cost: 22,
     mass: 8,
     energy: 5,
-    // Keeps 94% of the oxygen in the loop. One astronaut then lasts 203 days. Two do not.
-    o2Recycle: 0.94,
+    // Keeps 95% of the oxygen in the loop. The tanks of 3 astronauts then last 203 days.
+    o2Recycle: 0.95,
     src: scrubber,
     inside: true,
   },
@@ -305,7 +308,7 @@ export const PARTS = [
     id: 'antenna',
     name: 'Radio dish',
     blurb: 'Calls home when Earth is hard to hear.',
-    missions: ['moon', 'mars'],
+    missions: ['earth', 'moon', 'mars'],
     cost: 18,
     mass: 5,
     energy: 2,

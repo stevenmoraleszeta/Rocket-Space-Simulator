@@ -14,22 +14,29 @@ import { useEffect, useRef } from 'react'
 import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { LaunchFact } from './LaunchFact.jsx'
+import { failureLook } from './failureLooks.js'
 import './orbitalLaunch.css'
 
 export function MissionFailedScreen({ mission, result, reason, hint, onRetry, onHangar }) {
   const playerName = engineerName(useSettings().playerName)
   const primaryRef = useRef(null)
+  // Picture, headline and color for this exact failure (failureLooks.js)
+  const look = failureLook(result)
 
   useEffect(() => {
     primaryRef.current?.focus()
   }, [])
 
   return (
-    <div className="mission-complete mission-failed" role="dialog" aria-modal="true" aria-labelledby="mission-failed-title">
+    <div className={`mission-complete mission-failed is-${look.tone}`} role="dialog" aria-modal="true" aria-labelledby="mission-failed-title">
       <div className="mission-complete__card mission-failed__card">
         <p className="mission-complete__kicker">Mission {mission.number} · {mission.title}</p>
+        <div className={`mission-failed__art is-${look.motion}`} aria-hidden="true">
+          <span>{look.art}</span>
+        </div>
+        <p className="mission-failed__lose">{playerName ? sayTo(playerName, 'You lose') : 'You lose'}</p>
         <h2 id="mission-failed-title" className="mission-complete__title mission-failed__title">
-          {playerName ? sayTo(playerName, 'You lose') : 'You lose'}
+          {look.title}
         </h2>
 
         <section className="mission-failed__why">
@@ -38,7 +45,7 @@ export function MissionFailedScreen({ mission, result, reason, hint, onRetry, on
           {hint && <p className="mission-failed__hint">{hint}</p>}
         </section>
 
-        <LaunchFact result={result} label="Trivia" className="mission-complete__fact" />
+        <LaunchFact result={result} mission={mission} label="Trivia" className="mission-complete__fact" />
 
         <div className="mission-complete__actions">
           {onHangar ? (
