@@ -37,9 +37,9 @@ export const REAL_SATELLITES = [
     summary: 'Astronauts from many countries live here and run science experiments.',
   },
   {
-    id: 'tiangong', name: 'the Tiangong station', shortName: 'Tiangong', altitudeKm: 390, startAngleDeg: 200,
-    kind: 'Space station',
-    summary: "China's space station, where its astronauts live and work.",
+    id: 'gpm', name: 'the GPM rain satellite', shortName: 'GPM', altitudeKm: 407, startAngleDeg: 200,
+    kind: 'Weather satellite',
+    summary: 'NASA and Japan built it to measure rain and snow all over the world.',
   },
   {
     id: 'hubble', name: 'the Hubble telescope', shortName: 'Hubble', altitudeKm: 535, startAngleDeg: 110,

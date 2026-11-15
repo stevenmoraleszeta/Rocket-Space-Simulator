@@ -472,6 +472,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
               {site ? (
                 <div className="orbit-detail">
                   <p className="orbit-detail__name">{site.name}, {site.country}</p>
+                  <p><b>Spaceport:</b> {site.spaceport}</p>
                   <p className={`orbit-badge orbit-badge--${siteRating.level}`}>{siteRating.label}</p>
                   <p><b>Why here?</b> {site.why}</p>
                   <p><b>What for?</b> {site.whatFor}</p>
