@@ -161,11 +161,14 @@ function drawPlanets(ctx, view, images, day) {
  */
 /**
  * Before the launch each hazard is a small pixel light: all the same size, a 4 × 4 grid of equal
- * pixels with the corners cut off, always on, its color stepping red, green, blue. Each light
- * starts on a different color so they do not all match.
+ * pixels with the corners cut off, always on, its color stepping red, green, blue (softened, not at
+ * full saturation). The middle pixels are solid; the edge pixels are see-through, like a glow.
+ * Each light starts on a different color so they do not all match.
  */
-const PIXEL_LIGHT_COLORS = ['#ff2d2d', '#2dff4f', '#2d6bff']
-const PIXEL_LIGHT_PIXEL = 4
+const PIXEL_LIGHT_COLORS = ['#e8706b', '#6fd68a', '#6f95e8']
+const PIXEL_LIGHT_PIXEL = 3
+/** See-through amount of the edge pixels (the middle 2 × 2 is solid). */
+const PIXEL_LIGHT_EDGE_ALPHA = 0.45
 const PIXEL_LIGHT_GRID = 4
 const PIXEL_LIGHT_STEP_SECONDS = 0.5
 const PIXEL_LIGHT_CELLS = (() => {
@@ -188,7 +191,13 @@ function drawPixelLight(ctx, spot, index, clockSeconds) {
   const left = Math.round((spot.x - half) / size) * size
   const top = Math.round((spot.y - half) / size) * size
   ctx.fillStyle = color
-  for (const [x, y] of PIXEL_LIGHT_CELLS) ctx.fillRect(left + x * size, top + y * size, size, size)
+  const last = PIXEL_LIGHT_GRID - 1
+  for (const [x, y] of PIXEL_LIGHT_CELLS) {
+    const edge = x === 0 || y === 0 || x === last || y === last
+    ctx.globalAlpha = edge ? PIXEL_LIGHT_EDGE_ALPHA : 1
+    ctx.fillRect(left + x * size, top + y * size, size, size)
+  }
+  ctx.globalAlpha = 1
 }
 
 function drawHazards(ctx, view, images, day, launched, clockSeconds) {
