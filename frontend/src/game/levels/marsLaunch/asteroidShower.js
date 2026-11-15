@@ -4,6 +4,7 @@
  * A swarm of rocks that escaped the asteroid belt rains down. The rocket sits at the bottom of the
  * field and slides left and right after the mouse (or the arrow keys, or a finger) to dodge them.
  *   - SHOWER_SECONDS long; rocks fall faster and come more often as time goes on
+ *   - SIDE_SHARE of the rocks fall near the left and right edges, so hiding at a side is not safe
  *   - each hit breaks one of SHIELDS shields and costs HIT_PENALTY points
  *   - losing every shield breaks the ship apart
  * Units are pixels of the small field (FIELD_W × FIELD_H) and seconds.
@@ -17,6 +18,20 @@ export const HIT_PENALTY = 10
 
 /** The rocket: its center x moves, its y is fixed near the bottom. */
 export const SHIP = { y: FIELD_H - 14, halfWidth: 4, halfHeight: 6, speed: 170 }
+/** Share of the rocks that fall in the side strips, and how wide each strip is (part of the field). */
+export const SIDE_SHARE = 0.3
+export const SIDE_STRIP = 0.25
+
+/** Where a new rock starts (x): often near the edges, otherwise anywhere. */
+export function rockStartX(random, r) {
+  const span = FIELD_W - 2 * r
+  if (random() < SIDE_SHARE) {
+    const offset = random() * span * SIDE_STRIP
+    return random() < 0.5 ? r + offset : FIELD_W - r - offset
+  }
+  return r + random() * span
+}
+
 /** After a hit the ship blinks and cannot be hit again for this long. */
 export const HIT_GRACE_SECONDS = 1
 
@@ -47,7 +62,7 @@ export function createShower(seed = Date.now()) {
 /** Seconds between rocks and their speed at a moment of the shower: it gets harder. */
 export function difficultyAt(time) {
   const k = Math.min(1, time / SHOWER_SECONDS)
-  return { gap: 0.55 - 0.33 * k, speed: 36 + 40 * k }
+  return { gap: 0.46 - 0.28 * k, speed: 36 + 40 * k }
 }
 
 /** Where the player wants the ship (field x), clamped to the field. */
@@ -80,7 +95,7 @@ export function stepShower(shower, dt, targetX) {
   while (shower.nextRock <= 0 && shower.time < SHOWER_SECONDS - 0.6) {
     const r = 3 + Math.floor(shower.random() * 3)
     shower.rocks.push({
-      x: r + shower.random() * (FIELD_W - 2 * r),
+      x: rockStartX(shower.random, r),
       y: -r,
       r,
       speed: level.speed * (0.8 + shower.random() * 0.45),
