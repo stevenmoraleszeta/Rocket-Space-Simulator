@@ -12,10 +12,11 @@
 export const SCENE_W = 192
 export const SCENE_H = 108
 /** Seconds of each part of the landing. */
-export const PARACHUTE_CUT = 4.2
-export const THRUST_START = 4.6
-export const TOUCHDOWN = 6.6
-export const LANDING_SECONDS = 8.4
+// Slow on purpose: the captions explain why we explore Mars while the dome comes down.
+export const PARACHUTE_CUT = 7
+export const THRUST_START = 7.5
+export const TOUCHDOWN = 10
+export const LANDING_SECONDS = 11.8
 
 const GROUND_Y = 88
 const START_Y = 26

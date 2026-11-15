@@ -338,6 +338,11 @@ export const world = {
   'Touchdown!': '¡Aterrizaje!',
   'The recon dome is on Mars.': 'La cúpula de reconocimiento ya está en Marte.',
   'The recon dome is coming down slowly…': 'La cúpula de reconocimiento baja lentamente…',
+  // Mars: why we explore Mars, during the landing (MarsLanding.jsx)
+  'Why explore Mars? It is the planet most like Earth: its days last almost 24 hours, and it has seasons and ice.': '¿Por qué explorar Marte? Es el planeta más parecido a la Tierra: sus días duran casi 24 horas, y tiene estaciones y hielo.',
+  'Long ago Mars had rivers and lakes. Its rocks can tell us if life ever began there.': 'Hace mucho tiempo Marte tuvo ríos y lagos. Sus rocas nos pueden decir si alguna vez empezó la vida ahí.',
+  'The recon dome studies the ground, the air, the ice and the dangers, like dust storms and radiation.': 'La cúpula de reconocimiento estudia el suelo, el aire, el hielo y los peligros, como las tormentas de polvo y la radiación.',
+  'With what we learn, in some years people may be able to live on Mars!': '¡Con lo que aprendamos, en algunos años las personas podrían vivir en Marte!',
   // Mars: grazes and the runaway asteroids (marsLaunch)
   'You meet Mars, but the rocket grazes {{name}}: −{{points}} points.': 'Llegas a Marte, pero el cohete roza {{name}}: −{{points}} puntos.',
   'Grazed {{name}}! −{{points}} points': '¡Rozaste {{name}}! −{{points}} puntos',
