@@ -20,11 +20,18 @@ import { MoonLaunchLevel } from './levels/moon/MoonLaunchLevel.jsx'
 import { MarsLaunchLevel } from './levels/marsLaunch/MarsLaunchLevel.jsx'
 import { STAGE_IDS, STAGE_INFO, getNextStage } from './stages.js'
 
+/**
+ * Loadout entries that are not parts but still travel with the rocket: the gold rocket
+ * upgrade (lifeSupport.js, loadout.upgrade). Without it here a failed flight sent the player
+ * back to the hangar with the upgrade switched off.
+ */
+const EXTRA_LOADOUT_IDS = ['upgrade']
+
 function loadoutFromPack(pack) {
   const loadout = { ...EMPTY_LOADOUT }
   if (!pack) return loadout
   for (const [id, count] of Object.entries(pack)) {
-    if (id in loadout) loadout[id] = count
+    if (id in loadout || EXTRA_LOADOUT_IDS.includes(id)) loadout[id] = count
   }
   return loadout
 }

@@ -17,7 +17,7 @@ function nextMissionAfter(missionId) {
   return index >= 0 ? (MISSIONS[index + 1] ?? null) : null
 }
 
-export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain, lead, design }) {
+export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain, lead, design, continueLabel }) {
   const playerName = engineerName(useSettings().playerName)
   const nextMission = nextMissionAfter(mission.id)
   const continueRef = useRef(null)
@@ -78,7 +78,7 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
         <div className="mission-complete__actions">
           <button type="button" className="game__back" onClick={onFlyAgain}>{t('Fly again')}</button>
           <button ref={continueRef} type="button" className="ms-btn" onClick={onContinue}>
-            {nextMission ? t('Next mission') : t('Missions')}
+            {continueLabel ?? (nextMission ? t('Next mission') : t('Missions'))}
           </button>
         </div>
       </div>
