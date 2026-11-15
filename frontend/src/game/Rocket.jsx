@@ -138,7 +138,10 @@ export function PartIcon({ part, lit = false }) {
   }
   return (
     <span className="part__icon">
-      <span className="rocket__layer" style={sheetStyle(part, lit)} />
+      <span
+        className="rocket__layer"
+        style={{ ...sheetStyle(part, lit), top: `calc(${part.iconOffsetY ?? 0}px * var(--scale))` }}
+      />
     </span>
   );
 }

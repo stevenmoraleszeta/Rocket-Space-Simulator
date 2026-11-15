@@ -25,6 +25,8 @@ export const ROCKET = {
 /**
  * Parts the player can add or remove before liftoff.
  * Sheet parts share the rocket's 32×32 cell, so they stack on the same origin.
+ * `iconOffsetY` (art pixels) only moves the part's button icon, so the art sits in the middle
+ * of the button; the part stays put on the rocket.
  * `inside` parts ride in the cabin and only show when the hull is open.
  */
 export const PARTS = [
@@ -44,6 +46,7 @@ export const PARTS = [
     offX: 128,
     offY: 0,
     frame: 32,
+    iconOffsetY: 8, // the shell sits at the top of its cell (rows 0..15)
     breaksOnSeparation: true, // the shell cracks in two out of the atmosphere, no heat left
     flightFrames: 5, // lit frames in row frameY, played while flying
   },
@@ -64,6 +67,7 @@ export const PARTS = [
     offX: 0,
     offY: 0,
     frame: 32,
+    iconOffsetY: -6, // the boosters and their flames sit low in their cell (rows 14..30)
     dropsWithStage: true, // fixed to the rear stage: falls away with it in space
     flightFrames: 5, // lit frames in row frameY, played while flying
   },

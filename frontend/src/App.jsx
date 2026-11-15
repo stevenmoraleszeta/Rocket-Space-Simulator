@@ -24,9 +24,10 @@ export default function App() {
           <>
             <MenuSoundtrack />
             <MissionSelect onStartMission={setMission} />
-            <SettingsMenu />
           </>
         )}
+        {/* Music and name settings, on every screen (fixed in the top-right corner). */}
+        <SettingsMenu />
       </ProgressProvider>
     </SettingsProvider>
   )
