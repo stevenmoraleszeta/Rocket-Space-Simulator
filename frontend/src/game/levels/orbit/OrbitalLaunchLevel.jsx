@@ -34,7 +34,7 @@ import { MissionCompleteScreen } from './MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from './MissionFailedScreen.jsx'
 import { EXPLODING_OUTCOMES, OUTCOMES, arrivalPosition, degreesToRadians, satellitePositionAt, simulateLaunch } from './launchSimulation.js'
 import { buildLaunchVehicle } from './launchVehicle.js'
-import { aimFromPointer, initialAim, siteAngleOf } from './orbitAiming.js'
+import { aimArmPoint, aimFromPointer, findGoodLaunchAim, initialAim, siteAngleOf } from './orbitAiming.js'
 import {
   createView,
   drawOrbitScene,
@@ -158,6 +158,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launc
   const [arrivalAngle, setArrivalAngle] = useState(null)
   const [aim, setAim] = useState(null)
   const [aimPoint, setAimPoint] = useState(null)
+  // "Help me aim": '' until pressed, then 'found' or 'none'
+  const [aimHelp, setAimHelp] = useState('')
   const [result, setResult] = useState(null)
   // Mission 1 won: the first-orbit story plays after the Congratulations screen
   const [firstOrbitStory, setFirstOrbitStory] = useState(false)
@@ -481,8 +483,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launc
   const aimAt = (point) => {
     const nextAim = aimFromPointer(site, siteScreenPosition(view, site, true), point.x, point.y, view.aimMaxPixels)
     if (nextAim) {
-      setAim(nextAim)
-      setAimPoint(point)
+      setAimHelp('')
+      setAim({ tiltRadians: nextAim.tiltRadians, power: nextAim.power })
+      // The crosshair sits where the arm points (limited and in clicks), with the arm from the base
+      setAimPoint({ ...nextAim.point, base: nextAim.base })
     }
   }
 
@@ -550,6 +554,26 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launc
     setStep('aim')
   }
   // Launch: first the pad liftoff and the climb (LaunchSequence), then the orbit flight on the canvas.
+  /** "Help me aim" (like the Moon mission): moves the arm to an aim that reaches the orbit. */
+  const helpAim = () => {
+    if (!site || !arrival || aimHelp === 'busy') return
+    // Show "Looking…" first; the search runs right after, so the button never seems stuck
+    setAimHelp('busy')
+    setTimeout(() => findAim(), 30)
+  }
+  const findAim = () => {
+    const found = findGoodLaunchAim({ site, arrival, vehicle, rotationBoost, satellites: REAL_SATELLITES })
+    if (!found) {
+      playSfx(SFX.cancel)
+      setAimHelp('none')
+      return
+    }
+    playSfx(SFX.confirm)
+    setAim(found)
+    setAimPoint(aimArmPoint(site, siteScreenPosition(view, site, true), found, view.aimMaxPixels))
+    setAimHelp('found')
+  }
+
   const launch = () => {
     playSfx(SFX.liftoff)
     setTelemetry(null)
@@ -755,6 +779,13 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launc
                 </dl>
               )}
               {predictionSummary && <p className={`orbit-prediction is-${predictionSummary.tone}`}>{sayTo(playerName, predictionSummary.text)}</p>}
+              {!design && (
+                <button type="button" className="game__back orbit-help" onClick={helpAim} disabled={aimHelp === 'busy'}>
+                  {aimHelp === 'busy' ? t('Looking for a path…') : t('Help me aim')}
+                </button>
+              )}
+              {aimHelp === 'found' && <p className="orbit-panel__hint">{t('The arm is set on a path that reaches the orbit. Press Launch!')}</p>}
+              {aimHelp === 'none' && <p className="orbit-panel__hint">{t('No aim reaches this orbit from this base. Go back and try another base.')}</p>}
               <div className="orbit-panel__actions">
                 <button type="button" className="game__back" onClick={() => goBack('site')}>{t('Back')}</button>
                 <button type="button" className="ms-btn" onClick={launch}>{t('Launch')}</button>

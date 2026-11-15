@@ -196,6 +196,100 @@
   .mars-landing__panel { left: 0.75rem; right: 0.75rem; width: auto; top: 0.75rem; }
   .mars-landing__why { font-size: 1rem; }
 }
+/* The Mars robot (MarsRobot.jsx) at the bottom left, saying the message in the box beside it. */
+.mars-landing__talk {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.875rem;
+  width: min(38rem, 48vw);
+}
+.mars-robot {
+  position: relative;
+  flex: none;
+  width: clamp(6rem, 20vh, 11rem);
+  aspect-ratio: 24 / 27;
+  filter: drop-shadow(0.1875rem 0 0 #2a1018) drop-shadow(-0.1875rem 0 0 #2a1018)
+    drop-shadow(0 0.1875rem 0 #2a1018) drop-shadow(0 -0.1875rem 0 #2a1018);
+  animation: mars-robot-in 0.9s cubic-bezier(0.2, 1.3, 0.4, 1) 0.3s both;
+}
+.mars-robot__bob { position: absolute; inset: 0; animation: mars-robot-bob 1.6s ease-in-out infinite; }
+.mars-robot__part {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  will-change: transform;
+}
+/* Waves its claw, rests the other arm, blinks its eye every few seconds */
+.mars-robot__arm-right { animation: mars-robot-wave 0.55s ease-in-out infinite alternate; }
+.mars-robot__arm-left { animation: mars-robot-explain 2.6s ease-in-out infinite; }
+.mars-robot__lid { opacity: 0; animation: mars-robot-blink 3.4s steps(1, end) infinite; }
+.mars-robot__light { animation: mars-robot-light 1.4s steps(1, end) infinite; }
+/* Talking: the grille glows in pulses and the antenna blinks fast */
+.mars-robot__voice { opacity: 0; }
+.mars-robot.is-talking .mars-robot__voice { animation: mars-robot-voice 0.24s steps(1, end) infinite; }
+.mars-robot.is-talking .mars-robot__light { animation-duration: 0.3s; }
+.mars-robot.is-talking .mars-robot__arm-left { animation-duration: 1.2s; }
+@keyframes mars-robot-in { from { transform: translateX(-130%); } to { transform: none; } }
+@keyframes mars-robot-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3%); } }
+@keyframes mars-robot-wave { from { transform: rotate(-16deg); } to { transform: rotate(14deg); } }
+@keyframes mars-robot-explain { 0%, 55%, 100% { transform: rotate(0); } 70%, 85% { transform: rotate(35deg); } }
+@keyframes mars-robot-blink { 0%, 92% { opacity: 0; } 94%, 97% { opacity: 1; } 99% { opacity: 0; } }
+@keyframes mars-robot-light { 0% { opacity: 1; } 50% { opacity: 0.25; } }
+@keyframes mars-robot-voice { 0% { opacity: 1; } 50% { opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) {
+  .mars-robot,
+  .mars-robot__bob,
+  .mars-robot__part,
+  .mars-robot.is-talking .mars-robot__voice { animation: none; }
+}
+.mars-landing__talk .mars-landing__why {
+  position: relative;
+  flex: 1;
+  margin-bottom: clamp(1.5rem, 7vh, 4.5rem);
+}
+/* Speech tail pointing at the astronaut */
+.mars-landing__talk .mars-landing__why::before {
+  content: '';
+  position: absolute;
+  left: -0.875rem;
+  bottom: 1.25rem;
+  border-style: solid;
+  border-width: 0.5rem 0.75rem 0.5rem 0;
+  border-color: transparent #e2b31f transparent transparent;
+}
+.mars-landing__talk .mars-landing__why.is-landed::before {
+  border-right-color: #3ddc97;
+}
+/* Phones: the astronaut stands above a full-width box. */
+@media (max-width: 720px) {
+  .mars-landing__talk {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 4rem;
+    width: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .mars-robot { width: 5.5rem; }
+  .mars-landing__talk .mars-landing__why { width: 100%; margin-bottom: 0; }
+  .mars-landing__talk .mars-landing__why::before {
+    left: 2rem;
+    top: -0.75rem;
+    bottom: auto;
+    border-width: 0 0.5rem 0.75rem 0.5rem;
+    border-color: transparent transparent #e2b31f transparent;
+  }
+  .mars-landing__talk .mars-landing__why.is-landed::before {
+    border-color: transparent transparent #3ddc97 transparent;
+  }
+}
 .mars-landing__why.is-landed { border-color: #3ddc97; color: #e6fff2; }
 .mars-landing__why-text { margin: 0 0 0.75rem; }
 .mars-landing__why-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }

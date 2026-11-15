@@ -374,27 +374,103 @@ function drawSatellite(ctx, scene, object, screen, clock, hit, hovered) {
   if (hit || hovered) drawLabel(ctx, object.shortName, screen.x, screen.y - height / 2 - 10, 'center', hit ? COLORS.hit : '#ffffff', 12)
 }
 
+/*
+ * Space junk: a loose cloud of small pixel pieces (rocks, metal plates, bent rods, bits of solar
+ * panel and bolts that glint), each tumbling a quarter turn now and then. Every cloud gets its
+ * own mix from its id, so two clouds never look alike. Shapes are rows of characters:
+ * '#' base color, '+' light side, '-' dark side, 'o' accent (rivet, cell line or glint).
+ */
+const JUNK_SHAPES = {
+  rock: { rows: [' ##', '+##-', '##--', ' --'], palettes: [['#8a8178', '#b3aaa0', '#5c554e', '#a39a90'], ['#7a6a5c', '#a8927e', '#4f4338', '#93806c'], ['#6f7480', '#9ea4b0', '#4a4e58', '#8a909c']] },
+  pebble: { rows: ['+#', '#-'], palettes: [['#9a8f84', '#c4bab0', '#655d55', '#9a8f84'], ['#8b7b6a', '#b29f8b', '#5a4c3e', '#8b7b6a']] },
+  plate: { rows: ['++++', '#o##', '###-', '----'], palettes: [['#aeb4c0', '#e2e6ee', '#767c8a', '#4b4e5a'], ['#c0a77a', '#e6d3a8', '#8a744c', '#5a4a2e']] },
+  rod: { rows: ['++#', '  #', '  #-'], palettes: [['#9aa0b0', '#d4d8e2', '#636878', '#9aa0b0'], ['#b8743a', '#e0a06a', '#7a4a22', '#b8743a']] },
+  panel: { rows: ['+o+o', '#o#o', '-o-o'], palettes: [['#2f5fb0', '#5b8ee0', '#1c3a72', '#c6cedc']] },
+  bolt: { rows: ['o#', '#-'], palettes: [['#c6cedc', '#ffffff', '#7d8292', '#ffffff']] },
+}
+const JUNK_MIX = ['rock', 'pebble', 'plate', 'rock', 'rod', 'pebble', 'panel', 'bolt', 'rock', 'plate', 'pebble', 'rod']
+
+/** Small seeded random numbers from a cloud's id, so its pieces stay put between frames. */
+function junkRandom(id) {
+  let seed = 7
+  for (const char of String(id)) seed = (seed * 31 + char.charCodeAt(0)) % 2147483647
+  return () => {
+    seed = (seed * 16807) % 2147483647
+    return (seed - 1) / 2147483646
+  }
+}
+
+const junkCache = new Map()
+/** The pieces of one cloud: where each sits in the band, its shape, colors and spin. */
+function junkPieces(object) {
+  if (junkCache.has(object.id)) return junkCache.get(object.id)
+  const random = junkRandom(object.id)
+  const pieces = Array.from({ length: 26 }, (_, index) => {
+    const kind = JUNK_MIX[Math.floor(random() * JUNK_MIX.length)]
+    const shape = JUNK_SHAPES[kind]
+    // Bunched toward the middle of the band, thinning out at its ends and edges
+    const along = (random() + random() + random()) / 3 - 0.5
+    const across = (random() + random()) - 1
+    return {
+      kind,
+      rows: shape.rows,
+      colors: shape.palettes[Math.floor(random() * shape.palettes.length)],
+      along,
+      across,
+      scale: kind === 'rock' && random() < 0.35 ? 2 : 1,
+      spin: 0.3 + random() * 0.9,
+      phase: random() * 4,
+      drift: random() * Math.PI * 2,
+      index,
+    }
+  })
+  junkCache.set(object.id, pieces)
+  return pieces
+}
+
+/** Draws one piece turned by a number of quarter turns, in screen pixels. */
+function drawJunkPiece(ctx, piece, x, y, quarter, hit, glint) {
+  const [base, light, dark, accent] = piece.colors
+  const height = piece.rows.length
+  const width = Math.max(...piece.rows.map((row) => row.length))
+  const size = piece.scale
+  piece.rows.forEach((row, rowIndex) => {
+    for (let column = 0; column < row.length; column += 1) {
+      const char = row[column]
+      if (char === ' ') continue
+      let px = column - width / 2
+      let py = rowIndex - height / 2
+      for (let turn = 0; turn < quarter; turn += 1) [px, py] = [-py - 1, px]
+      ctx.fillStyle = hit ? (char === '-' ? '#a3122c' : '#ff5d73')
+        : char === '+' ? light : char === '-' ? dark : char === 'o' ? (piece.kind === 'bolt' && !glint ? base : accent) : base
+      ctx.fillRect(Math.round(x + px * size), Math.round(y + py * size), size, size)
+    }
+  })
+}
+
 function drawDebris(ctx, view, scene, object, seconds, clock, hit, hovered, turn = 0) {
   const radius = displayRadius(EARTH_RADIUS_KM + object.altitudeKm) * view.unit
   const center = trafficAngle(object, scene.launchDate, seconds) + turn
   const span = (object.spanDeg * Math.PI) / 180
   const thickness = DEBRIS_BAND_HALF * view.unit
   ctx.save()
-  // Faint band, so the cloud reads as one thing.
-  ctx.strokeStyle = hit ? 'rgba(255, 93, 115, 0.3)' : hovered ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 159, 107, 0.16)'
-  ctx.lineWidth = thickness * 2
-  ctx.beginPath()
-  ctx.arc(view.centerX, view.centerY, radius, -(center - span / 2), -(center + span / 2), true)
-  ctx.stroke()
-  // Grains that tumble a little.
-  for (let grain = 0; grain < 34; grain += 1) {
-    const along = ((grain * 0.6180339) % 1) - 0.5
-    const across = (((grain * 0.7548776) % 1) - 0.5) * 2 + Math.sin(clock * 2 + grain) * 0.05
-    const angle = center + along * span
-    const r = radius + across * thickness
-    const size = grain % 5 === 0 ? 4 : grain % 2 ? 3 : 2
-    ctx.fillStyle = hit ? COLORS.hit : grain % 3 ? COLORS.debris : '#c9b39a'
-    ctx.fillRect(Math.round(view.centerX + r * Math.cos(angle)) - 1, Math.round(view.centerY - r * Math.sin(angle)) - 1, size, size)
+  // The danger zone only shows as a faint band when pointed at or hit.
+  if (hit || hovered) {
+    ctx.strokeStyle = hit ? 'rgba(255, 93, 115, 0.22)' : 'rgba(255, 255, 255, 0.14)'
+    ctx.lineWidth = thickness * 2
+    ctx.beginPath()
+    ctx.arc(view.centerX, view.centerY, radius, -(center - span / 2), -(center + span / 2), true)
+    ctx.stroke()
+  }
+  for (const piece of junkPieces(object)) {
+    const angle = center + piece.along * span
+    const wobble = Math.sin(clock * 0.8 + piece.drift) * 0.08
+    const r = radius + (piece.across + wobble) * thickness
+    const x = view.centerX + r * Math.cos(angle)
+    const y = view.centerY - r * Math.sin(angle)
+    const quarter = Math.floor(clock * piece.spin + piece.phase) % 4
+    const glint = Math.floor(clock * 2 + piece.index) % 5 === 0
+    drawJunkPiece(ctx, piece, x, y, quarter, hit, glint)
   }
   ctx.restore()
   if (hit || hovered) {

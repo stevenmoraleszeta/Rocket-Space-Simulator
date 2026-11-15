@@ -132,7 +132,7 @@ export function MoonEventCard({ activeEvent, blockedReason, onChoose, onAct, onC
     <div className="moon-event-shade">
       <section className="moon-event moon-panel" role="dialog" aria-modal="true" aria-labelledby="moon-event-title">
         <p className="moon-kicker">{t('SPACE EVENT')}</p>
-        {!resolvedText && (
+        {!resolvedText && actingChoice && (
           <div className="moon-event__clock" aria-label={t('{{seconds}} seconds left', { seconds: activeEvent.secondsLeft })}>
             <span key={activeEvent.deadline} style={{ animationDuration: `${activeEvent.total}s` }} />
             <b>{activeEvent.secondsLeft}s</b>
@@ -157,7 +157,7 @@ export function MoonEventCard({ activeEvent, blockedReason, onChoose, onAct, onC
         ) : (
           <>
             <p>{t(event.text)}</p>
-            <p className="moon-event__note">{t('Think, then choose. If the clock runs out, the risky thing happens.')}</p>
+            <p className="moon-event__note">{t('Take your time. Think, then choose.')}</p>
             {event.timing ? (
               <div className="moon-timing">
                 <p>{t('Hold the button. Release in the green zone.')}</p>

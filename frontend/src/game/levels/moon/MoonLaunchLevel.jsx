@@ -42,6 +42,7 @@ import { SunRating } from './SunRating.jsx'
 import { useLaunchRoute } from '../orbit/useLaunchRoute.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
+import { MoonLandingStory } from './MoonLandingStory.jsx'
 import { formatLaunchDate, MOON_SYNODIC_MONTH_DAYS } from './moonLaunchPlanning.js'
 import {
   CAPTURE_KM,
@@ -262,6 +263,8 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
   const [telemetry, setTelemetry] = useState(null)
   const [seenHits, setSeenHits] = useState(0)
   const [result, setResult] = useState(null)
+  // Mission won: the Apollo 11 story plays after the Congratulations screen
+  const [moonStory, setMoonStory] = useState(false)
   const [crashWatched, setCrashWatched] = useState(null)
   const [events, setEvents] = useState([])
   const [eventIndex, setEventIndex] = useState(0)
@@ -726,17 +729,14 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
     else playSfx(effect.scienceFactor < 1 || effect.dataLoss > 0 ? SFX.cancel : SFX.confirm)
   }, [])
 
+  // Questions have no clock: the player takes all the time they need. Only a hands-on action
+  // (tap fast, turn the dial) runs against the clock, and running out counts as a miss.
   useEffect(() => {
-    if (!activeEvent || activeEvent.resolvedText) return undefined
+    if (!activeEvent || activeEvent.resolvedText || !activeEvent.acting) return undefined
     const timer = setInterval(() => {
       const secondsLeft = Math.max(0, Math.ceil((activeEvent.deadline - Date.now()) / 1000))
       if (secondsLeft === 0) {
-        if (activeEvent.acting) {
-          chooseEvent(activeEvent.acting, { actionSuccess: false })
-        } else {
-          const risky = activeEvent.event.choices.find((choice) => choice.risky)?.id ?? activeEvent.event.choices[0].id
-          chooseEvent(risky, { timingSuccess: false })
-        }
+        chooseEvent(activeEvent.acting, { actionSuccess: false })
       } else if (secondsLeft !== activeEvent.secondsLeft) {
         setActiveEvent((current) => (current ? { ...current, secondsLeft } : current))
       }
@@ -875,6 +875,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
     setStep('flight')
   }, [])
   const retry = () => {
+    setMoonStory(false)
     flightRef.current = null
     setLanding(null)
     setResult(null)
@@ -925,7 +926,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
           <LaunchSequence equipped={equipped} hud={hud} onDone={startFlight} failure={liftoffFailure} onFail={failLaunch} />
         </div>
       )}
-      {step === 'result' && result?.success && (
+      {step === 'result' && result?.success && !moonStory && (
         <MissionCompleteScreen
           mission={mission}
           result={result}
@@ -933,10 +934,12 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
           lead={result.tripDays
             ? t('Your crew mapped the Moon and came home after {{days}} days.', { days: result.tripDays.toFixed(1) })
             : t('Your crew mapped the Moon and came home.')}
-          onContinue={onNextMission ?? onExit}
+          onContinue={() => setMoonStory(true)}
+          continueLabel={t('Continue')}
           onFlyAgain={retry}
         />
       )}
+      {moonStory && <MoonLandingStory onDone={onExit} />}
       {step === 'result' && failScreenReady && (
         <MissionFailedScreen
           mission={mission}

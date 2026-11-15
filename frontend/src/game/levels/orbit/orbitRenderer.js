@@ -344,7 +344,8 @@ function pathColor(outcomeType) {
 }
 
 /** Square dots evenly spaced along the screen path, up to `untilTime` seconds of flight. */
-function drawDottedPath(ctx, view, samples, color, untilTime = Infinity) {
+function drawDottedPath(ctx, view, samples, color, untilTime = Infinity, aboveGroundOnly = false) {
+  const groundRadius = view.earthRadiusPixels + DOT_SIZE_PIXELS
   ctx.fillStyle = color
   let carried = 0
   let previous = null
@@ -359,7 +360,10 @@ function drawDottedPath(ctx, view, samples, color, untilTime = Infinity) {
       while (along <= length) {
         const x = previous.x + (dx * along) / length
         const y = previous.y + (dy * along) / length
-        ctx.fillRect(Math.round(x - DOT_SIZE_PIXELS / 2), Math.round(y - DOT_SIZE_PIXELS / 2), DOT_SIZE_PIXELS, DOT_SIZE_PIXELS)
+        // The predicted path never shows dots under the ground
+        if (!aboveGroundOnly || Math.hypot(x - view.centerX, y - view.centerY) >= groundRadius) {
+          ctx.fillRect(Math.round(x - DOT_SIZE_PIXELS / 2), Math.round(y - DOT_SIZE_PIXELS / 2), DOT_SIZE_PIXELS, DOT_SIZE_PIXELS)
+        }
         along += DOT_SPACING_PIXELS
       }
       carried = length - (along - DOT_SPACING_PIXELS)
@@ -374,7 +378,7 @@ function drawPrediction(ctx, view, prediction, alpha = 1) {
   const { outcome } = prediction
   const color = pathColor(outcome.type)
   ctx.globalAlpha = alpha
-  drawDottedPath(ctx, view, prediction.samples, color)
+  drawDottedPath(ctx, view, prediction.samples, color, Infinity, true)
   if (outcome.type === OUTCOMES.ORBIT_REACHED) {
     drawDottedRing(ctx, view, orbitRingRadius(view, (outcome.orbitRadius - EARTH_RADIUS_METERS) / 1000), color, 3, 14)
   }
@@ -545,7 +549,20 @@ export function drawOrbitScene(ctx, view, scene) {
   if (scene.step === 'aim') {
     drawPrediction(ctx, view, scene.prediction)
     if (scene.aimPoint) {
-      // Small crosshair where the player is pointing.
+      // The aiming arm: a pixel rod from the base to the crosshair, with a joint at each end
+      const { base } = scene.aimPoint
+      if (base) {
+        const dx = scene.aimPoint.x - base.x
+        const dy = scene.aimPoint.y - base.y
+        const length = Math.hypot(dx, dy)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)'
+        for (let along = 8; along < length - 8; along += 4) {
+          ctx.fillRect(Math.round(base.x + (dx * along) / length - 1), Math.round(base.y + (dy * along) / length - 1), 2, 2)
+        }
+        ctx.fillStyle = '#ffd23f'
+        ctx.fillRect(Math.round(base.x - 3), Math.round(base.y - 3), 6, 6)
+      }
+      // Crosshair where the arm points.
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(Math.round(scene.aimPoint.x - 7), Math.round(scene.aimPoint.y - 1), 14, 3)
       ctx.fillRect(Math.round(scene.aimPoint.x - 1), Math.round(scene.aimPoint.y - 7), 3, 14)

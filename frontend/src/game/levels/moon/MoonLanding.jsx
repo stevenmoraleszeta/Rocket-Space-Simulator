@@ -11,6 +11,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { t } from '../../../i18n/index.js'
 import { SYNTH, playSynth } from '../../../audio'
 import { PixelIcon } from '../../PixelIcon.jsx'
+import { LunarLander } from './LunarLander.jsx'
+import { MoonTips } from './MoonTips.jsx'
+import { tipsTurnedOff } from './moonTipsStorage.js'
 
 const GRAVITY = 1.62
 const THRUST = 4.2
@@ -70,8 +73,15 @@ export function MoonLanding({ onDone }) {
   const burnRef = useRef(false)
   const stateRef = useRef(state)
   const autoRef = useRef(false)
+  // The landing tutorial opens first (unless the player turned the tips off); it holds the game
+  const [tipsOpen, setTipsOpen] = useState(() => !tipsTurnedOff())
+  const tipsRef = useRef(tipsOpen)
+  useEffect(() => {
+    tipsRef.current = tipsOpen
+  }, [tipsOpen])
 
   const press = useCallback((on) => {
+    if (on && tipsRef.current) return
     burnRef.current = on
     if (on) setPhase((value) => (value === 'ready' ? 'flying' : value))
   }, [])
@@ -148,12 +158,15 @@ export function MoonLanding({ onDone }) {
   const falling = -state.speed
   const tone = falling <= SOFT_SPEED ? 'good' : falling <= HARD_SPEED ? 'warn' : 'bad'
   // Lander top (% of the scene): its feet touch the pad at height 0.
-  const top = 4 + (1 - state.height / START_HEIGHT) * 52
+  const top = 4 + (1 - state.height / START_HEIGHT) * 48
 
   return (
     <div className="moon-event-shade">
       <section className="moon-landing moon-panel" role="dialog" aria-modal="true" aria-labelledby="moon-landing-title">
         <p className="moon-kicker">{t('Landing')}</p>
+        {!tipsOpen && !outcome && (
+          <button type="button" className="moon-tips-open moon-landing__tips" onClick={() => { press(false); setTipsOpen(true) }} aria-label={t('Show tips')}>?</button>
+        )}
         <h2 id="moon-landing-title">{landingCopy(outcome).title}</h2>
         <div
           className={`moon-landing__scene is-${outcome?.id ?? phase}`}
@@ -164,16 +177,7 @@ export function MoonLanding({ onDone }) {
           <span className="moon-landing__earth" aria-hidden="true"><PixelIcon name="earth" /></span>
           <span className="moon-landing__pad" aria-hidden="true" />
           <div className="moon-landing__lander" style={{ top: `${top}%` }} aria-hidden="true">
-            <svg viewBox="0 0 24 24" shapeRendering="crispEdges">
-              <rect x="7" y="3" width="10" height="7" fill="#d9dbe4" />
-              <rect x="9" y="5" width="3" height="3" fill="#4fc3ff" />
-              <rect x="5" y="10" width="14" height="5" fill="#ffd23f" />
-              <rect x="4" y="15" width="2" height="6" fill="#9aa6c8" />
-              <rect x="18" y="15" width="2" height="6" fill="#9aa6c8" />
-              <rect x="2" y="20" width="5" height="1" fill="#9aa6c8" />
-              <rect x="17" y="20" width="5" height="1" fill="#9aa6c8" />
-              {state.firing && <rect className="moon-landing__flame" x="10" y="15" width="4" height="7" fill="#ffb347" />}
-            </svg>
+            <LunarLander firing={state.firing} />
           </div>
           {phase === 'landed' && outcome?.id !== 'crash' && <span className="moon-landing__flag" aria-hidden="true"><PixelIcon name="flag" /></span>}
           {phase === 'landed' && <span className="moon-landing__dust" aria-hidden="true" />}
@@ -217,6 +221,7 @@ export function MoonLanding({ onDone }) {
           </>
         )}
       </section>
+      {tipsOpen && <MoonTips step="landing" onClose={() => setTipsOpen(false)} />}
     </div>
   )
 }

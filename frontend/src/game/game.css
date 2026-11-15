@@ -872,10 +872,13 @@
 }
 
 /* The box: flat panel with faint pixel scanlines, framed by the 3-layer bevel.
-   One grid for every row, so icons, labels, bars and values line up in columns. */
+   One grid for every row, so icons, labels, bars and values line up in columns.
+   Labels and values take the room they need but never more than the panel has: the pixel
+   font is a little wider on some computers (and Spanish lines are longer), so a long label
+   or value wraps to a second line instead of running past the frame and being cut off. */
 .meters__grid {
   display: grid;
-  grid-template-columns: 1.25rem max-content minmax(3.75rem, 1fr) max-content;
+  grid-template-columns: 1.25rem auto minmax(2.5rem, 1fr) auto;
   align-items: center;
   gap: 0.4375rem 0.5rem;
   padding: 0.9375rem 0.9375rem 1rem;
@@ -918,8 +921,11 @@
 }
 
 .meter__label {
+  min-width: 0;
   font-family: var(--ms-font-pixel);
   font-size: 0.5rem;
+  line-height: 1.4;
+  overflow-wrap: break-word;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #dfe5ff;
@@ -958,11 +964,12 @@
 }
 
 .meter__value {
+  min-width: 0;
   font-family: var(--ms-font-pixel);
   font-size: 0.5rem;
   line-height: 1.4;
   text-align: right;
-  white-space: nowrap;
+  overflow-wrap: break-word;
   color: #ffffff;
   text-shadow: 0.0625rem 0.0625rem 0 var(--outline);
 }
@@ -2363,7 +2370,7 @@
   }
 
   .meters__grid {
-    grid-template-columns: 1.125rem max-content minmax(3rem, 1fr) max-content;
+    grid-template-columns: 1.125rem auto minmax(2.25rem, 1fr) auto;
     column-gap: 0.375rem;
   }
 

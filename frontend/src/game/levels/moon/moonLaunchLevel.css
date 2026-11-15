@@ -1372,8 +1372,7 @@
   position: absolute;
   z-index: 2;
   left: 50%;
-  width: 4rem;
-  height: 4rem;
+  width: 5rem;
   transform: translateX(-50%);
 }
 
@@ -1518,6 +1517,187 @@
   animation: moon-tut-best 1.6s ease-in-out infinite;
 }
 
+/* The Eagle (LunarLander.jsx): its flame flickers between two shapes. */
+.lunar-lander {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.lunar-lander__flame-b {
+  animation: lunar-flame 0.12s steps(1, end) infinite;
+}
+
+.lunar-lander__flame-a {
+  animation: lunar-flame 0.12s steps(1, end) infinite reverse;
+}
+
+@keyframes lunar-flame {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* The landing game's "?" sits in the panel's top-right corner. */
+.moon-landing {
+  position: relative;
+}
+
+.moon-landing .moon-landing__tips {
+  top: 0.75rem;
+  right: 0.75rem;
+}
+
+/* Landing tutorial cards (MoonTips.jsx, step "landing"). */
+.moon-tut-art--burn .moon-tut-eagle,
+.moon-tut-art--fuel .moon-tut-eagle {
+  position: absolute;
+  left: 50%;
+  width: 3.5rem;
+  transform: translateX(-50%);
+}
+
+.moon-tut-art--burn .moon-tut-eagle {
+  bottom: 1.25rem;
+  animation: moon-tut-eagle-land 3.2s ease-out infinite;
+}
+
+.moon-tut-art--burn .lunar-lander__flame {
+  animation: moon-tut-eagle-burn 3.2s steps(1, end) infinite;
+}
+
+.moon-tut-press {
+  position: absolute;
+  left: 0.25rem;
+  bottom: 2.25rem;
+  padding: 0.25rem 0.375rem;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.5rem;
+  color: #04213a;
+  background: var(--ms-yellow);
+  box-shadow: 0 0.1875rem 0 #a88412;
+  animation: moon-tut-press 3.2s steps(1, end) infinite;
+}
+
+.moon-tut-art--burn .moon-tut-ground,
+.moon-tut-art--fuel .moon-tut-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.5rem;
+  height: 0.75rem;
+  background: #b7b9c4;
+}
+
+@keyframes moon-tut-eagle-land {
+  0% { transform: translate(-50%, -4.5rem); }
+  35% { transform: translate(-50%, -2.75rem); }
+  80%, 100% { transform: translate(-50%, 0); }
+}
+
+/* The flame is off while the Eagle drops, on while it slows down, off once it has landed. */
+@keyframes moon-tut-eagle-burn {
+  0% { opacity: 0; }
+  35% { opacity: 1; }
+  80%, 100% { opacity: 0; }
+}
+
+@keyframes moon-tut-press {
+  0% { transform: none; box-shadow: 0 0.1875rem 0 #a88412; }
+  35% { transform: translateY(0.1875rem); box-shadow: 0 0 0 #a88412; }
+  80%, 100% { transform: none; box-shadow: 0 0.1875rem 0 #a88412; }
+}
+
+.moon-tut-gauge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  width: 8rem;
+  height: 4rem;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  place-items: center;
+  background: #111932;
+  box-shadow: inset 0 0 0 0.1875rem #2c3157;
+  transform: translate(-50%, -50%);
+}
+
+.moon-tut-gauge-label {
+  font-family: var(--ms-font);
+  font-size: 0.75rem;
+  color: var(--ms-muted);
+}
+
+.moon-tut-gauge-value {
+  grid-area: 2 / 1;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.875rem;
+  opacity: 0;
+  animation: moon-tut-gauge 3.6s steps(1, end) infinite;
+}
+
+.moon-tut-gauge-value.is-bad { color: #ff8a9a; }
+.moon-tut-gauge-value.is-warn { color: var(--ms-yellow); animation-delay: -2.4s; }
+.moon-tut-gauge-value.is-good { color: #3ddc97; animation-delay: -1.2s; }
+
+@keyframes moon-tut-gauge {
+  0% { opacity: 1; }
+  33.3% { opacity: 0; }
+}
+
+.moon-tut-check {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.75rem;
+  font-family: var(--ms-font-pixel);
+  font-size: 1.25rem;
+  color: #3ddc97;
+  opacity: 0;
+  animation: moon-tut-gauge 3.6s steps(1, end) -1.2s infinite;
+}
+
+.moon-tut-art--fuel .moon-tut-eagle {
+  top: 0.5rem;
+  animation: moon-tut-hover 1.6s ease-in-out infinite;
+}
+
+.moon-tut-art--fuel .lunar-lander__flame {
+  animation: moon-tut-burst 1.6s steps(1, end) infinite;
+}
+
+.moon-tut-fuel {
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  width: 8rem;
+  height: 0.75rem;
+  background: #263a68;
+  transform: translateX(-50%);
+}
+
+.moon-tut-fuel span {
+  display: block;
+  height: 100%;
+  background: var(--ms-yellow);
+  animation: moon-tut-fuel 4.8s steps(4, end) infinite;
+}
+
+@keyframes moon-tut-hover {
+  0%, 100% { transform: translate(-50%, 0.5rem); }
+  50% { transform: translate(-50%, -0.25rem); }
+}
+
+@keyframes moon-tut-burst {
+  0% { opacity: 1; }
+  40% { opacity: 0; }
+}
+
+@keyframes moon-tut-fuel {
+  from { width: 100%; }
+  to { width: 20%; }
+}
+
 .moon-tut-art--land .moon-tut-lander {
   position: absolute;
   left: 50%;
@@ -1552,6 +1732,16 @@
   .moon-button.is-ready,
   .moon-landing__flame,
   .moon-tut-art--land .moon-tut-lander,
+  .moon-tut-art--burn .moon-tut-eagle,
+  .moon-tut-art--burn .lunar-lander__flame,
+  .moon-tut-press,
+  .moon-tut-gauge-value,
+  .moon-tut-check,
+  .moon-tut-art--fuel .moon-tut-eagle,
+  .moon-tut-art--fuel .lunar-lander__flame,
+  .moon-tut-fuel span,
+  .lunar-lander__flame-a,
+  .lunar-lander__flame-b,
   .moon-tut-swing-home {
     animation: none;
     transition: none;

@@ -4,6 +4,8 @@
  * time with "Next", why exploring Mars matters and that one day people may live there. The last
  * message's "Continue" (once the dome is down) opens the mission complete screen, like every
  * level. "Skip" ends it at once; with reduced motion the dome is already on the ground.
+ * The messages are said by the game's little Mars robot (MarsRobot.jsx), rolling at the bottom
+ * left with the message box beside it; it talks for a moment on each line.
  */
 import { useEffect, useRef, useState } from 'react'
 import { t } from '../../../i18n/index.js'
@@ -15,6 +17,7 @@ import {
   createLandingScene,
   drawLandingFrame,
 } from './marsLandingScene.js'
+import { MarsRobot } from './MarsRobot.jsx'
 
 /** Why we explore Mars, one short line at a time while the dome comes down. */
 const WHY_MARS = [
@@ -30,6 +33,13 @@ export function MarsLanding({ onDone }) {
   const [landed, setLanded] = useState(false)
   const [line, setLine] = useState(0)
   const last = line === MESSAGES.length - 1
+  // The robot talks for a moment on each new message, longer for longer ones
+  const [quietLine, setQuietLine] = useState(-1)
+  const talking = quietLine !== line
+  useEffect(() => {
+    const timer = setTimeout(() => setQuietLine(line), Math.min(4500, 900 + t(MESSAGES[line]).length * 30))
+    return () => clearTimeout(timer)
+  }, [line])
   const doneRef = useRef(onDone)
   useEffect(() => {
     doneRef.current = onDone
@@ -66,7 +76,7 @@ export function MarsLanding({ onDone }) {
   return (
     <div className="mars-landing" role="dialog" aria-modal="true" aria-label={t('Landing on Mars')}>
       <canvas ref={canvasRef} className="mars-landing__scene" width={SCENE_W} height={SCENE_H} aria-hidden="true" />
-      {/* Title and messages in one panel at the top left, away from the dome coming down the middle. */}
+      {/* Title at the top left, away from the dome coming down the middle. */}
       <div className="mars-landing__panel">
         <div className="mars-landing__caption" aria-live="polite">
           <p className="mars-landing__title">{landed ? t('Touchdown!') : t('Landing on Mars')}</p>
@@ -74,6 +84,10 @@ export function MarsLanding({ onDone }) {
             {landed ? t('The recon dome is on Mars.') : t('The recon dome is coming down slowly…')}
           </p>
         </div>
+      </div>
+      {/* The robot says the messages, in the box beside it at the bottom left. */}
+      <div className="mars-landing__talk">
+        <MarsRobot talking={talking} />
         <div className={`mars-landing__why${last ? ' is-landed' : ''}`} key={line} aria-live="polite">
           <p className="mars-landing__why-text">{t(MESSAGES[line])}</p>
           <div className="mars-landing__why-row">
