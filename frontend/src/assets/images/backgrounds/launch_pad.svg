@@ -77,27 +77,79 @@
     <rect x="300" y="186" width="2" height="84"/>
     <rect x="390" y="186" width="2" height="84"/>
   </g>
-  <!-- hazard border -->
+  <!-- hazard border: straight yellow and black bands along the far and near edges of the apron,
+       12 px stripes from x=40, so both bands line up -->
   <g fill="#e2b31f">
     <rect x="40" y="186" width="12" height="6"/>
     <rect x="64" y="186" width="12" height="6"/>
     <rect x="88" y="186" width="12" height="6"/>
+    <rect x="112" y="186" width="12" height="6"/>
+    <rect x="136" y="186" width="12" height="6"/>
+    <rect x="160" y="186" width="12" height="6"/>
+    <rect x="184" y="186" width="12" height="6"/>
+    <rect x="208" y="186" width="12" height="6"/>
+    <rect x="232" y="186" width="12" height="6"/>
+    <rect x="256" y="186" width="12" height="6"/>
+    <rect x="280" y="186" width="12" height="6"/>
+    <rect x="304" y="186" width="12" height="6"/>
+    <rect x="328" y="186" width="12" height="6"/>
+    <rect x="352" y="186" width="12" height="6"/>
+    <rect x="376" y="186" width="12" height="6"/>
+    <rect x="400" y="186" width="12" height="6"/>
+    <rect x="424" y="186" width="12" height="6"/>
     <rect x="40" y="258" width="12" height="6"/>
     <rect x="64" y="258" width="12" height="6"/>
     <rect x="88" y="258" width="12" height="6"/>
-    <rect x="300" y="186" width="12" height="6"/>
-    <rect x="324" y="186" width="12" height="6"/>
-    <rect x="348" y="186" width="12" height="6"/>
-    <rect x="372" y="186" width="12" height="6"/>
+    <rect x="112" y="258" width="12" height="6"/>
+    <rect x="136" y="258" width="12" height="6"/>
+    <rect x="160" y="258" width="12" height="6"/>
+    <rect x="184" y="258" width="12" height="6"/>
+    <rect x="208" y="258" width="12" height="6"/>
+    <rect x="232" y="258" width="12" height="6"/>
+    <rect x="256" y="258" width="12" height="6"/>
+    <rect x="280" y="258" width="12" height="6"/>
+    <rect x="304" y="258" width="12" height="6"/>
+    <rect x="328" y="258" width="12" height="6"/>
+    <rect x="352" y="258" width="12" height="6"/>
+    <rect x="376" y="258" width="12" height="6"/>
+    <rect x="400" y="258" width="12" height="6"/>
+    <rect x="424" y="258" width="12" height="6"/>
   </g>
   <g fill="#1c1e22">
     <rect x="52" y="186" width="12" height="6"/>
     <rect x="76" y="186" width="12" height="6"/>
+    <rect x="100" y="186" width="12" height="6"/>
+    <rect x="124" y="186" width="12" height="6"/>
+    <rect x="148" y="186" width="12" height="6"/>
+    <rect x="172" y="186" width="12" height="6"/>
+    <rect x="196" y="186" width="12" height="6"/>
+    <rect x="220" y="186" width="12" height="6"/>
+    <rect x="244" y="186" width="12" height="6"/>
+    <rect x="268" y="186" width="12" height="6"/>
+    <rect x="292" y="186" width="12" height="6"/>
+    <rect x="316" y="186" width="12" height="6"/>
+    <rect x="340" y="186" width="12" height="6"/>
+    <rect x="364" y="186" width="12" height="6"/>
+    <rect x="388" y="186" width="12" height="6"/>
+    <rect x="412" y="186" width="12" height="6"/>
+    <rect x="436" y="186" width="10" height="6"/>
     <rect x="52" y="258" width="12" height="6"/>
     <rect x="76" y="258" width="12" height="6"/>
-    <rect x="312" y="186" width="12" height="6"/>
-    <rect x="336" y="186" width="12" height="6"/>
-    <rect x="360" y="186" width="12" height="6"/>
+    <rect x="100" y="258" width="12" height="6"/>
+    <rect x="124" y="258" width="12" height="6"/>
+    <rect x="148" y="258" width="12" height="6"/>
+    <rect x="172" y="258" width="12" height="6"/>
+    <rect x="196" y="258" width="12" height="6"/>
+    <rect x="220" y="258" width="12" height="6"/>
+    <rect x="244" y="258" width="12" height="6"/>
+    <rect x="268" y="258" width="12" height="6"/>
+    <rect x="292" y="258" width="12" height="6"/>
+    <rect x="316" y="258" width="12" height="6"/>
+    <rect x="340" y="258" width="12" height="6"/>
+    <rect x="364" y="258" width="12" height="6"/>
+    <rect x="388" y="258" width="12" height="6"/>
+    <rect x="412" y="258" width="12" height="6"/>
+    <rect x="436" y="258" width="10" height="6"/>
   </g>
 
   <!-- scorched ring and the flame trench. The rocket stands over x=163. -->

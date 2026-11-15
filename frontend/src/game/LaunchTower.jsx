@@ -4,11 +4,12 @@
  * crane and a lightning mast on top.
  *
  * Every coordinate is in pixels of the 32 × 32 rocket sprite, so the arms touch the hull at these
- * rows at any --scale (arms sit behind the rocket, so where the hull is wider it covers their tip).
- * All three hold the upper part of the rocket, each a plain 3-pixel strip of medium gray steel:
- *   crew access arm   rows 3–5   the capsule, just under the nose
- *   upper arm         rows 7–9   the upper stage
- *   stage arm         rows 11–13 above the joint where the rear stage separates in space
+ * rows at any --scale.
+ * All three hold the upper part of the rocket. They are thin red beams like the tower (Apollo's
+ * swing arms were red too), so no gray block sticks to the rocket:
+ *   crew access arm   row 4    the capsule, just under the nose
+ *   upper arm         row 8    the upper stage
+ *   stage arm         row 12   above the joint where the rear stage separates in space
  * The hold-down posts on the fins are part of launch_base.png.
  *
  * launching: the arms swing back into the tower before liftoff (see .tower__arm in game.css).
@@ -28,20 +29,17 @@ const COLORS = {
   steel: '#c8372d',
   steelDark: '#8e2a20',
   steelLight: '#e8604c',
-  arm: '#a3abb8',
-  armLight: '#c3cad4',
   hook: '#8d96a4',
   crane: '#f2c94c',
   mast: '#c9dcf0',
   light: '#ff5d73',
 };
 
-/** Arms: top row and x where they touch the rocket hull. All of them are ARM_THICKNESS rows tall. */
-const ARM_THICKNESS = 3;
+/** Arms: row and x where they touch the rocket hull. Each one is a single pixel row. */
 const ARMS = [
-  { id: 'crew', top: 3, hullX: 19 },
-  { id: 'upper', top: 7, hullX: 21 },
-  { id: 'stage', top: 11, hullX: 21 },
+  { id: 'crew', top: 4, hullX: 20 },
+  { id: 'upper', top: 8, hullX: 21 },
+  { id: 'stage', top: 12, hullX: 21 },
 ];
 
 function px(x, y, color, w = 1, h = 1, key = `${x},${y},${color}`) {
@@ -77,12 +75,9 @@ function top() {
 }
 
 function arm({ id, top: y, hullX }) {
-  const length = LEFT_LEG - hullX;
   return (
     <g key={id} className={`tower__arm tower__arm--${id}`}>
-      {/* lit top edge, then the rest of the strip */}
-      {px(hullX, y, COLORS.armLight, length, 1, `${id}-top`)}
-      {px(hullX, y + 1, COLORS.arm, length, ARM_THICKNESS - 1, `${id}-body`)}
+      {px(hullX, y, COLORS.steel, LEFT_LEG - hullX, 1, `${id}-beam`)}
     </g>
   );
 }
