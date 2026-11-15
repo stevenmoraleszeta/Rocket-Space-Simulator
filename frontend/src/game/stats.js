@@ -44,6 +44,9 @@ export function rocketStatus(equipped, mission) {
   const meters = [
     {
       ...roomMeter('budget', 'Budget', report.cost, limits.budget, 'cr'),
+      // Money is the one bar that shrinks: it shows what is left to spend.
+      fill: budgetLeft < 0 ? 100 : Math.max(0, Math.min(100, Math.round((budgetLeft / limits.budget) * 100))),
+      current: Math.max(0, budgetLeft),
       text: budgetLeft < 0 ? `${-budgetLeft} cr over` : `${budgetLeft} cr left`,
       bar: true,
     },

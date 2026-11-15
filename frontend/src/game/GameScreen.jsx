@@ -484,23 +484,28 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose }) {
 }
 
 /** Budget, mass, energy, and the supplies the mission asks for. */
+/** Blocks in each supply bar. */
+const METER_CELLS = 8;
+
 function Meters({ meters }) {
   return (
     <section className="meters" aria-label="Rocket supplies">
-      <h2 className="meters__title">Supplies</h2>
+      <header className="meters__head">
+        <h2 className="meters__title">Supplies</h2>
+        <span className="meters__stripes" aria-hidden="true" />
+      </header>
       <div className="meters__grid">
-        {meters.map((meter) => (
-          // Only money colors its bar. The other amounts share one color, so the hangar
-          // does not say whether they are enough before liftoff.
-          <div key={meter.id} className={meter.bar ? `meter is-${meter.tone}` : 'meter is-plain'}>
-            {METER_ICONS[meter.id] && (
-              <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />
-            )}
-            <div className="meter__body">
-              <div className="meter__top">
-                <span className="meter__label">{meter.label}</span>
-                <span className="meter__value">{meter.text}</span>
-              </div>
+        {meters.map((meter) => {
+          const lit = meter.fill > 0 ? Math.max(1, Math.round((meter.fill / 100) * METER_CELLS)) : 0;
+          // Every bar is the same cyan, so the color never says whether a supply is enough:
+          // only money turns red when it is overspent (is-over).
+          return (
+            <div
+              key={meter.id}
+              className={`meter meter--${meter.id}${meter.bar && meter.tone === 'over' ? ' is-over' : ''}`}
+            >
+              {METER_ICONS[meter.id] && <img className="meter__icon" src={METER_ICONS[meter.id]} alt="" />}
+              <span className="meter__label">{meter.label}</span>
               <div
                 className="meter__track"
                 role="meter"
@@ -510,11 +515,14 @@ function Meters({ meters }) {
                 aria-valuenow={meter.current}
                 aria-valuetext={`${meter.label}: ${meter.text}`}
               >
-                <span className="meter__fill" style={{ clipPath: `inset(0 ${100 - meter.fill}% 0 0)` }} />
+                {Array.from({ length: METER_CELLS }, (_, index) => (
+                  <span key={index} className={index < lit ? 'meter__cell is-lit' : 'meter__cell'} />
+                ))}
               </div>
+              <span className="meter__value">{meter.text}</span>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

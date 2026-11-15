@@ -21,6 +21,7 @@ import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
+import { partCount } from '../../parts.js'
 import { FlightReadout } from '../../FlightReadout.jsx'
 import { flightReadout } from '../../lifeSupport.js'
 import { flightNotes } from '../../flightSummary.js'
@@ -54,6 +55,8 @@ const MAX_ASCENT_PLAYBACK_SECONDS = 4
 const MAX_COAST_PLAYBACK_SECONDS = 7
 /** Real seconds a rocket called home (no food on board) takes to come down and land. */
 const RETURN_HOME_SECONDS = 4.5
+/** Real seconds a rocket without boosters takes to fall back and hit the Earth. */
+const FALL_BACK_SECONDS = 3
 /** Real seconds to watch an explosion on the map before the "You lose" screen. */
 const EXPLOSION_WATCH_MS = 1500
 
@@ -128,7 +131,12 @@ const SATELLITE_TAP_PIXELS = 18
 export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
-  const vehicle = useMemo(() => buildLaunchVehicle(equipped), [equipped])
+  // No boosters: the dotted path still shows the planned flight (as if they were there).
+  // The rocket then fails on the way up (see climbFailure below).
+  const vehicle = useMemo(
+    () => buildLaunchVehicle(partCount(equipped, 'boosters') > 0 ? equipped : { ...equipped, boosters: 1 }),
+    [equipped],
+  )
 
   const [step, setStep] = useState('site')
   // Same tracks as the hangar flight: intense music, plus the space ambience once the rocket flies.
@@ -196,16 +204,25 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   // Launch: first the pad liftoff and the climb (LaunchSequence), then the orbit flight.
   const [liftingOff, setLiftingOff] = useState(false)
   // A rocket without boosters or heat shield blows up during the launch sequence.
-  const failure = useMemo(() => launchFailure(equipped, mission), [equipped, mission])
+  const anyFailure = useMemo(() => launchFailure(equipped, mission), [equipped, mission])
+  // A climb failure (no boosters) is not shown in the liftoff scene here: on this map the rocket
+  // climbs, loses height before orbit and crashes into the Earth.
+  const failure = anyFailure?.at === 'climb' ? null : anyFailure
   const tripSupplyFailure = useMemo(() => flightSupplyFailure(equipped, mission), [equipped, mission])
   // A failure that calls the crew home (no food) happens in space, halfway through the coast
   // after the engines stop, even on a perfect path.
   const supplyFailure = useMemo(() => {
+    if (anyFailure?.at === 'climb' && prediction) {
+      // Almost at the orbit: high up, late on the way to the arrival point
+      const burnout = prediction.burnoutTime
+      const end = prediction.outcome.t
+      return { ...anyFailure, fallsBack: true, atSeconds: end > burnout ? burnout + (end - burnout) * 0.75 : end * 0.85 }
+    }
     if (!tripSupplyFailure?.returnsHome || !prediction) return tripSupplyFailure
     const burnout = prediction.burnoutTime
     const end = prediction.outcome.t
     return { ...tripSupplyFailure, atSeconds: end > burnout ? burnout + (end - burnout) * 0.5 : end }
-  }, [tripSupplyFailure, prediction])
+  }, [anyFailure, tripSupplyFailure, prediction])
   const tripNotes = useCallback((extra = {}) => flightNotes(equipped, {
     site: site ? `${site.name}, ${site.country}` : '',
     orbit: orbit?.name || '',
@@ -234,10 +251,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
         (outcome.type === OUTCOMES.ORBIT_REACHED && supplyFailure.atSeconds < mission.loadout.durationSeconds))
     ) {
       outcome = { type: supplyFailure.id, t: supplyFailure.atSeconds }
-      if (supplyFailure.returnsHome) {
-        // Where it turned back: its place on the path at that moment.
+      if (supplyFailure.returnsHome || supplyFailure.fallsBack) {
+        // Where it turned back or started to fall: its place on the path at that moment.
         const pose = flightPoseAt(prediction.samples, supplyFailure.atSeconds)
-        outcome = { ...outcome, x: pose.x, y: pose.y, returnedHome: true }
+        outcome = { ...outcome, x: pose.x, y: pose.y, returnedHome: Boolean(supplyFailure.returnsHome), crashed: Boolean(supplyFailure.fallsBack) }
       }
       supply = supplyFailure
     }
@@ -254,7 +271,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     } catch {
       /* mission locked or unknown: show the result anyway */
     }
-    const crashed = EXPLODING_OUTCOMES.includes(outcome.type)
+    const crashed = EXPLODING_OUTCOMES.includes(outcome.type) || Boolean(outcome.crashed)
     playSfx(success ? SFX.missionComplete : crashed ? SFX.explosion : SFX.lose)
     setResult({
       outcome,
@@ -302,8 +319,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       images,
       finishFlight,
       canvasSize,
-      // Only a launch that failed on the pad or in the climb never flew. Trip failures did fly.
-      blewUp: Boolean(result?.failure) && result.failure.at !== 'flight',
+      // Only a launch stopped on the ground or in the liftoff scene never flew on the map.
+      // Failures timed on the trip (atSeconds) did fly, so their path, fall and blast stay drawn.
+      blewUp: Boolean(result?.failure) && result.failure.atSeconds == null,
       equipped,
       mission,
       supplyFailure,
@@ -346,7 +364,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           const trajectoryEnd = current.prediction.outcome.t
           const endTime = supplyAt != null && supplyAt < trajectoryEnd ? supplyAt : trajectoryEnd
           // Called home (no food): the rocket turns back, comes down and lands upright.
-          const goesHome = Boolean(current.supplyFailure?.returnsHome) && endTime === supplyAt
+          const fallsBack = Boolean(current.supplyFailure?.fallsBack)
+          const goesHome = (Boolean(current.supplyFailure?.returnsHome) || fallsBack) && endTime === supplyAt
           let shownTime = simTime
           let returnSeconds = null
           if (goesHome && simTime >= endTime) {
@@ -354,7 +373,8 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
             shownTime = endTime
             returnSeconds = (now - flightClock.returnStartedAt) / 1000
           }
-          const done = !goesHome || (returnSeconds != null && returnSeconds >= RETURN_HOME_SECONDS)
+          const leaveSeconds = fallsBack ? FALL_BACK_SECONDS : RETURN_HOME_SECONDS
+          const done = !goesHome || (returnSeconds != null && returnSeconds >= leaveSeconds)
           if (simTime >= endTime && done && !flightClock.endedAt) {
             flightClock.endedAt = now
             current.finishFlight()
@@ -365,8 +385,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
             returnHome: goesHome
               ? {
                   t: endTime,
-                  progress: returnSeconds == null ? 0 : Math.min(1, returnSeconds / RETURN_HOME_SECONDS),
+                  progress: returnSeconds == null ? 0 : Math.min(1, returnSeconds / leaveSeconds),
                   landed: Boolean(flightClock.endedAt),
+                  crash: fallsBack,
                 }
               : null,
           }

@@ -141,7 +141,7 @@ export function PartIcon({ part, lit = false }) {
   }
   return (
     <span className="part__icon">
-      <span className="rocket__layer" style={sheetStyle(part, lit)} />
+      <span className="rocket__layer" style={{ ...sheetStyle(part, lit), '--shift-y': part.iconShiftY ?? 0 }} />
     </span>
   );
 }

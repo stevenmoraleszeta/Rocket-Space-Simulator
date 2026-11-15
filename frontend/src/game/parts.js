@@ -68,6 +68,7 @@ export const PARTS = [
     frameY: 32,
     offX: 128,
     offY: 0,
+    iconShiftY: 12, // sprite pixels to move it down so it sits centered on its icon button
     frame: 32,
     breaksOnSeparation: true, // the shell cracks in two out of the atmosphere, no heat left
     flightFrames: 5, // lit frames in row frameY, played while flying
@@ -88,6 +89,7 @@ export const PARTS = [
     frameY: 32,
     offX: 0,
     offY: 0,
+    iconShiftY: -4, // sprite pixels to move it up so it sits centered on its icon button
     frame: 32,
     dropsWithStage: true, // fixed to the rear stage: falls away with it in space
     flightFrames: 5, // lit frames in row frameY, played while flying

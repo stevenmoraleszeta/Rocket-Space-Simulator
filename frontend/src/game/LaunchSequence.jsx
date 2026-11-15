@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { SFX, playSfx } from '../audio';
 import launchPad from '../assets/images/backgrounds/launch_pad.svg';
 import launchBase from '../assets/images/rockets/launch_base.png';
-import { ASCENT_MS, AscentScene, OVERHEAT_EXPLODE_AT_MS } from './AscentScene.jsx';
+import { ASCENT_MS, AscentScene, FALL_BACK_EXPLODE_AT_MS, OVERHEAT_EXPLODE_AT_MS } from './AscentScene.jsx';
 import { PadClouds } from './PadClouds.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
@@ -54,7 +54,7 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
       next = () => setPhase('ascent');
     } else if (failure) {
       // Overheating in the atmosphere: AscentScene shows the explosion.
-      ms = OVERHEAT_EXPLODE_AT_MS + EXPLOSION_MS;
+      ms = (failure.at === 'climb' ? FALL_BACK_EXPLODE_AT_MS : OVERHEAT_EXPLODE_AT_MS) + EXPLOSION_MS;
       next = onFail;
     } else {
       ms = reduceMotion ? 500 : ASCENT_MS;
@@ -65,7 +65,15 @@ export function LaunchSequence({ equipped, hud = null, onDone, failure = null, o
   }, [phase, onDone, onFail, failure]);
 
   if (phase === 'ascent') {
-    return <AscentScene equipped={equipped} hud={hud} overheating={Boolean(failure)} failureMessage={failure?.message} />;
+    return (
+      <AscentScene
+        equipped={equipped}
+        hud={hud}
+        overheating={failure?.at === 'ascent'}
+        fallingBack={failure?.at === 'climb'}
+        failureMessage={failure?.message}
+      />
+    );
   }
 
   return (

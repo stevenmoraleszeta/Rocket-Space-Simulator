@@ -368,13 +368,16 @@ export function flightPoseAt(samples, timeSeconds) {
   }
 }
 
-/** spin: extra turn in radians (used to stand the rocket up for a landing). */
-function drawRocket(ctx, view, pose, headingPoint, images, spin = 0) {
+/**
+ * spin: extra turn in radians (used to stand the rocket up for a landing).
+ * upperStage: always draw the short upper stage (a rocket coming back down keeps its size).
+ */
+function drawRocket(ctx, view, pose, headingPoint, images, spin = 0, upperStage = false) {
   const screen = worldToScreen(view, pose.x, pose.y)
   const ahead = worldToScreen(view, headingPoint.x, headingPoint.y)
   const inSpace = Math.hypot(pose.x, pose.y) - EARTH_RADIUS_METERS > STAGE_SEPARATION_ALTITUDE_METERS
   const upper = images.rocketUpperStage
-  const image = inSpace && upper?.complete ? upper : pose.burning ? images.rocketLit : images.rocketOff
+  const image = (inSpace || upperStage) && upper?.complete ? upper : pose.burning ? images.rocketLit : images.rocketOff
   if (!image?.complete) return
   // The sprite points up: rotate it toward where it is going on screen.
   const heading = Math.atan2(ahead.y - screen.y, ahead.x - screen.x)
@@ -417,26 +420,42 @@ const LANDING_BURN_FROM = 0.72
 
 const easeInOut = (t) => t * t * (3 - 2 * t)
 
-function returnPoint(start, progress) {
+/** falling: a crash, it drops faster at the end (no landing burn to slow it). */
+function returnPoint(start, progress, falling = false) {
   const startRadius = Math.hypot(start.x, start.y)
   const startAngle = Math.atan2(start.y, start.x)
   const ahead = start.next ?? start
   // Which way it was going around the Earth
   const direction = Math.sign(start.x * (ahead.y - start.y) - start.y * (ahead.x - start.x)) || 1
   const angle = startAngle + direction * RETURN_FORWARD_RADIANS * Math.sin((progress * Math.PI) / 2)
-  const radius = startRadius - (startRadius - EARTH_RADIUS_METERS) * easeInOut(progress)
+  const drop = falling ? progress ** 1.7 : easeInOut(progress)
+  const radius = startRadius - (startRadius - EARTH_RADIUS_METERS) * drop
   return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius }
 }
 
-/** Thin dotted line of the way home. */
-function drawReturnTrail(ctx, view, start, progress) {
-  ctx.fillStyle = 'rgba(158, 212, 255, 0.6)'
+/** Thin dotted line of the way home (light blue), or a bright yellow trail behind a falling rocket. */
+function drawReturnTrail(ctx, view, start, progress, falling = false) {
+  ctx.fillStyle = falling ? '#ffd23f' : 'rgba(158, 212, 255, 0.6)'
+  const size = falling ? 6 : 4
   const steps = Math.floor(progress * 40)
-  for (let index = 0; index <= steps; index += 2) {
-    const spot = returnPoint(start, index / 40)
+  for (let index = 0; index <= steps; index += falling ? 1 : 2) {
+    const spot = returnPoint(start, index / 40, falling)
     const point = worldToScreen(view, spot.x, spot.y)
-    ctx.fillRect(Math.round(point.x - 2), Math.round(point.y - 2), 4, 4)
+    ctx.fillRect(Math.round(point.x - size / 2), Math.round(point.y - size / 2), size, size)
   }
+}
+
+/** Blinking yellow ring around a falling rocket, so the eye follows it down. */
+function drawFallMarker(ctx, view, spot, clockSeconds) {
+  const point = worldToScreen(view, spot.x, spot.y)
+  const on = Math.floor(clockSeconds * 6) % 2 === 0
+  ctx.save()
+  ctx.strokeStyle = on ? '#ffd23f' : 'rgba(255, 210, 63, 0.45)'
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  ctx.arc(Math.round(point.x), Math.round(point.y), ROCKET_DRAW_SIZE * 0.62, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.restore()
 }
 
 /**
@@ -447,7 +466,7 @@ function drawReturningRocket(ctx, view, start, progress, images) {
   const here = returnPoint(start, progress)
   const ahead = returnPoint(start, Math.min(1, progress + 0.02))
   if (progress < LANDING_BURN_FROM) {
-    drawRocket(ctx, view, { ...here, burning: false }, ahead, images)
+    drawRocket(ctx, view, { ...here, burning: false }, ahead, images, 0, true)
     return
   }
   // Landing burn: turn from the glide direction to upright, engine on until it touches down.
@@ -461,7 +480,7 @@ function drawReturningRocket(ctx, view, start, progress, images) {
   while (delta > Math.PI) delta -= Math.PI * 2
   while (delta < -Math.PI) delta += Math.PI * 2
   // drawRocket points the nose along the glide; the extra turn stands it up for landing.
-  drawRocket(ctx, view, { ...here, burning: progress < 1 }, ahead, images, delta * turn)
+  drawRocket(ctx, view, { ...here, burning: progress < 1 }, ahead, images, delta * turn, true)
 }
 
 /** Satellite going round its new orbit after a successful insertion. */
@@ -475,7 +494,8 @@ function orbitingPoint(outcome, secondsAfterInsertion) {
  * scene: { step, orbits, selectedOrbitId, arrival, satellites, prediction, aimPoint, flight, images, clockSeconds }
  *   clockSeconds: real time in seconds, drives sprite animations (animated satellites)
  *   flight: { simTime, realSecondsSinceEnd, returnHome } while flying or after the end
- *     returnHome: { t, progress (0..1), landed } when mission control calls the crew home (no food)
+ *     returnHome: { t, progress (0..1), landed, crash } when the rocket leaves its path: called home
+ *       (no food: lands upright) or falling back (no boosters, crash: true: hits the Earth and blows up)
  *   highlightSatelliteId: the satellite under the cursor while picking a base
  */
 export function drawOrbitScene(ctx, view, scene) {
@@ -511,8 +531,17 @@ export function drawOrbitScene(ctx, view, scene) {
       // Called home (no food): it comes back down along a smooth curve and lands upright.
       const start = flightPoseAt(samples, home.t)
       const progress = home.landed ? 1 : home.progress
-      drawReturnTrail(ctx, view, start, progress)
-      drawReturningRocket(ctx, view, start, progress, scene.images)
+      drawReturnTrail(ctx, view, start, progress, home.crash)
+      if (!home.crash) {
+        drawReturningRocket(ctx, view, start, progress, scene.images)
+      } else if (!home.landed) {
+        // Falling back: nose down along the fall, engine out, marked by a blinking yellow ring
+        const here = returnPoint(start, progress, true)
+        drawFallMarker(ctx, view, here, scene.clockSeconds ?? 0)
+        drawRocket(ctx, view, { ...here, burning: false }, returnPoint(start, Math.min(1, progress + 0.02), true), scene.images, 0, true)
+      } else {
+        drawExplosion(ctx, view, returnPoint(start, 1, true), scene.flight.realSecondsSinceEnd, scene.images)
+      }
     } else if (simTime <= outcome.t) {
       const pose = flightPoseAt(samples, simTime)
       drawRocket(ctx, view, pose, pose.next ?? pose, scene.images)

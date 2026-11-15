@@ -66,8 +66,10 @@ export const LAUNCH_FAILURES = Object.freeze({
   },
   noBoosters: {
     id: 'noBoosters',
-    at: 'pad',
-    message: 'Without boosters the engines could not lift the rocket: it strained on the pad and blew up.',
+    // It lifts off, but without the boosters' push it cannot climb fast enough to stay up:
+    // before reaching orbit it loses height, falls back and crashes.
+    at: 'climb',
+    message: 'Without boosters the rocket lifted off, but it could not climb fast enough. Before reaching orbit it lost height, fell back and crashed.',
     hint: 'Go back to the hangar and add the boosters, or carry less.',
   },
   noShield: {
