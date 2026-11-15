@@ -84,6 +84,10 @@ export const LAUNCH_FACTS = {
     title: 'Faster than Earth',
     text: 'To reach Mars, a rocket has to go even faster around the Sun than Earth does, about 3 km every second faster. Too slow, and it never climbs out to Mars\u2019s orbit.',
   },
+  marsDecision: {
+    title: 'Practice for every surprise',
+    text: 'Astronauts train for years on Earth for problems that might happen in space. When something goes wrong, they stay calm, follow a plan and talk to mission control.',
+  },
   marsHazard: {
     title: 'Junk around the Sun',
     text: 'Old rocket stages from the Moon missions still circle the Sun. Space is mostly empty, but navigators keep track of every known object near a spacecraft\u2019s path.',
@@ -220,6 +224,7 @@ export function factForResult(result, mission) {
     case 'marsMissed':
     case 'marsShort':
     case 'marsHazard':
+    case 'marsDecision':
       return LAUNCH_FACTS[outcome.type]
     default:
       return result.reachedArrival ? LAUNCH_FACTS.missedTooFastOrSlow : LAUNCH_FACTS.missedTarget
