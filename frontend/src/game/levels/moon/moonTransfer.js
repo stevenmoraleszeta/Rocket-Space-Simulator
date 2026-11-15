@@ -111,15 +111,15 @@ export function getSunLongitude(date) {
 
 /** Phase name from how much of the Moon is lit and whether the lit part grows. */
 export function phaseName(illumination, waxing) {
-  if (illumination < 0.03) return { name: 'New Moon', symbol: '🌑' }
-  if (illumination > 0.97) return { name: 'Full Moon', symbol: '🌕' }
+  if (illumination < 0.03) return { name: 'New Moon', symbol: 'moon-new' }
+  if (illumination > 0.97) return { name: 'Full Moon', symbol: 'moon-full' }
   if (Math.abs(illumination - 0.5) <= 0.04) {
-    return waxing ? { name: 'First quarter', symbol: '🌓' } : { name: 'Last quarter', symbol: '🌗' }
+    return waxing ? { name: 'First quarter', symbol: 'moon-half' } : { name: 'Last quarter', symbol: 'moon-last-quarter' }
   }
   if (illumination < 0.5) {
-    return waxing ? { name: 'Waxing crescent', symbol: '🌒' } : { name: 'Waning crescent', symbol: '🌘' }
+    return waxing ? { name: 'Waxing crescent', symbol: 'moon-crescent' } : { name: 'Waning crescent', symbol: 'moon-waning-crescent' }
   }
-  return waxing ? { name: 'Waxing gibbous', symbol: '🌔' } : { name: 'Waning gibbous', symbol: '🌖' }
+  return waxing ? { name: 'Waxing gibbous', symbol: 'moon-gibbous' } : { name: 'Waning gibbous', symbol: 'moon-waning-gibbous' }
 }
 
 /**

@@ -906,7 +906,7 @@ function scaledFromEarth(ctx, view, k, draw) {
 }
 
 /** Splashdown: rings on the sea and a parachute. */
-function drawSplash(ctx, point, since, clock) {
+function drawSplash(ctx, point, since, clock, scene) {
   ctx.save()
   for (let ring = 0; ring < 3; ring += 1) {
     const grown = (since * 0.9 + ring / 3) % 1
@@ -918,12 +918,14 @@ function drawSplash(ctx, point, since, clock) {
     ctx.stroke()
   }
   ctx.restore()
-  ctx.save()
-  ctx.font = '26px system-ui, "Segoe UI Emoji", sans-serif'
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'bottom'
-  ctx.fillText('🪂', point.x, point.y - 6 + Math.sin(clock * 3) * 2)
-  ctx.restore()
+  // Pixel parachute sprite (items/parachute.svg) bobbing over the splash.
+  const parachute = scene.images?.parachute
+  if (parachute?.complete && parachute.naturalWidth) {
+    ctx.save()
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(parachute, Math.round(point.x - 14), Math.round(point.y - 34 + Math.sin(clock * 3) * 2), 28, 28)
+    ctx.restore()
+  }
   drawLabel(ctx, 'SPLASHDOWN!', point.x, point.y - 44, 'center', COLORS.home, 13)
 }
 
@@ -1091,7 +1093,7 @@ export function drawMoonScene(ctx, view, sceneIn) {
       const last = homeSamples.length - 1
       const position = Math.min(last, flight.returnPosition ?? 0)
       if (position >= last) {
-        drawSplash(ctx, shipScreen(view, scene, homeSamples[last], homeFrame), flight.secondsSinceSplash ?? 0, clock)
+        drawSplash(ctx, shipScreen(view, scene, homeSamples[last], homeFrame), flight.secondsSinceSplash ?? 0, clock, scene)
       } else {
         drawShipOn(ctx, view, scene, homeSamples, position, clock, { size: 30, flame: position < 6, heat: Math.max(0, (position / last - 0.9) / 0.1), frame: homeFrame })
       }

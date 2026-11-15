@@ -116,6 +116,8 @@ img.ms-planet { object-fit: contain; user-select: none; }
 
 .ms-stars { letter-spacing: .1em; color: #444d82; line-height: 1; }
 .ms-stars .on { color: var(--ms-yellow); }
+/* Pixel star sprites (StarRating.jsx): the ones not earned yet are gray. */
+.ms-stars > span:not(.on) .pixel-icon { filter: grayscale(1) brightness(0.55); }
 
 /* Mission card. The overlay scrolls only as a fallback; a short card stays centered. */
 .ms-modal {

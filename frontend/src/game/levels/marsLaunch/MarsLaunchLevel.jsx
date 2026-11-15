@@ -58,6 +58,7 @@ import { PixelSky } from './PixelSky.jsx'
 import { SitePin } from '../orbit/SitePin.jsx'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
+import { PixelIcon } from '../../PixelIcon.jsx'
 
 /** The whole cruise plays in this many real seconds. */
 const FLIGHT_PLAYBACK_SECONDS = 7
@@ -619,7 +620,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
           )}
           {encounter && (
             <div className="mars-encounter" role="dialog" aria-modal="true" aria-labelledby="mars-encounter-question">
-              <p className="mars-encounter__kicker">⚠️ {t('Day {{day}} · {{name}}', { day: Math.round(encounter.day), name: t(encounter.hazard.name) })}</p>
+              <p className="mars-encounter__kicker"><PixelIcon name="warning" /> {t('Day {{day}} · {{name}}', { day: Math.round(encounter.day), name: t(encounter.hazard.name) })}</p>
               {!encounter.picked ? (
                 <>
                   <h3 id="mars-encounter-question" className="mars-encounter__question">{t(encounter.situation.question)}</h3>
@@ -634,7 +635,9 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
               ) : (
                 <>
                   <h3 id="mars-encounter-question" className={`mars-encounter__result is-${encounter.picked.kind}`}>
-                    {encounter.picked.kind === CHOICE.GOOD ? `✅ ${t('Good choice!')}` : `⚠️ ${t('Risky! −{{points}} points', { points: MILD_PENALTY })}`}
+                    {encounter.picked.kind === CHOICE.GOOD
+                      ? <><PixelIcon name="check" /> {t('Good choice!')}</>
+                      : <><PixelIcon name="warning" /> {t('Risky! −{{points}} points', { points: MILD_PENALTY })}</>}
                   </h3>
                   <p className="mars-encounter__explain">{t(encounter.picked.explain)}</p>
                   <button type="button" className="ms-btn" onClick={continueTrip}>{t('Keep flying')}</button>
@@ -643,7 +646,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
             </div>
           )}
           <aside className={`mars-fact mars-fact--${FACT_CORNERS[fact.corner]}`} aria-live="polite" key={fact.index}>
-            <p className="mars-fact__label">🪐 {t('Space fact')}</p>
+            <p className="mars-fact__label"><PixelIcon name="ringedPlanet" /> {t('Space fact')}</p>
             <p className="mars-fact__text">{t(SPACE_FACTS[fact.index])}</p>
           </aside>
           {hazardCard && (
@@ -654,7 +657,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
               aria-label={t(hazardCard.hazard.name)}
             >
               <button type="button" className="satellite-card__close" aria-label={t('Close')} onClick={() => setHazardCard(null)}>
-                ✕
+                <PixelIcon name="close" />
               </button>
               <h3 className="satellite-card__name">{t(hazardCard.hazard.name)}</h3>
               <p className="satellite-card__kind">
@@ -735,7 +738,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
               </p>
               <div className="orbit-panel__actions">
                 <button type="button" className="game__back" onClick={backToSites}>{t('Back')}</button>
-                <button type="button" className="ms-btn" onClick={launch} disabled={liftingOff}>{t('Launch 🚀')}</button>
+                <button type="button" className="ms-btn" onClick={launch} disabled={liftingOff}>{t('Launch')} <PixelIcon name="rocket" /></button>
               </div>
             </>
           )}

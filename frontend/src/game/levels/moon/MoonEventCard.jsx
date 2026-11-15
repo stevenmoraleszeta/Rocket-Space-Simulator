@@ -12,6 +12,7 @@ import gamepadUrl from '../../../assets/images/icons/gamepad.svg'
 import sparkleUrl from '../../../assets/images/icons/sparkle.svg'
 import handUrl from '../../../assets/images/icons/hand_pointer.svg'
 import lockUrl from '../../../assets/images/items/lock.svg'
+import { PixelIcon } from '../../PixelIcon.jsx'
 
 /** Pixel sprite for each event (moonOrbitEvents.js id). The radio blackout shows a thin Moon. */
 const EVENT_SPRITES = {
@@ -80,7 +81,7 @@ function AimAction({ action, onDone }) {
         <span className={`moon-action__pointer${inside ? ' is-in' : ''}`} style={{ left: `${value}%` }} aria-hidden="true">▲</span>
       </div>
       <button type="button" className={`moon-button moon-button--primary${inside ? ' is-ready' : ''}`} onClick={() => onDone(inside)}>
-        <ButtonIcon src={lockUrl} />{t('Lock it')} {inside ? '✓' : ''}
+        <ButtonIcon src={lockUrl} />{t('Lock it')} {inside ? <PixelIcon name="check" /> : null}
       </button>
     </div>
   )

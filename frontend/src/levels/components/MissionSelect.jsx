@@ -20,6 +20,7 @@ import { useSettings } from '../../settings/SettingsContext.jsx';
 import { t } from '../../i18n/index.js';
 import { engineerName, sayTo } from '../../settings/settingsStore.js';
 import adminIcon from '../../assets/images/icons/admin.svg';
+import { PixelIcon } from '../../game/PixelIcon.jsx';
 
 export function MissionSelect({ onStartMission, googleSignedIn = false, authError = '' }) {
   const { missions, progress, getState, getStars, totalStars, maxStars, loading, adminMode, setAdminMode, playerUnlocked } = useProgress();
@@ -77,7 +78,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
           </p>
         )}
         <div className="ms-total" aria-label={t('{{stars}} of {{max}} stars collected', { stars: totalStars, max: maxStars })}>
-          <span aria-hidden="true">★</span> {totalStars} / {maxStars}
+          <span aria-hidden="true"><PixelIcon name="star" /></span> {totalStars} / {maxStars}
         </div>
       </header>
 
@@ -114,7 +115,7 @@ export function MissionSelect({ onStartMission, googleSignedIn = false, authErro
                     <img className={`ms-lock__img${SPRITES.lock.pixelArt ? ' is-pixel' : ''}`} src={SPRITES.lock.src} alt="" draggable="false" />
                   </span>
                 )}
-                {state === 'completed' && <span className="ms-check" aria-hidden="true">✓</span>}
+                {state === 'completed' && <span className="ms-check" aria-hidden="true"><PixelIcon name="check" /></span>}
               </button>
               <div className="ms-stop__num">{t('Mission {{number}}', { number: m.number })}</div>
               <div className="ms-stop__title">{t(m.title)}</div>

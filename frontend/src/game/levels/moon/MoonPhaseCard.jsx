@@ -3,6 +3,7 @@ import sunUrl from '../../../assets/images/planets/sun.svg'
 import pinUrl from '../../../assets/images/icons/pin.svg'
 import { t } from '../../../i18n/index.js'
 import { PixelMoon } from './PixelMoon.jsx'
+import { SunRating } from './SunRating.jsx'
 
 /**
  * Corner card: the Moon when the ship arrives, from above (why it has phases) and from Earth.
@@ -98,7 +99,7 @@ export function MoonPhaseCard({ look, dateLabel, title = 'Moon when you arrive',
       <p className="moon-phase-card__lit">{t('{{percent}}% of the side we see is lit', { percent })}</p>
       {rating && (
         <p className={`moon-phase-card__light is-${rating.tone}`}>
-          <span aria-hidden="true">{'☀'.repeat(rating.level)}</span> {t('{{label}} for the cameras', { label: t(rating.label) })}
+          <SunRating level={rating.level} /> {t('{{label}} for the cameras', { label: t(rating.label) })}
         </p>
       )}
       {place && <p className="moon-phase-card__place"><img className="moon-phase-card__pin" src={pinUrl} alt="" /> {place}</p>}

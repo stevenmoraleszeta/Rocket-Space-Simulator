@@ -38,6 +38,7 @@ import {
 } from './moonRoute.js'
 import { MOON_WINDOWS } from './moonWindows.js'
 import { aimFromPointer, createMoonView, drawMoonScene, sampleAt, worldToScreen } from './moonRenderer.js'
+import { PixelIcon } from '../../PixelIcon.jsx'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
 
@@ -441,7 +442,7 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
               aria-label={t(card.name)}
             >
               <button type="button" className="satellite-card__close" aria-label={t('Close')} onClick={() => setCard(null)}>
-                ✕
+                <PixelIcon name="close" />
               </button>
               <h3 className="satellite-card__name">{t(card.name)}</h3>
               <p className="satellite-card__summary">{t(card.summary)}</p>

@@ -105,7 +105,7 @@ export function getLunarPhase(date) {
     'Waning crescent',
   ]
   const phaseIndex = Math.round((ageDays / MOON_SYNODIC_MONTH_DAYS) * names.length) % names.length
-  const symbols = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘']
+  const symbols = ['moon-new', 'moon-crescent', 'moon-half', 'moon-gibbous', 'moon-full', 'moon-waning-gibbous', 'moon-last-quarter', 'moon-waning-crescent']
   return {
     ageDays,
     phaseIndex,

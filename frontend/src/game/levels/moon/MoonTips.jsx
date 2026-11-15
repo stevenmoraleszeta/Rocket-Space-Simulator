@@ -17,6 +17,8 @@ import rocketUrl from '../../../assets/images/rockets/rocket_32x32.png'
 import handUrl from '../../../assets/images/icons/hand_pointer.svg'
 import junkUrl from '../../../assets/images/icons/space_junk.svg'
 import pinUrl from '../../../assets/images/icons/pin.svg'
+import landerUrl from '../../../assets/images/items/lander.svg'
+import energyUrl from '../../../assets/images/icons/energy.svg'
 
 /** Pixel sprite sized like the emoji it replaced (1em), so the tip layouts stay the same. */
 function Sprite({ src }) {
@@ -62,7 +64,7 @@ const ART = {
   ),
   land: (
     <div className="moon-tut-art moon-tut-art--land" aria-hidden="true">
-      <span className="moon-tut-lander">🛸</span>
+      <span className="moon-tut-lander"><Sprite src={landerUrl} /></span>
       <span className="moon-tut-ground" />
     </div>
   ),
@@ -90,7 +92,7 @@ const ART = {
   event: (
     <div className="moon-tut-art moon-tut-art--event" aria-hidden="true">
       <span className="moon-tut-moon-big"><Sprite src={moonUrl} /></span>
-      <span className="moon-tut-alert">⚡</span>
+      <span className="moon-tut-alert"><Sprite src={energyUrl} /></span>
     </div>
   ),
 }
@@ -103,7 +105,7 @@ const MOON_TIPS = {
     { art: 'light', title: 'Pick a bright Moon', text: 'The Sun lights half the Moon. Pick a day when the side we see is bright.' },
     { art: 'orbit', title: 'Aim ahead', text: 'The Moon moves. Aim at the yellow ring.' },
     { art: 'drag', title: 'Drag to fly', text: 'Hold your base and drag. Farther = faster.' },
-    { art: 'traffic', title: 'Dodge traffic', text: 'Red ✕ means a crash. Change the hour or tap ✨.' },
+    { art: 'traffic', title: 'Dodge traffic', text: 'A red X means a crash. Change the hour or tap Help me aim.' },
     { art: 'swing', title: 'Two paths', text: 'Green dots: the way out. Blue dots: the WAY HOME. The Moon’s gravity swings you round, one burn sends you back.' },
   ],
   orbit: [
