@@ -287,25 +287,14 @@ function drawDottedPath(ctx, view, samples, color, untilTime = Infinity) {
   }
 }
 
-/** The predicted trajectory: only dots, ending with an X when it crashes. */
+/** The predicted trajectory: only dots, no mark where it crashes. */
 function drawPrediction(ctx, view, prediction, alpha = 1) {
   if (!prediction) return
   const { outcome } = prediction
   const color = pathColor(outcome.type)
   ctx.globalAlpha = alpha
   drawDottedPath(ctx, view, prediction.samples, color)
-  const end = worldToScreen(view, outcome.x, outcome.y)
-  if (color === COLORS.pathCrash) {
-    ctx.strokeStyle = color
-    ctx.lineWidth = 4
-    ctx.beginPath()
-    ctx.moveTo(end.x - 9, end.y - 9)
-    ctx.lineTo(end.x + 9, end.y + 9)
-    ctx.moveTo(end.x + 9, end.y - 9)
-    ctx.lineTo(end.x - 9, end.y + 9)
-    ctx.stroke()
-    ctx.lineWidth = 1
-  } else if (outcome.type === OUTCOMES.ORBIT_REACHED) {
+  if (outcome.type === OUTCOMES.ORBIT_REACHED) {
     drawDottedRing(ctx, view, orbitRingRadius(view, (outcome.orbitRadius - EARTH_RADIUS_METERS) / 1000), color, 3, 14)
   }
   ctx.globalAlpha = 1

@@ -20,7 +20,7 @@ import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
 import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { LAUNCH_SITES } from './launchSites.js'
-import { OUTCOMES, arrivalPosition, degreesToRadians, simulateLaunch } from './launchSimulation.js'
+import { OUTCOMES, arrivalPosition, degreesToRadians, satellitePositionAt, simulateLaunch } from './launchSimulation.js'
 import { buildLaunchVehicle } from './launchVehicle.js'
 import { aimFromPointer, initialAim, siteAngleOf } from './orbitAiming.js'
 import {
@@ -28,6 +28,7 @@ import {
   drawOrbitScene,
   flightPoseAt,
   siteScreenPosition,
+  worldToScreen,
 } from './orbitRenderer.js'
 import {
   SUGGESTED_ARRIVAL_OFFSET_DEG,
@@ -100,6 +101,9 @@ function describePrediction(prediction) {
   }
 }
 
+/** How close (screen pixels) a tap must land to a satellite to open its card. */
+const SATELLITE_TAP_PIXELS = 18
+
 export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
   const vehicle = useMemo(() => buildLaunchVehicle(equipped), [equipped])
@@ -149,6 +153,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const canvasRef = useRef(null)
   const flightRef = useRef(null) // { startedAt, endedAt }
   const draggingRef = useRef(false)
+  // Simulated time the satellites are drawn at (moves only during the flight), for tapping them.
+  const simTimeRef = useRef(0)
+  const [satelliteInfo, setSatelliteInfo] = useState(null) // { satellite, x, y }
   const [images] = useState(() => ({
     earth: loadImage(ASSETS.earthPlanet.src),
     rocketLit: loadImage(ASSETS.rocketLit.src),
@@ -232,6 +239,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           }
         }
 
+        simTimeRef.current = flight?.simTime ?? 0
         drawOrbitScene(ctx, current.view, {
           step: current.step,
           orbits: current.orbitsForSite,
@@ -273,7 +281,27 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
     }
   }
 
+  /** Satellite under a screen point (within a finger's reach), or null. */
+  const satelliteAt = (point) => {
+    let closest = null
+    for (const satellite of REAL_SATELLITES) {
+      const world = satellitePositionAt(satellite, simTimeRef.current)
+      const screen = worldToScreen(view, world.x, world.y)
+      const gap = Math.hypot(point.x - screen.x, point.y - screen.y)
+      if (gap < SATELLITE_TAP_PIXELS && (!closest || gap < closest.gap)) closest = { satellite, gap, screen }
+    }
+    return closest
+  }
+
   const handlePointerDown = (event) => {
+    const point = pointerPosition(event)
+    const tapped = satelliteAt(point)
+    if (tapped) {
+      playSfx(SFX.select)
+      setSatelliteInfo({ satellite: tapped.satellite, x: tapped.screen.x, y: tapped.screen.y })
+      return
+    }
+    setSatelliteInfo(null)
     if (step === 'aim' && site) {
       draggingRef.current = true
       event.currentTarget.setPointerCapture(event.pointerId)
@@ -282,7 +310,12 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   }
 
   const handlePointerMove = (event) => {
-    if (draggingRef.current && step === 'aim' && site) aimAt(pointerPosition(event))
+    if (draggingRef.current && step === 'aim' && site) {
+      aimAt(pointerPosition(event))
+      return
+    }
+    // Hand cursor over a satellite, so players know they can tap it.
+    event.currentTarget.style.cursor = satelliteAt(pointerPosition(event)) ? 'pointer' : ''
   }
 
   const handlePointerUp = () => {
@@ -360,6 +393,24 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
           />
+          {satelliteInfo && (
+            <div
+              className={`satellite-card${satelliteInfo.y < 150 ? ' is-below' : ''}`}
+              style={{
+                left: Math.min(Math.max(satelliteInfo.x, 130), canvasSize.width - 130),
+                top: satelliteInfo.y,
+              }}
+              role="dialog"
+              aria-label={satelliteInfo.satellite.shortName}
+            >
+              <button type="button" className="satellite-card__close" aria-label="Close" onClick={() => setSatelliteInfo(null)}>
+                ✕
+              </button>
+              <h3 className="satellite-card__name">{satelliteInfo.satellite.shortName}</h3>
+              <p className="satellite-card__kind">{satelliteInfo.satellite.kind} · {satelliteInfo.satellite.altitudeKm} km</p>
+              <p className="satellite-card__summary">{satelliteInfo.satellite.summary}</p>
+            </div>
+          )}
           {/* Launch bases: real buttons on top of the planet, big enough to tap and read. */}
           <div className="orbit-sites">
             {visibleSites.map((candidate) => {

@@ -10,21 +10,73 @@
  */
 export const HAZARD_RADIUS_KILOMETERS = 120
 
-/** A Starlink "train": several satellites one behind the other, like right after a real launch. */
-const STARLINK_TRAIN = [0, 1, 2, 3, 4, 5].map((index) => ({
-  id: `starlink-${index + 1}`,
-  name: 'Starlink satellite',
-  shortName: index === 0 ? 'Starlink' : '',
-  altitudeKm: 550,
-  startAngleDeg: 250 + index * 5,
-}))
-
+/**
+ * Every satellite is real. Fields:
+ *   name        used in sentences ("It crashes into …")
+ *   shortName   label next to it on the map
+ *   kind        what type of satellite it is, shown when the player taps it
+ *   summary     one short line about what it does
+ * Start angles are spread around the planet so no two satellites sit on top of each other.
+ */
 export const REAL_SATELLITES = [
-  { id: 'iss', name: 'the International Space Station', shortName: 'ISS', altitudeKm: 420, startAngleDeg: 30 },
-  { id: 'tiangong', name: 'the Tiangong station', shortName: 'Tiangong', altitudeKm: 390, startAngleDeg: 200 },
-  { id: 'hubble', name: 'the Hubble telescope', shortName: 'Hubble', altitudeKm: 535, startAngleDeg: 110 },
-  ...STARLINK_TRAIN,
-  { id: 'landsat-9', name: 'Landsat 9', shortName: 'Landsat 9', altitudeKm: 705, startAngleDeg: 320 },
-  { id: 'sentinel-2a', name: 'Sentinel-2A', shortName: 'Sentinel-2A', altitudeKm: 786, startAngleDeg: 160 },
-  { id: 'noaa-20', name: 'the NOAA-20 weather satellite', shortName: 'NOAA-20', altitudeKm: 824, startAngleDeg: 60 },
+  {
+    id: 'iss', name: 'the International Space Station', shortName: 'ISS', altitudeKm: 420, startAngleDeg: 30,
+    kind: 'Space station',
+    summary: 'Astronauts from many countries live here and run science experiments.',
+  },
+  {
+    id: 'tiangong', name: 'the Tiangong station', shortName: 'Tiangong', altitudeKm: 390, startAngleDeg: 200,
+    kind: 'Space station',
+    summary: "China's space station, where its astronauts live and work.",
+  },
+  {
+    id: 'hubble', name: 'the Hubble telescope', shortName: 'Hubble', altitudeKm: 535, startAngleDeg: 110,
+    kind: 'Space telescope',
+    summary: 'Takes pictures of faraway stars and galaxies, high above the blurry air.',
+  },
+  {
+    id: 'starlink-1007', name: 'Starlink-1007', shortName: 'Starlink-1007', altitudeKm: 550, startAngleDeg: 262,
+    kind: 'Internet satellite',
+    summary: 'One of thousands of Starlink satellites that bring internet to the whole planet.',
+  },
+  {
+    id: 'worldview-3', name: 'WorldView-3', shortName: 'WorldView-3', altitudeKm: 617, startAngleDeg: 292,
+    kind: 'Earth photo satellite',
+    summary: 'Takes very sharp photos of Earth: it can see a single car from space.',
+  },
+  {
+    id: 'icesat-2', name: 'ICESat-2', shortName: 'ICESat-2', altitudeKm: 496, startAngleDeg: 75,
+    kind: 'Ice measuring satellite',
+    summary: 'Uses a laser to measure how thick the ice at the poles is.',
+  },
+  {
+    id: 'iridium-133', name: 'Iridium 133', shortName: 'Iridium 133', altitudeKm: 780, startAngleDeg: 8,
+    kind: 'Phone satellite',
+    summary: 'Lets people make phone calls from anywhere, even the middle of the ocean.',
+  },
+  {
+    id: 'suomi-npp', name: 'the Suomi NPP weather satellite', shortName: 'Suomi NPP', altitudeKm: 824, startAngleDeg: 240,
+    kind: 'Weather satellite',
+    summary: 'Watches clouds and storms so we can forecast the weather.',
+  },
+  {
+    id: 'aqua', name: 'the Aqua satellite', shortName: 'Aqua', altitudeKm: 705, startAngleDeg: 140,
+    kind: 'Earth science satellite',
+    summary: 'Studies the water on Earth: rain, clouds, oceans and ice.',
+  },
+  {
+    id: 'landsat-9', name: 'Landsat 9', shortName: 'Landsat 9', altitudeKm: 705, startAngleDeg: 320,
+    kind: 'Earth photo satellite',
+    summary: 'Takes photos of all of Earth to see how forests, farms and cities change.',
+  },
+  {
+    id: 'sentinel-2a', name: 'Sentinel-2A', shortName: 'Sentinel-2A', altitudeKm: 786, startAngleDeg: 160,
+    kind: 'Earth photo satellite',
+    summary: 'Takes color photos of the land to watch over crops, forests and floods.',
+  },
+  {
+    id: 'noaa-20', name: 'the NOAA-20 weather satellite', shortName: 'NOAA-20', altitudeKm: 824, startAngleDeg: 60,
+    kind: 'Weather satellite',
+    summary: 'Measures air temperature and clouds all over the world for weather forecasts.',
+  },
 ]
