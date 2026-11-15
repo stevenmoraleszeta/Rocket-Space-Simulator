@@ -205,7 +205,8 @@ export function drawMarsScene(ctx, view, scene) {
       ctx.translate(spot.x, spot.y)
       ctx.rotate(angle + Math.PI / 2)
       const frame = Math.floor(flight.t * 12) % 2
-      ctx.drawImage(images.rocket, 192 + frame * 32, 64, 32, 32, -16, -16, 32, 32)
+      const half = 16 * (images.rocket.grow ?? 1)
+      ctx.drawImage(images.rocket, 192 + frame * 32, 64, 32, 32, -half, -half, half * 2, half * 2)
       ctx.restore()
     }
   }

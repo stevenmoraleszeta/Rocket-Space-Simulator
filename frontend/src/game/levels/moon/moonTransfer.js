@@ -32,6 +32,23 @@ const EARTH_SIDEREAL_RATE = (2 * Math.PI) / 86_164.0905
 
 /** The ship gives up after this many days without reaching the Moon. */
 export const MAX_FLIGHT_DAYS = 10
+/**
+ * The trip to the Moon is planned for 3 days: the ship has to reach the spot where the Moon
+ * will be on day 3, at that moment. Meeting the Moon sooner or later does not count.
+ */
+export const TRIP_DAYS = 3
+/** How far from day 3 the meeting can be and still count (a quarter of a day: 6 hours). */
+export const TRIP_WINDOW_DAYS = 0.25
+/**
+ * The path goes straight out from Earth to the Moon: it may curve a little as Earth turns,
+ * but never swing around Earth. More than this turn around Earth (degrees) is a loop.
+ */
+export const MAX_TURN_AROUND_EARTH_DEG = 75
+/** The path is only followed a little past day 3, and a little past the Moon's distance. */
+const TRIP_MAX_SECONDS = (TRIP_DAYS + TRIP_WINDOW_DAYS + 0.5) * 86_400
+const PAST_MOON_FACTOR = 1.15
+/** Start aim: straight out from the base (offset -90° from "along Earth's spin"), medium power. */
+export const DEFAULT_AIM = Object.freeze({ offset: -Math.PI / 2, power: 0.6 })
 /** Inside this distance from the Moon's center the lander can brake into orbit. */
 export const CAPTURE_KM = 30_000
 /** The side fuel tank pays for a midcourse correction, so a wider miss still works. */
@@ -49,7 +66,27 @@ export const TRANSFER_OUTCOMES = Object.freeze({
   EARTH_IMPACT: 'earthImpact',
   SHORT: 'moonShort',
   PAST: 'moonPast',
+  // Met the Moon, but not on day 3 (see TRIP_DAYS)
+  TOO_EARLY: 'moonTooEarly',
+  TOO_LATE: 'moonTooLate',
+  // Swung around Earth instead of going straight out to the Moon
+  LOOP: 'moonLoop',
 })
+
+/** How far (degrees) a path turns around Earth's center from its first sample to its last. */
+export function turnAroundEarthDeg(samples) {
+  let total = 0
+  let previous = Math.atan2(samples[0].y, samples[0].x)
+  for (const sample of samples) {
+    const angle = Math.atan2(sample.y, sample.x)
+    let step = angle - previous
+    if (step > Math.PI) step -= TAU
+    if (step < -Math.PI) step += TAU
+    total += step
+    previous = angle
+  }
+  return Math.abs(total) / DEG
+}
 
 const TAU = Math.PI * 2
 const DEG = Math.PI / 180
@@ -446,11 +483,13 @@ export function simulateTransfer({ siteAngle, aim, moonTable, captureKm = CAPTUR
   let vy = speed * Math.sin(heading)
   let t = 0
   const samples = [{ t, x, y }]
-  const maxT = MAX_FLIGHT_DAYS * DAY_SECONDS
+  const maxT = Math.min(MAX_FLIGHT_DAYS * DAY_SECONDS, TRIP_MAX_SECONDS)
   let closest = { distanceKm: Infinity, t: 0, index: 0, relativeSpeed: 0 }
   let maxRadius = startRadius
   let outcome = null
   let insideCapture = false
+  let previousAngle = Math.atan2(y, x)
+  let turned = 0
 
   while (t < maxT && samples.length < 6000) {
     const moon = moonAt(moonTable, t)
@@ -487,6 +526,17 @@ export function simulateTransfer({ siteAngle, aim, moonTable, captureKm = CAPTUR
 
     const newRadius = Math.hypot(x, y)
     maxRadius = Math.max(maxRadius, newRadius)
+    // Swinging around Earth instead of heading out: stop the path there.
+    const angleNow = Math.atan2(y, x)
+    let turnStep = angleNow - previousAngle
+    if (turnStep > Math.PI) turnStep -= TAU
+    if (turnStep < -Math.PI) turnStep += TAU
+    turned += turnStep
+    previousAngle = angleNow
+    if (Math.abs(turned) > MAX_TURN_AROUND_EARTH_DEG * DEG) {
+      outcome = { type: TRANSFER_OUTCOMES.LOOP, t, index: samples.length - 1 }
+      break
+    }
     if (newRadius < EARTH_RADIUS_KM) {
       outcome = { type: TRANSFER_OUTCOMES.EARTH_IMPACT, t, index: samples.length - 1 }
       break
@@ -509,16 +559,23 @@ export function simulateTransfer({ siteAngle, aim, moonTable, captureKm = CAPTUR
     if (distance < captureKm) insideCapture = true
     // Past the closest point inside the capture zone: that is where the lander brakes.
     if (insideCapture && distance > closest.distanceKm + 1) {
+      // It only counts on day 3: the planned meeting with the Moon.
+      const arrivalDays = closest.t / DAY_SECONDS
+      const onTime = Math.abs(arrivalDays - TRIP_DAYS) <= TRIP_WINDOW_DAYS
       outcome = {
-        type: TRANSFER_OUTCOMES.ARRIVED,
+        type: onTime
+          ? TRANSFER_OUTCOMES.ARRIVED
+          : arrivalDays < TRIP_DAYS ? TRANSFER_OUTCOMES.TOO_EARLY : TRANSFER_OUTCOMES.TOO_LATE,
         t: closest.t,
         index: closest.index,
         periluneAltitudeKm: closest.distanceKm - MOON_RADIUS_KM,
+        arrivalDays,
       }
       samples.length = closest.index + 1
       break
     }
-    if (newRadius > MOON_DISTANCE_KM * 2.2) break
+    // A little past the Moon's distance: the path does not go on behind it.
+    if (newRadius > MOON_DISTANCE_KM * PAST_MOON_FACTOR) break
   }
 
   if (!outcome) {
@@ -560,8 +617,8 @@ export function sampleIndexAt(samples, seconds) {
  */
 export function findGoodAim({ siteAngle, moonTable, captureKm = CAPTURE_KM, launchDate }) {
   let best = null
-  for (let offsetDeg = -40; offsetDeg <= 40; offsetDeg += 4) {
-    for (let power = 0.3; power <= 0.62; power += 0.01) {
+  for (let offsetDeg = -150; offsetDeg <= -30; offsetDeg += 5) {
+    for (let power = 0.3; power <= 1; power += 0.02) {
       const aim = { offset: offsetDeg * DEG, power }
       const result = simulateTransfer({ siteAngle, aim, moonTable, captureKm })
       if (result.outcome.type !== TRANSFER_OUTCOMES.ARRIVED) continue
@@ -576,8 +633,8 @@ export function findGoodAim({ siteAngle, moonTable, captureKm = CAPTURE_KM, laun
 
 // ------------------------------------------------------------------ light for the maps
 
-/** About how long the trip takes: used to show the Moon on arrival day before a path exists. */
-export const TYPICAL_TRIP_SECONDS = 3.5 * DAY_SECONDS
+/** How long the trip takes (TRIP_DAYS): used to show the Moon on arrival day. */
+export const TYPICAL_TRIP_SECONDS = TRIP_DAYS * DAY_SECONDS
 
 /**
  * The cameras map the side of the Moon that faces Earth, and they need sunlight.
@@ -605,6 +662,8 @@ export const STAY_SECONDS = DAY_SECONDS
 const ENTRY_ALTITUDE_KM = 120
 const TARGET_PERIGEE_ALTITUDE_KM = 40
 const MAX_RETURN_SECONDS = 6 * DAY_SECONDS
+/** Beyond this distance from Earth the way home should look straight (no swing around Earth). */
+const FAR_FROM_EARTH_KM = 60_000
 
 /** One RK4 step under Earth and Moon gravity, the Moon moving inside the step. */
 function stepShip(state, dt, moonTable) {
@@ -705,13 +764,13 @@ export function simulateReturn({ moonTable, arrivalT, sense = 1, stay = STAY_SEC
   }
   // For each burn point on the orbit, the lowest point over Earth changes smoothly with the
   // burn size: find where it crosses the target height, then home in on it (bisection).
+  // Every burn point that works is kept; the most direct path home wins (see below).
   let best = null
+  const options = []
   for (const way of [sense, -sense]) {
     for (let angleDeg = 0; angleDeg < 360; angleDeg += 6) {
       let previous = null
       for (let burn = 0.6; burn <= 1.6001; burn += 0.1) {
-        // A bigger burn than the best one found cannot be cheaper: stop here.
-        if (best && best.rank < 100 && burn - 0.1 > best.burn) break
         const value = miss(angleDeg, burn, way)
         if (previous && value !== null && Math.sign(value) !== Math.sign(previous.value)) {
           let low = previous.burn
@@ -732,15 +791,32 @@ export function simulateReturn({ moonTable, arrivalT, sense = 1, stay = STAY_SEC
           const error = Math.abs(miss(angleDeg, found, way) ?? Infinity)
           // The smallest burn that works is the cheapest way home.
           const rank = error < 5 ? found : 100 + error
+          if (error < 5) options.push({ rank, angleDeg, burn: found, way })
           if (!best || rank < best.rank) best = { rank, angleDeg, burn: found, way }
           break
         }
         previous = value === null ? null : { burn, value }
       }
     }
-    if (best && best.rank < 100) break
   }
   if (!best) return null
+  // Straight from the Moon to Earth: of the cheaper ways home, the one that turns least
+  // around Earth (no swing up and over), with a small nudge toward smaller burns.
+  options.sort((a, b) => a.burn - b.burn)
+  let straightest = null
+  for (const option of options) {
+    const trial = flyHome(moonTable, departT, option.angleDeg * DEG, option.burn, option.way, true)
+    // Only paths that really get home: into the air, in a few days
+    if (trial.crashed || !trial.samples || !trial.entered) continue
+    const days = (trial.samples[trial.samples.length - 1].t - departT) / DAY_SECONDS
+    // The swing in the last part, close to Earth, is how every ship slides into the air;
+    // what matters on the map is the long way from the Moon, which should come straight in.
+    const far = trial.samples.filter((sample) => Math.hypot(sample.x, sample.y) > FAR_FROM_EARTH_KM)
+    const turn = far.length > 1 ? turnAroundEarthDeg(far) : 0
+    const score = turn + option.burn * 20 + Math.max(0, days - 3.5) * 40
+    if (!straightest || score < straightest.score) straightest = { ...option, score }
+  }
+  if (straightest) best = straightest
   const flown = flyHome(moonTable, departT, best.angleDeg * DEG, best.burn, best.way, true)
   return {
     samples: flown.samples,

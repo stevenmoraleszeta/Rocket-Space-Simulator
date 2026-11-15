@@ -54,10 +54,12 @@ export const MISSIONS = [
     ],
     funFact: 'The space station goes all the way around Earth in about 90 minutes!',
     passPct: 60,
-    // 122 credits is the one loadout that can fly: shield, boosters, food, water, one astronaut.
-    // 2 credits are left. The cheapest extra part costs 14.
-    // Mass 98 of 102. 6,518 s = a 10 minute climb + one 98.6 minute loop at 700 km.
-    loadout: { budget: 124, mass: 102, energy: 40, heat: 20, thrust: 40, minCrew: 1, durationSeconds: 6518 },
+    // The loadout that flies: shield, boosters, food, one astronaut (108 credits, 1,040 W).
+    // The hangar also offers three traps, and the budget lets each one be packed so it fails
+    // in its own way (launchFailure.js): the fuel tank (too heavy to reach orbit), the radio
+    // dish (one more draw than the 1,080 W the ship has) and the plant locker (no water aboard).
+    // Mass 90 of 102. 6,518 s = a 10 minute climb + one 98.6 minute loop at 700 km.
+    loadout: { budget: 150, mass: 102, energy: 27, heat: 20, thrust: 40, minCrew: 1, durationSeconds: 6518 },
     // Hangar checklist (MissionChecklist.jsx): pictures with a check or a cross.
     checklist: {
       required: [
@@ -85,6 +87,7 @@ export const MISSIONS = [
       'The Moon has almost no air. Only a rocket engine can slow the ship down there.',
     ],
     hints: [
+      'Two astronauts fly this trip. Each one eats, drinks, and breathes.',
       'The Moon is about 384,400 km away. The trip takes about 5 days.',
       'Space junk can break the computer and lose data. A shield helps.',
       'Hitting a satellite hurts it, and it hurts your ship too.',
@@ -93,8 +96,14 @@ export const MISSIONS = [
     ],
     funFact: 'Apollo 11 took about 3 days to reach the Moon. In 2009 NASA found ice in a dark crater at the south pole.',
     passPct: 60,
-    // A crew of at least 1 for up to 8 days: shield, boosters, food, water, medicine, filter, lander.
-    loadout: { budget: 266, mass: 166, energy: 40, heat: 30, thrust: 55, minCrew: 1, durationSeconds: 8 * 86400 },
+    // A crew of 2 for up to 8 days: shield, boosters, 2 astronauts, 2 food, 2 water, medicine,
+    // filter, lander = 242 cr, 150 kg, 43 energy. That leaves room for the fuel tank only.
+    // The upgrade (+25% mass and power for 45 cr: 208 kg, 55 energy) makes room for two more
+    // extras, like the ice rover and the radio dish.
+    loadout: {
+      budget: 330, mass: 166, energy: 44, heat: 30, thrust: 55, minCrew: 2, durationSeconds: 8 * 86400,
+      upgrade: { cost: 45, pct: 25 },
+    },
     checklist: {
       required: [
         { part: 'shield', why: 'The climb through the air gets very hot. Without it the rocket burns.' },
@@ -136,6 +145,7 @@ export const MISSIONS = [
       'Money, weight, and power can run out. Packing extra can leave you short.',
     ],
     hints: [
+      'Three astronauts fly to Mars. Each one eats, drinks, and breathes for months.',
       'This trip lasts many months. What has to last, and what has to be cleaned?',
       'A second person needs more air, more meals, more water, and more power.',
       'The big asteroid belt is past Mars. A few rocks still share this road.',
@@ -144,10 +154,15 @@ export const MISSIONS = [
     ],
     funFact: 'Perseverance flew about 471 million km in 203 days. The asteroid belt is farther out, past Mars.',
     passPct: 60,
-    // 203 days, the Perseverance cruise. One winning pack for the long paths:
-    // shield, boosters, 1 crew, 3 food, meal locker, scrubber, shelter, parachute,
-    // rover, medicine, 1 water, water recycler = 300 cr, 176 kg, 41 energy.
-    // The radio (18 cr, 5 kg, 2 energy) fits only if the meal packs come off, and then only the 180-day path lasts.
-    loadout: { budget: 302, mass: 178, energy: 43, heat: 35, thrust: 60, minCrew: 1, durationSeconds: 203 * 86400 },
+    // 203 days, the Perseverance cruise, with a crew of 3. One winning pack for the long paths:
+    // shield, boosters, 3 crew, 3 meal lockers, 2 food, 2 water, water recycler, scrubber,
+    // shelter, parachute, rover, medicine = 390 cr, 209 kg, 69 energy.
+    // The radio (18 cr, 5 kg, 2 energy) fits only if the food packs come off, and then only the
+    // 180-day path lasts. The upgrade (+40% mass and power for 70 cr: 297 kg, 99 energy)
+    // carries the radio and the full meals, so any path works.
+    loadout: {
+      budget: 480, mass: 212, energy: 71, heat: 35, thrust: 60, minCrew: 3, durationSeconds: 203 * 86400,
+      upgrade: { cost: 70, pct: 40 },
+    },
   },
 ];

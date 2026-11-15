@@ -58,7 +58,15 @@ const FALLBACK_LIMITS = {
 /** Food, oxygen, power, mass, and crew actually packed. */
 export function supplyReport(equipped, mission) {
   const limits = { ...FALLBACK_LIMITS, ...(mission?.loadout ?? {}) }
-  let cost = 0
+  // Rocket upgrade (Moon and Mars): costs credits, lifts more mass and feeds more power.
+  const upgrade = limits.upgrade ?? null
+  const upgraded = Boolean(upgrade) && partCount(equipped, 'upgrade') > 0
+  if (upgraded) {
+    const grow = 1 + upgrade.pct / 100
+    limits.mass = Math.round(limits.mass * grow)
+    limits.energy = Math.round(limits.energy * grow)
+  }
+  let cost = upgraded ? upgrade.cost : 0
   let massKg = HULL.mass
   let energyPoints = 0
   let heat = 0
@@ -123,6 +131,8 @@ export function supplyReport(equipped, mission) {
 
   return {
     limits,
+    upgrade,
+    upgraded,
     crew,
     minCrew,
     cost,

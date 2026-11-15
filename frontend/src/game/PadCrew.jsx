@@ -13,14 +13,14 @@ const CREW = [
 ];
 
 /** scrub: the launch was called off (no astronaut). Everyone walks away but one, who says "no". */
-export function PadCrew({ scrub = false }) {
+export function PadCrew({ scrub = false, bubble = 'No astronauts!' }) {
   return (
     <div className="crew" aria-hidden={!scrub}>
       {CREW.map((person) => {
         if (scrub && person.saysNo) {
           return (
             <span key={person.job} className="crew__mover" style={{ left: person.left, bottom: person.bottom }}>
-              <span className="crew__bubble" role="status">No astronauts!</span>
+              <span className="crew__bubble" role="status">{bubble}</span>
               <span className={`engineer engineer--${person.job} is-saying-no`}>
                 <span className="engineer__sheet" style={{ backgroundImage: `url(${sheet})` }} />
               </span>

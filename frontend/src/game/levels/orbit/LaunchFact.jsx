@@ -27,6 +27,18 @@ export const LAUNCH_FACTS = {
     title: 'Free return',
     text: 'Apollo 13 lost its main oxygen tank on the way. Its path swung around the Moon and back to Earth on its own, and the crew came home safely.',
   },
+  moonTooEarly: {
+    title: 'A meeting in space',
+    text: 'The Moon moves about 3,700 km every hour. Apollo crews launched at the exact minute that let them meet it three days later, at the right spot.',
+  },
+  moonTooLate: {
+    title: 'The Moon does not wait',
+    text: 'The Moon goes around Earth once a month, so it is always moving. A ship that gets there late finds only empty space where the Moon used to be.',
+  },
+  moonLoop: {
+    title: 'Straight out, then coast',
+    text: 'To leave Earth, a ship fires its engine once and then coasts. Point it the wrong way and Earth pulls it around instead of letting it go.',
+  },
   noLander: {
     title: 'No air, no parachute',
     text: 'On Earth, air and parachutes slow a capsule down. At the Moon only a rocket engine can do it, so every lander carries one.',
@@ -64,6 +76,18 @@ export const LAUNCH_FACTS = {
     text: 'Thousands of satellites and bits of space junk fly around Earth. The space station even moves out of the way a few times a year.',
   },
   // Loadout failures (launchFailure.js): one fact for each reason.
+  tooMuchFuel: {
+    title: 'Just enough fuel',
+    text: 'Every kilogram of fuel has to be lifted too. Engineers pack only the fuel a trip needs, plus a little extra, so the rocket stays light enough to climb.',
+  },
+  radioPower: {
+    title: 'Calling home',
+    text: 'Close to Earth, small antennas are enough to talk to mission control. Big radio dishes are for far trips, like the Moon or Mars, where the signal gets very weak.',
+  },
+  plantsNoWater: {
+    title: 'Plants in space',
+    text: 'Astronauts grow lettuce on the space station in a plant locker called Veggie. The plants need water, light and about a month to grow, so they only go on long trips.',
+  },
   overBudget: {
     title: 'Space is expensive',
     text: 'One launch can cost millions of dollars. Some companies now land their boosters and fly them again, which makes launches much cheaper.',
@@ -75,6 +99,19 @@ export const LAUNCH_FACTS = {
   noCrew: {
     title: 'Someone has to fly it',
     text: 'Astronauts train for years before their first flight. Even rockets that fly themselves have a team on the ground watching every second.',
+  },
+  // Crew facts for missions 2 and 3 (missing or too few astronauts). Mission 1 uses noCrew.
+  crewMoon: {
+    title: 'Two on the Moon',
+    text: 'On every Apollo landing, two astronauts rode the lunar lander down to the Moon together. On a trip of many days, one can fly while the other works or rests. This trip needs 2 astronauts.',
+  },
+  crewMars: {
+    title: 'A crew of three',
+    text: 'The first crew to live on the space station, in the year 2000, was 3 people. On a trip of many months, they take turns flying, fixing the ship, and sleeping. This trip to Mars needs 3 astronauts.',
+  },
+  fewCrew: {
+    title: 'A team in space',
+    text: 'The longer the trip, the more people it needs to fly the ship, fix it, and look after each other.',
   },
   noPower: {
     title: 'Power from the Sun',
@@ -111,8 +148,13 @@ export const LAUNCH_FACTS = {
 }
 
 /** Fact that matches what happened in the flight. */
-export function factForResult(result) {
+export function factForResult(result, mission) {
   const { outcome } = result
+  // Crew facts name only what this mission needs
+  if (outcome.type === 'noCrew' || outcome.type === 'fewCrew') {
+    if (mission?.id === 'moon') return LAUNCH_FACTS.crewMoon
+    if (mission?.id === 'mars') return LAUNCH_FACTS.crewMars
+  }
   switch (outcome.type) {
     case OUTCOMES.ORBIT_REACHED:
       return outcome.missKm <= BULLSEYE_KM ? LAUNCH_FACTS.bullseye : LAUNCH_FACTS.orbitReached
@@ -128,6 +170,9 @@ export function factForResult(result) {
     case 'moonImpact':
     case 'moonShort':
     case 'moonPast':
+    case 'moonTooEarly':
+    case 'moonTooLate':
+    case 'moonLoop':
     case 'noLander':
     case 'moonLowScience':
       return LAUNCH_FACTS[outcome.type]
@@ -135,9 +180,13 @@ export function factForResult(result) {
     case 'overBudget':
     case 'tooHeavy':
     case 'noCrew':
+    case 'fewCrew':
     case 'noPower':
     case 'noBoosters':
     case 'noShield':
+    case 'tooMuchFuel':
+    case 'radioPower':
+    case 'plantsNoWater':
       return LAUNCH_FACTS[outcome.type]
     case 'noFood':
     case 'outOfFood':
@@ -155,8 +204,8 @@ export function factForResult(result) {
   }
 }
 
-export function LaunchFact({ result, className = '', label = 'Did you know?' }) {
-  const fact = factForResult(result)
+export function LaunchFact({ result, mission, className = '', label = 'Did you know?' }) {
+  const fact = factForResult(result, mission)
   const playerName = engineerName(useSettings().playerName)
   return (
     <section className={`launch-fact ${result.success ? 'is-good' : 'is-bad'} ${className}`}>

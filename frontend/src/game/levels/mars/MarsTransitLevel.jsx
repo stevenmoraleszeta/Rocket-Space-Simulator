@@ -22,6 +22,7 @@ import { earliestSupplyEnd, flightReadout, supplyReport } from '../../lifeSuppor
 import { flightNotes } from '../../flightSummary.js'
 import { launchFailure } from '../../launchFailure.js'
 import { partCount } from '../../parts.js'
+import { goldRocketImage, isUpgraded } from '../../rendering/upgradedRocket.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
 import {
@@ -163,7 +164,7 @@ export function MarsTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
     phobos: loadImage(ASSETS.phobos.src),
     deimos: loadImage(ASSETS.deimos.src),
     asteroid: loadImage(ASSETS.asteroid.src),
-    rocket: loadImage(ASSETS.rocketUpperStage.src),
+    rocket: goldRocketImage(ASSETS.rocketUpperStage.src, isUpgraded(equipped)),
     explosion: loadImage(ASSETS.explosion.src),
   }))
 
