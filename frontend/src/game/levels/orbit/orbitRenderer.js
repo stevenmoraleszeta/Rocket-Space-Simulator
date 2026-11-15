@@ -28,6 +28,11 @@ const EARTH_SPRITE_BODY = { x: 16, y: 16, size: 224 }
 const DOT_SPACING_PIXELS = 11
 const DOT_SIZE_PIXELS = 5
 const SATELLITE_SIZE_PIXELS = 10
+const SATELLITE_FRAME_WIDTH = 24
+const SATELLITE_FRAME_HEIGHT = 16
+const SATELLITE_FRAME_COUNT = 4
+const SATELLITE_FRAMES_PER_SECOND = 6
+const SATELLITE_DRAW_SCALE = 1.25
 const ROCKET_DRAW_SIZE = 40
 const EXPLOSION_FRAME_SIZE = 32
 const EXPLOSION_FRAME_COUNT = 8
@@ -146,26 +151,42 @@ function drawEarth(ctx, view, images) {
   }
 }
 
-function drawSatellites(ctx, view, satellites, timeSeconds) {
+/** Animated satellite sprite. Each satellite starts on a different frame so they don't blink together. */
+function drawSatelliteSprite(ctx, screen, image, clockSeconds, index) {
+  const frame = (Math.floor(clockSeconds * SATELLITE_FRAMES_PER_SECOND) + index) % SATELLITE_FRAME_COUNT
+  const width = SATELLITE_FRAME_WIDTH * SATELLITE_DRAW_SCALE
+  const height = SATELLITE_FRAME_HEIGHT * SATELLITE_DRAW_SCALE
+  ctx.drawImage(
+    image,
+    frame * SATELLITE_FRAME_WIDTH, 0, SATELLITE_FRAME_WIDTH, SATELLITE_FRAME_HEIGHT,
+    Math.round(screen.x - width / 2), Math.round(screen.y - height / 2), width, height,
+  )
+}
+
+function drawSatellites(ctx, view, satellites, timeSeconds, images, clockSeconds) {
   const drawnRings = new Set()
   for (const satellite of satellites) {
     if (drawnRings.has(satellite.altitudeKm)) continue
     drawnRings.add(satellite.altitudeKm)
     drawDottedRing(ctx, view, orbitRingRadius(view, satellite.altitudeKm), COLORS.satelliteOrbit, 2, 9)
   }
-  for (const satellite of satellites) {
+  satellites.forEach((satellite, index) => {
     const world = satellitePositionAt(satellite, timeSeconds)
     const screen = worldToScreen(view, world.x, world.y)
     // Danger zone around the satellite
     drawCircle(ctx, screen.x, screen.y, SATELLITE_SIZE_PIXELS, COLORS.danger)
-    // PLACEHOLDER satellite sprite: a pixel square until real art exists.
-    ctx.fillStyle = COLORS.satellite
-    ctx.fillRect(Math.round(screen.x - SATELLITE_SIZE_PIXELS / 2), Math.round(screen.y - SATELLITE_SIZE_PIXELS / 2), SATELLITE_SIZE_PIXELS, SATELLITE_SIZE_PIXELS)
+    if (images?.satellite?.complete && images.satellite.naturalWidth > 0) {
+      drawSatelliteSprite(ctx, screen, images.satellite, clockSeconds ?? 0, index)
+    } else {
+      // Fallback while the sprite loads: a plain pixel square.
+      ctx.fillStyle = COLORS.satellite
+      ctx.fillRect(Math.round(screen.x - SATELLITE_SIZE_PIXELS / 2), Math.round(screen.y - SATELLITE_SIZE_PIXELS / 2), SATELLITE_SIZE_PIXELS, SATELLITE_SIZE_PIXELS)
+    }
     if (satellite.shortName) {
       const outward = Math.atan2(-(screen.y - view.centerY), screen.x - view.centerX)
-      drawLabel(ctx, satellite.shortName, screen.x + Math.cos(outward) * 14, screen.y - Math.sin(outward) * 14, Math.cos(outward) >= 0 ? 'left' : 'right', COLORS.satellite, 13)
+      drawLabel(ctx, satellite.shortName, screen.x + Math.cos(outward) * 20, screen.y - Math.sin(outward) * 18, Math.cos(outward) >= 0 ? 'left' : 'right', COLORS.satellite, 13)
     }
-  }
+  })
 }
 
 /**
@@ -307,7 +328,8 @@ function orbitingPoint(outcome, secondsAfterInsertion) {
 
 /**
  * Draws one frame.
- * scene: { step, orbits, selectedOrbitId, arrival, satellites, prediction, aimPoint, flight, images }
+ * scene: { step, orbits, selectedOrbitId, arrival, satellites, prediction, aimPoint, flight, images, clockSeconds }
+ *   clockSeconds: real time in seconds, drives sprite animations (satellites)
  *   flight: { simTime, realSecondsSinceEnd } while flying or after the end
  */
 export function drawOrbitScene(ctx, view, scene) {
@@ -315,7 +337,7 @@ export function drawOrbitScene(ctx, view, scene) {
   ctx.imageSmoothingEnabled = false
 
   const simTime = scene.flight?.simTime ?? 0
-  drawSatellites(ctx, view, scene.satellites, simTime)
+  drawSatellites(ctx, view, scene.satellites, simTime, scene.images, scene.clockSeconds)
   drawEarth(ctx, view, scene.images)
   drawOrbitRings(ctx, view, scene.orbits, scene.selectedOrbitId, scene.step)
   if (scene.step !== 'site') drawArrivalMarker(ctx, view, scene.arrival)

@@ -20,6 +20,7 @@ import launchBaseUrl from '../../assets/images/rockets/launch_base.png'
 import explosionSheetUrl from '../../assets/images/rockets/animations/explosion_sheet.png'
 import earthPlanetUrl from '../../assets/images/planets/earth.svg'
 import spaceBackgroundUrl from '../../assets/images/backgrounds/space.svg'
+import satelliteSheetUrl from '../../assets/images/satellites/satellite_sheet.png'
 
 export const ASSETS = Object.freeze({
   // Rocket waiting on the pad: engine off (cold nozzle), like in the hangar before liftoff.
@@ -31,6 +32,8 @@ export const ASSETS = Object.freeze({
   explosion: { src: explosionSheetUrl, frameWidth: 32, frameHeight: 32, frames: 8 },
   earthPlanet: { src: earthPlanetUrl, frameWidth: 256, frameHeight: 256, frames: 1 },
   spaceBackground: { src: spaceBackgroundUrl, frameWidth: 320, frameHeight: 180, frames: 1 },
+  // Real satellites on the orbit map: gold body, solar panels with a sun glint and a blinking light.
+  satellite: { src: satelliteSheetUrl, frameWidth: 24, frameHeight: 16, frames: 4 },
 
   // PLACEHOLDER entries: no art provided yet.
   launchTower: null,
