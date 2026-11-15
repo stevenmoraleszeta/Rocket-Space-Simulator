@@ -57,7 +57,7 @@ import {
   tripEncounters,
 } from './marsEncounters.js'
 import './marsLaunch.css'
-import iceAsteroid from '../../../assets/images/icons/ice_block.svg'
+import iceAsteroid from '../../../assets/images/asteroids/ice_asteroid.svg'
 import animatedSun from '../../../assets/images/planets/sun_animated.svg'
 import { PixelSky } from './PixelSky.jsx'
 import { SitePin } from '../orbit/SitePin.jsx'
@@ -700,6 +700,9 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
           )}
           {encounter && (
             <div className="mars-encounter" role="dialog" aria-modal="true" aria-labelledby="mars-encounter-question">
+              {encounter.hazard.icy && (
+                <img className="mars-encounter__sprite" src={iceAsteroid} alt="" aria-hidden="true" draggable="false" />
+              )}
               <p className="mars-encounter__kicker"><PixelIcon name="warning" /> {t('Day {{day}} · {{name}}', { day: Math.round(encounter.day), name: t(encounter.hazard.name) })}</p>
               {!encounter.picked ? (
                 <>
