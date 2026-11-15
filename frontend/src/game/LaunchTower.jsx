@@ -5,9 +5,10 @@
  *
  * It holds the rocket at the same points NASA's tower does. Every coordinate is in pixels of the
  * 32 × 32 rocket sprite, so the arms touch the hull at these rows at any --scale:
- *   crew access arm   rows 3–6   the capsule, ending in the white room the crew walks through
- *   stage umbilical   rows 13–14 the joint where the rear stage separates in space
- *   core umbilical    rows 19–20 the lower body (fuel and power lines)
+ *   crew access arm   rows 4–6   the capsule
+ *   stage umbilical   rows 13–15 the joint where the rear stage separates in space
+ *   core umbilical    rows 19–21 the lower body (fuel and power lines)
+ * Each arm is a plain 3-pixel strip of medium gray steel.
  * The hold-down posts on the fins are part of launch_base.png.
  *
  * launching: the arms swing back into the tower before liftoff (see .tower__arm in game.css).
@@ -27,20 +28,20 @@ const COLORS = {
   steel: '#c8372d',
   steelDark: '#8e2a20',
   steelLight: '#e8604c',
-  arm: '#b9c2ec',
-  armDark: '#5d6a8a',
-  whiteRoom: '#ffffff',
-  hose: '#f2994a',
+  arm: '#a3abb8',
+  armLight: '#c3cad4',
+  hook: '#8d96a4',
   crane: '#f2c94c',
   mast: '#c9dcf0',
   light: '#ff5d73',
 };
 
-/** Arms: row (top), height, and x where they touch the rocket hull. */
+/** Arms: top row and x where they touch the rocket hull. All of them are ARM_THICKNESS rows tall. */
+const ARM_THICKNESS = 3;
 const ARMS = [
-  { id: 'crew', top: 4, height: 2, hullX: 20, end: 'whiteRoom' },
-  { id: 'stage', top: 13, height: 2, hullX: 21, end: 'hose' },
-  { id: 'core', top: 19, height: 2, hullX: 22, end: 'hose' },
+  { id: 'crew', top: 4, hullX: 20 },
+  { id: 'stage', top: 13, hullX: 21 },
+  { id: 'core', top: 19, hullX: 22 },
 ];
 
 function px(x, y, color, w = 1, h = 1, key = `${x},${y},${color}`) {
@@ -68,24 +69,20 @@ function top() {
     px(25, TOWER_TOP - 2, COLORS.crane, 11, 1, 'boom'),
     px(LEFT_LEG, TOWER_TOP - 1, COLORS.crane, RIGHT_LEG - LEFT_LEG + 1, 1, 'crane-base'),
     px(34, TOWER_TOP - 3, COLORS.steelDark, 2, 1, 'counterweight'),
-    px(25, TOWER_TOP - 1, COLORS.armDark, 1, 2, 'hook'),
+    px(25, TOWER_TOP - 1, COLORS.hook, 1, 2, 'hook'),
     // Lightning mast with its red warning light
     px(32, TOWER_TOP - 9, COLORS.mast, 1, 7, 'mast'),
     px(32, TOWER_TOP - 10, COLORS.light, 1, 1, 'mast-light'),
   ];
 }
 
-function arm({ id, top: y, height, hullX, end }) {
+function arm({ id, top: y, hullX }) {
   const length = LEFT_LEG - hullX;
   return (
     <g key={id} className={`tower__arm tower__arm--${id}`}>
-      {px(hullX, y, COLORS.arm, length, 1, `${id}-deck`)}
-      {px(hullX, y + 1, COLORS.armDark, length, height - 1, `${id}-truss`)}
-      {end === 'whiteRoom'
-        ? px(hullX, y - 1, COLORS.whiteRoom, 2, height + 2, `${id}-room`)
-        : px(hullX, y, COLORS.hose, 1, height, `${id}-plate`)}
-      {/* service platform on the tower where the arm is hinged */}
-      {px(LEFT_LEG - 1, y + height, COLORS.armDark, 2, 1, `${id}-hinge`)}
+      {/* lit top edge, then the rest of the strip */}
+      {px(hullX, y, COLORS.armLight, length, 1, `${id}-top`)}
+      {px(hullX, y + 1, COLORS.arm, length, ARM_THICKNESS - 1, `${id}-body`)}
     </g>
   );
 }
