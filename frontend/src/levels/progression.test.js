@@ -19,24 +19,30 @@ describe('mission data', () => {
 });
 
 describe('unlocking', () => {
-  it('starts with only mission 1 unlocked', () => {
+  it('starts with Earth and Moon unlocked, while Mars stays locked', () => {
     const p = P.createEmptyProgress();
     expect(P.getMissionState(p, 'earth')).toBe('current');
-    expect(P.getMissionState(p, 'moon')).toBe('locked');
+    expect(P.getMissionState(p, 'moon')).toBe('current');
     expect(P.getMissionState(p, 'mars')).toBe('locked');
     expect(P.getCurrentMission(p).id).toBe('earth');
   });
-  it('completing a mission unlocks the next one', () => {
+  it('finishing Earth does not report Moon as newly unlocked', () => {
     const { progress, outcome } = P.applyResult(P.createEmptyProgress(), 'earth', win(70));
-    expect(outcome.unlockedMissionId).toBe('moon');
+    expect(outcome.unlockedMissionId).toBe(null);
     expect(P.getMissionState(progress, 'earth')).toBe('completed');
     expect(P.getMissionState(progress, 'moon')).toBe('current');
     expect(P.getMissionState(progress, 'mars')).toBe('locked');
   });
-  it('a failed attempt unlocks nothing', () => {
+  it('a failed Earth attempt leaves Moon available but does not unlock Mars', () => {
     const { progress, outcome } = P.applyResult(P.createEmptyProgress(), 'earth', { pct: 100, success: false });
     expect(outcome.completed).toBe(false);
-    expect(P.isUnlocked(progress, 'moon')).toBe(false);
+    expect(P.isUnlocked(progress, 'moon')).toBe(true);
+    expect(P.isUnlocked(progress, 'mars')).toBe(false);
+  });
+  it('allows Moon to be completed before Earth', () => {
+    const { progress } = P.applyResult(P.createEmptyProgress(), 'moon', win());
+    expect(P.getMissionState(progress, 'moon')).toBe('completed');
+    expect(P.getMissionState(progress, 'mars')).toBe('current');
   });
   it('refuses to play a locked mission', () => {
     expect(() => P.applyResult(P.createEmptyProgress(), 'mars', win())).toThrow(/locked/);
