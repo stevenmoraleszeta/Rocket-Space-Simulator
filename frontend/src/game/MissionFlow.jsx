@@ -2,7 +2,7 @@
  * Plays the stages of one mission in order (see stages.js).
  *
  *   Level 2  GameScreen          hangar: fit the rocket parts
- *   Level 2  OrbitalLaunchLevel  choose site and orbit, aim, launch (mission 1)
+ *   Level 2  OrbitalLaunchLevel  choose a site, aim at the hardest orbit, launch (mission 1)
  *
  * Launch in the hangar hands the rocket to the next implemented stage of the mission (stages.js).
  * That stage plays the liftoff animation (LaunchSequence.jsx) when the rocket really leaves.
