@@ -12,11 +12,15 @@
   filter: drop-shadow(0 0.25rem 0 rgba(0, 0, 0, 0.3));
 }
 
-.pad-laika svg {
+/* Tail, body and head are stacked full-size layers (PadLaika.jsx, Part), each animated alone. */
+.pad-laika__part {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
+  will-change: transform;
 }
 
 .pad-laika:focus-visible {
@@ -25,20 +29,14 @@
 }
 
 .pad-laika__tail {
-  transform-box: fill-box;
-  transform-origin: 100% 100%;
   animation: laika-wag 0.36s ease-in-out infinite alternate;
 }
 
 .pad-laika__body {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
   animation: laika-breathe 2.4s ease-in-out infinite;
 }
 
 .pad-laika__head {
-  transform-box: fill-box;
-  transform-origin: 20% 90%;
   animation: laika-look 5s ease-in-out infinite;
 }
 
@@ -80,7 +78,7 @@
 
 @keyframes laika-bark {
   0%, 100% { transform: rotate(0); }
-  50% { transform: rotate(-12deg) translateY(-0.5px); }
+  50% { transform: rotate(-12deg) translateY(-3.5%); }
 }
 
 @keyframes laika-call {

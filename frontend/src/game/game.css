@@ -75,8 +75,28 @@
 /* Waving flag on its pole beside the communications station (see PadFlag.jsx). */
 .pad-flag {
   position: absolute;
-  height: auto;
+  display: block;
+  overflow: hidden;
+}
+
+/* All the waving frames side by side; sliding one frame at a time (steps) shows them in turn.
+   A transform only moves the strip on the GPU, nothing is redrawn. */
+.pad-flag__strip {
+  display: block;
+  width: calc(100% * var(--frames, 6));
+  height: 100%;
+  max-width: none;
   image-rendering: pixelated;
+  animation: flag-wave 0.84s steps(var(--frames, 6)) infinite;
+  will-change: transform;
+}
+
+@keyframes flag-wave {
+  to { transform: translateX(-100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pad-flag__strip { animation: none; }
 }
 
 .clouds {
@@ -271,7 +291,9 @@
 @media (min-width: 1100px) {
   .game--pad .bay {
     margin-top: -64px;
-    padding-top: 0;
+    /* Clear the floating Settings button (top right, about 50px tall), so Story sits
+       right on top of SUPPLIES without going under it */
+    padding-top: 56px;
   }
 
   .game--pad .game__place {
@@ -973,25 +995,43 @@
   transform-origin: bottom center;
 }
 
+/* One engineer: a 16×24 window onto the sprite sheet (4 frames × 4 jobs). The sheet inside
+   slides one frame at a time with a transform, so the GPU animates it without repainting. */
 .engineer {
+  position: relative;
   display: block;
   width: 16px;
   height: 24px;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
+  overflow: hidden;
   transform: scale(calc(var(--scale) * 0.34));
   transform-origin: bottom center;
+}
+
+.engineer__sheet {
+  position: absolute;
+  left: 0;
+  top: var(--row, 0px);
+  width: 64px;
+  height: 96px;
+  background-repeat: no-repeat;
+  background-size: 64px 96px;
+  image-rendering: pixelated;
   animation: crew-work 0.72s steps(4) infinite;
+  will-change: transform;
 }
 
 .engineer.is-flip {
   transform: scale(calc(var(--scale) * -0.34), calc(var(--scale) * 0.34));
 }
 
-.engineer--weld { background-position-y: 0; animation-duration: 0.5s; }
-.engineer--hammer { background-position-y: -24px; animation-duration: 0.84s; }
-.engineer--walk { background-position-y: -48px; animation-duration: 0.44s; }
-.engineer--check { background-position-y: -72px; animation-duration: 0.96s; }
+.engineer--weld { --row: 0px; }
+.engineer--hammer { --row: -24px; }
+.engineer--walk { --row: -48px; }
+.engineer--check { --row: -72px; }
+.engineer--weld .engineer__sheet { animation-duration: 0.5s; }
+.engineer--hammer .engineer__sheet { animation-duration: 0.84s; }
+.engineer--walk .engineer__sheet { animation-duration: 0.44s; }
+.engineer--check .engineer__sheet { animation-duration: 0.96s; }
 
 .crew__mover.is-patrol {
   animation: crew-patrol 6.4s linear infinite;
@@ -1016,10 +1056,12 @@
 
 /* The one who stays shakes "no": turning left and right on the spot. */
 .engineer.is-saying-no {
-  background-position-y: -72px;
-  animation:
-    crew-work 0.96s steps(4) infinite,
-    crew-say-no 0.5s steps(1) 0.6s infinite;
+  --row: -72px;
+  animation: crew-say-no 0.5s steps(1) 0.6s infinite;
+}
+
+.engineer.is-saying-no .engineer__sheet {
+  animation-duration: 0.96s;
 }
 
 @keyframes crew-say-no {
@@ -1062,8 +1104,8 @@
 }
 
 @keyframes crew-work {
-  from { background-position-x: 0; }
-  to { background-position-x: -64px; }
+  from { transform: translateX(0); }
+  to { transform: translateX(-64px); }
 }
 
 @keyframes crew-patrol {
@@ -2037,6 +2079,7 @@
   .rocket__shell-half,
   .rocket__shell-flash,
   .engineer,
+  .engineer__sheet,
   .crew__mover.is-patrol {
     animation: none;
   }
