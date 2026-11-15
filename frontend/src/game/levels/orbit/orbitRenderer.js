@@ -32,8 +32,6 @@ const DOT_SIZE_PIXELS = 5
 const SATELLITE_SIZE_PIXELS = 10
 /** Before the launch satellites are only small dots of their type's color. */
 const SATELLITE_DOT_RADIUS_PIXELS = 4
-/** The Earth turns by changing sprite frames (ASSETS.earthSpin): seconds each frame is shown. */
-const EARTH_SPIN_SECONDS_PER_FRAME = 0.4
 /** Body of the planet inside one 32 x 32 spin frame (same area as EARTH_SPRITE_BODY, in blocks). */
 const EARTH_SPIN_BODY = { x: 2, y: 2, size: 28 }
 /**
@@ -109,6 +107,32 @@ export function screenToWorldAngle(view, screenX, screenY) {
   return Math.atan2(-(screenY - view.centerY), screenX - view.centerX)
 }
 
+/** The Earth turns by changing sprite frames (ASSETS.earthSpin): seconds each frame is shown. */
+export const EARTH_SPIN_SECONDS_PER_FRAME = 0.5
+
+/** Spin frame of the Earth sprite shown at a time in seconds. */
+export function earthSpinFrame(seconds) {
+  return Math.floor(seconds / EARTH_SPIN_SECONDS_PER_FRAME) % ASSETS.earthSpin.frames
+}
+
+/** Keeps launch bases a little inside the planet outline. */
+const SURFACE_INSET = 0.9
+
+/**
+ * Where a launch site sits ON the face of the turning Earth sprite, for choosing a base.
+ * Latitude gives the row (north up). Each row of the sprite shows the whole way around and
+ * slides sideways one block per frame, wrapping at the edge, so the base slides the same way
+ * as the continents and jumps with them, frame by frame.
+ */
+export function siteSurfacePosition(view, site, frame) {
+  const latitude = degreesToRadians(site.latitudeDeg)
+  const radius = view.earthRadiusPixels * SURFACE_INSET
+  const halfWidth = radius * Math.cos(latitude)
+  const turn = (site.longitudeDeg + 180) / 360 - frame / ASSETS.earthSpin.frames
+  const along = turn - Math.floor(turn)
+  return { x: view.centerX - halfWidth + along * 2 * halfWidth, y: view.centerY - radius * Math.sin(latitude) }
+}
+
 /** Screen position of a launch site on the rim of the Earth. */
 export function siteScreenPosition(view, site) {
   const point = pointOnCircle(EARTH_RADIUS_METERS, degreesToRadians(site.longitudeDeg))
@@ -161,7 +185,7 @@ function drawEarth(ctx, view, images, clockSeconds = 0) {
   if (spin?.complete && spin.naturalWidth > 0) {
     // Turning planet: step through the frames of the spin sheet, like any pixel-art animation.
     const sheet = ASSETS.earthSpin
-    const frame = Math.floor(clockSeconds / EARTH_SPIN_SECONDS_PER_FRAME) % sheet.frames
+    const frame = earthSpinFrame(clockSeconds)
     ctx.drawImage(
       spin,
       frame * sheet.frameWidth + EARTH_SPIN_BODY.x, EARTH_SPIN_BODY.y, EARTH_SPIN_BODY.size, EARTH_SPIN_BODY.size,
