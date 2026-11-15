@@ -19,7 +19,9 @@ import {
 
 /** Mars's orbit uses this fraction of half the smaller side of the canvas. */
 const MAP_FILL = 0.86
-const PLANET_PIXELS = { earth: 34, mars: 28, sun: 46 }
+const PLANET_PIXELS = { earth: 34, mars: 28, sun: 92 }
+/** The planet pictures (32 × 32 blocks) leave 2 blocks of halo on each side: the body is 28/32 of the size. */
+const PLANET_BODY_FRACTION = 28 / 32
 const ROCKET_PIXELS = 30
 const HAZARD_PIXELS = 18
 const EXPLOSION = { frameSize: 32, frames: 8, fps: 10, pixels: 96 }
@@ -61,7 +63,7 @@ export function baseScreenPosition(view, site, day = 0) {
   const earthWorld = earthPosition(day)
   const earth = toScreen(view, earthWorld.x, earthWorld.y)
   const angle = ((site?.longitudeDeg ?? 0) * Math.PI) / 180
-  const rim = PLANET_PIXELS.earth / 2
+  const rim = (PLANET_PIXELS.earth / 2) * PLANET_BODY_FRACTION
   return { x: earth.x + Math.cos(angle) * rim, y: earth.y - Math.sin(angle) * rim }
 }
 
@@ -76,7 +78,14 @@ export function pathScreenPoint(view, sample, site) {
   const earth = toScreen(view, earthWorld.x, earthWorld.y)
   const base = baseScreenPosition(view, site, 0)
   const pull = 1 - sample.day / BASE_BLEND_DAYS
-  return { x: point.x + (base.x - earth.x) * pull, y: point.y + (base.y - earth.y) * pull }
+  const moved = { x: point.x + (base.x - earth.x) * pull, y: point.y + (base.y - earth.y) * pull }
+  // Never through the planet: while it is still close, the path follows the edge of the Earth.
+  const dx = moved.x - earth.x
+  const dy = moved.y - earth.y
+  const distance = Math.hypot(dx, dy)
+  const edge = (PLANET_PIXELS.earth / 2) * PLANET_BODY_FRACTION
+  if (distance >= edge || distance === 0) return moved
+  return { x: earth.x + (dx / distance) * edge, y: earth.y + (dy / distance) * edge }
 }
 
 function circle(ctx, x, y, radius, fill) {
@@ -117,7 +126,7 @@ function drawImageCentered(ctx, image, x, y, size) {
 
 function drawPlanets(ctx, view, images, day) {
   const sun = { x: view.centerX, y: view.centerY }
-  circle(ctx, sun.x, sun.y, PLANET_PIXELS.sun * 0.75, 'rgba(255, 200, 60, 0.18)')
+  // Pixel-art Sun in the same style as the menu planets (levels/assets/sun.svg), halo included.
   if (!drawImageCentered(ctx, images.sun, sun.x, sun.y, PLANET_PIXELS.sun)) circle(ctx, sun.x, sun.y, PLANET_PIXELS.sun / 2, '#ffd23f')
   label(ctx, 'Sun', sun.x, sun.y + PLANET_PIXELS.sun / 2 + 12, '#ffe8a3')
 

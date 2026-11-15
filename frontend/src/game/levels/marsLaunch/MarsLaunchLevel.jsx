@@ -51,6 +51,7 @@ import {
   tripEncounters,
 } from './marsEncounters.js'
 import './marsLaunch.css'
+import sunPicture from '../../../levels/assets/sun.svg'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
 
@@ -187,7 +188,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, onBackToHangar, 
     earth: loadImage(ASSETS.earthPlanet.src),
     menuEarth: loadImage(SPRITES.planets.earth.src),
     mars: loadImage(ASSETS.marsPlanet.src),
-    sun: loadImage(ASSETS.sun.src),
+    sun: loadImage(sunPicture),
     rocket: loadImage(ASSETS.rocketUpperStage.src),
     explosion: loadImage(ASSETS.explosion.src),
     satellite: loadImage(ASSETS.commsSatellite.src),
