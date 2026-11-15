@@ -243,7 +243,6 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
         {t('Missions')}
       </button>
       <div className="game__mission">
-        <div className="game__num">{t('Mission {{number}}', { number: mission.number })}</div>
         <h1>{t(mission.title)}</h1>
         {playerName && <p className="game__engineer">{t('Engineer {{name}}', { name: playerName })}</p>}
       </div>

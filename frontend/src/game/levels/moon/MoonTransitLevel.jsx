@@ -91,7 +91,7 @@ const PLACES = [
   },
 ]
 
-export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar, onExit }) {
+export function MoonTransitLevel({ mission, equipped, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
   const [step, setStep] = useState('window')
@@ -397,7 +397,7 @@ export function MoonTransitLevel({ mission, stageInfo, equipped, onBackToHangar,
       <button type="button" className="game__back" onClick={onExit}>
         {t('Missions')}
       </button>
-      <HudMission kicker={t('Level {{number}} · {{title}}', { number: stageInfo.levelNumber, title: t(stageInfo.title) })} title={t(mission.title)} />
+      <HudMission title={t(mission.title)} />
       <div className="game__place">{t(mission.place)}</div>
     </header>
   )

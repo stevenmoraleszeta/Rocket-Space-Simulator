@@ -232,7 +232,7 @@ const EVENT_SOUNDS = {
 }
 
 /** Mission 2: pick a base, a day, and a path to the Moon. */
-export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPlace, onLaunchPlace, onBackToHangar, onExit, onNextMission }) {
+export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaunchPlace, onBackToHangar, onExit, onNextMission }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
   const uiScale = useUiScale()
@@ -907,7 +907,6 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, launchPl
     <header className="game__hud orbit-level__hud">
       <button type="button" className="game__back" onClick={onExit}>{t('Missions')}</button>
       <div className="game__mission">
-        <div className="game__num">{t('Level {{number}} · {{title}}', { number: stageInfo.levelNumber, title: t(stageInfo.title) })}</div>
         <h1>{t(mission.title)}</h1>
       </div>
       <div className="game__place">{t(mission.place)}</div>

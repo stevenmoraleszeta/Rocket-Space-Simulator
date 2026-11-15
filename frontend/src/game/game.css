@@ -43,6 +43,17 @@
   transform: translate(-50%, -50%);
 }
 
+/* Ultrawide monitors are wider than the pad's 16:9 frame. Covering the screen
+   from the center pushes the pad, and the rocket on it, off the bottom.
+   Pin the frame to the bottom so the extra sky is cropped from the top. */
+@media (min-aspect-ratio: 16 / 9) {
+  .stage__frame {
+    top: auto;
+    bottom: 0;
+    transform: translateX(-50%);
+  }
+}
+
 .stage__bg {
   display: block;
   width: 100%;
@@ -241,7 +252,7 @@
 }
 
 .game__mission h1 {
-  margin: 0.5rem 0 0;
+  margin: 0;
   font-family: var(--ms-font-pixel);
   font-weight: 400;
   font-size: clamp(0.875rem, 2vw, 1.375rem);
@@ -1436,7 +1447,7 @@
   left: 50%;
   top: 22%;
   z-index: 6;
-  width: min(520px, calc(100vw - 32px));
+  width: min(32.5rem, calc(100vw - 2rem));
   box-sizing: border-box;
   transform: translateX(-50%);
   padding: 14px 20px;
@@ -1651,7 +1662,7 @@
   left: 50%;
   top: 22%;
   z-index: 6;
-  width: min(520px, calc(100vw - 32px));
+  width: min(32.5rem, calc(100vw - 2rem));
   box-sizing: border-box;
   transform: translateX(-50%);
   padding: 14px 20px;
@@ -2299,7 +2310,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  width: min(460px, 100%);
+  width: min(28.75rem, 100%);
   margin: 0;
 }
 
@@ -2440,14 +2451,14 @@
 
 /* Failure screen after the rocket blows up (no boosters or no heat shield). */
 .launch-failed {
-  max-width: 560px;
+  max-width: 35rem;
   margin: 0 auto;
   text-align: center;
 }
 .launch-failed__title {
   margin: 0 0 12px;
   font-family: var(--ms-font-pixel);
-  font-size: 20px;
+  font-size: 1.25rem;
   color: #ff5d73;
 }
 .launch-failed__hint {

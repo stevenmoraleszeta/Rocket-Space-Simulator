@@ -190,7 +190,7 @@ function failureHint(result) {
   }
 }
 
-export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onLaunchPlace, onBackToHangar, onExit }) {
+export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
 
@@ -646,7 +646,6 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
         {t('Missions')}
       </button>
       <div className="game__mission">
-        <div className="game__num">{t('Level {{number}} · {{title}}', { number: stageInfo.levelNumber, title: t(stageInfo.title) })}</div>
         <h1>{t(mission.title)}</h1>
       </div>
       <div className="game__place">{t(mission.place)}</div>

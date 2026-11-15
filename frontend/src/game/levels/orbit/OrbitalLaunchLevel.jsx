@@ -142,7 +142,7 @@ function describePrediction(prediction) {
 /** How close (screen pixels) a tap must land to a satellite to open its card. */
 const SATELLITE_TAP_PIXELS = 18
 
-export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launchPlace, onLaunchPlace, onBackToHangar, onExit }) {
+export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onLaunchPlace, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
   const playerName = engineerName(useSettings().playerName)
   // No boosters: the dotted path still shows the planned flight (as if they were there).
@@ -606,7 +606,6 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, design, launc
         {t('Missions')}
       </button>
       <div className="game__mission">
-        <div className="game__num">{t('Level {{number}} · {{title}}', { number: stageInfo.levelNumber, title: t(stageInfo.title) })}</div>
         <h1>{t(mission.title)}</h1>
       </div>
       <div className="game__place">{t(mission.place)}</div>
