@@ -6,6 +6,12 @@ import spaceAmbience from '../assets/audio/space/space_ambience_loop.wav';
 import clinkLow from '../assets/audio/equipment/clink_low.wav';
 import armorEquip from '../assets/audio/equipment/armor_equip.wav';
 import liftoff from '../assets/audio/rockets/liftoff.wav';
+import select from '../assets/audio/ui/select.wav';
+import confirm from '../assets/audio/ui/confirm.wav';
+import cancel from '../assets/audio/ui/cancel.wav';
+import explosion from '../assets/audio/space/explosion.wav';
+import missionComplete from '../assets/audio/win_lose/mission_complete.wav';
+import lose from '../assets/audio/win_lose/lose.wav';
 
 export const MUSIC = {
   menu: calm,       // mission select
@@ -22,4 +28,10 @@ export const SFX = {
   equip: armorEquip,   // a rocket part is added
   unequip: clinkLow,   // a rocket part is removed
   liftoff,             // the Launch button is pressed
+  select,              // a launch site or orbit is picked
+  confirm,             // next step in the orbit launch
+  cancel,              // back one step in the orbit launch
+  explosion,           // the rocket crashes
+  missionComplete,     // the satellite reaches its orbit
+  lose,                // the launch misses the orbit
 };

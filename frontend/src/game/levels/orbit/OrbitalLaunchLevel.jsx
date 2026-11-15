@@ -2,21 +2,23 @@
  * LEVEL 2 (second part) — LAUNCH TO ORBIT, after the hangar of mission 1.
  *
  * Steps:
- *   site    tap a real launch base on the planet; each one explains why and what for
- *   target  tap an orbit ring at the exact point where the satellite should arrive
+ *   site    tap a real launch base on the planet; each one explains why and what for.
+ *           The arrival orbit is fixed: the hardest one (see hardestOrbit).
  *   aim     hold the click and move: the dotted line (the real simulated path) follows.
  *           Direction from the base = where the rocket tilts, distance = power.
+ *   liftoff the launch pad liftoff and the climb through the atmosphere (LaunchSequence)
  *   flight  the same simulation plays out in a few seconds; crashes explode
  *   result  the score is reported to the mission progress (src/levels)
  *
  * Physics lives in physics/ and launchSimulation.js, drawing in orbitRenderer.js.
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { StarRating, getMission, useProgress } from '../../../levels'
-import { playSound } from '../../audio/soundEffects.js'
+import { AMBIENCE, MUSIC, SFX, playSfx, useSoundtrack } from '../../../audio'
 import { EARTH_RADIUS_METERS } from '../../physics/constants.js'
 import { rotationBoostForInclination } from '../../physics/orbitalMechanics.js'
 import { ASSETS } from '../../rendering/assetManifest.js'
+import { LaunchSequence } from '../../LaunchSequence.jsx'
 import { LAUNCH_SITES } from './launchSites.js'
 import { OUTCOMES, arrivalPosition, degreesToRadians, simulateLaunch } from './launchSimulation.js'
 import { buildLaunchVehicle } from './launchVehicle.js'
@@ -25,14 +27,12 @@ import {
   createView,
   drawOrbitScene,
   flightPoseAt,
-  orbitRingRadius,
-  screenToWorldAngle,
   siteScreenPosition,
 } from './orbitRenderer.js'
 import {
-  ORBIT_TARGETS,
   SUGGESTED_ARRIVAL_OFFSET_DEG,
   checkTargetFromSite,
+  hardestOrbit,
   rateSiteForMission,
   scoreOrbitInsertion,
 } from './orbitTargets.js'
@@ -45,8 +45,6 @@ const MAX_ASCENT_PLAYBACK_SECONDS = 4
 const MAX_COAST_PLAYBACK_SECONDS = 7
 /** Simulated seconds per real second for the satellite circling after a success. */
 const ORBIT_PLAYBACK_WARP = 150
-/** Clicks closer than this (pixels) to an orbit ring select it. */
-const RING_HIT_PIXELS = 18
 
 const OUTCOME_MESSAGES = {
   [OUTCOMES.ORBIT_REACHED]: 'Satellite in orbit!',
@@ -107,8 +105,9 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const vehicle = useMemo(() => buildLaunchVehicle(equipped), [equipped])
 
   const [step, setStep] = useState('site')
+  // Same tracks as the hangar flight: intense music, plus the space ambience once the rocket flies.
+  useSoundtrack(step === 'flight' || step === 'result' ? { music: MUSIC.flight, ambient: AMBIENCE.space } : { music: MUSIC.flight })
   const [siteId, setSiteId] = useState(null)
-  const [orbitId, setOrbitId] = useState(null)
   const [arrivalAngle, setArrivalAngle] = useState(null)
   const [aim, setAim] = useState(null)
   const [aimPoint, setAimPoint] = useState(null)
@@ -118,20 +117,18 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
 
   const view = useMemo(() => createView(canvasSize.width, canvasSize.height), [canvasSize])
   const site = LAUNCH_SITES.find((candidate) => candidate.id === siteId) ?? null
-  const orbit = ORBIT_TARGETS.find((candidate) => candidate.id === orbitId) ?? null
-  const rotationBoost = orbit ? rotationBoostForInclination(orbit.inclinationDeg) : 0
+  // First level: no orbit choice. The satellite always aims for the hardest arrival orbit.
+  const orbit = useMemo(() => hardestOrbit(), [])
+  const siteCheck = site ? checkTargetFromSite(site, orbit) : null
+  const rotationBoost = rotationBoostForInclination(orbit.inclinationDeg)
   const arrival = useMemo(
     () => (orbit && arrivalAngle !== null ? arrivalPosition(orbit.altitudeKm, arrivalAngle) : null),
     [orbit, arrivalAngle],
   )
 
   const orbitsForSite = useMemo(
-    () =>
-      ORBIT_TARGETS.map((candidate) => {
-        const check = site ? checkTargetFromSite(site, candidate) : { ok: false, reason: '' }
-        return { ...candidate, available: check.ok, reason: check.reason }
-      }),
-    [site],
+    () => [{ ...orbit, available: true, reason: '' }],
+    [orbit],
   )
 
   // The dotted line: the full flight simulated with the current aim.
@@ -171,7 +168,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
       /* mission locked or unknown: show the result anyway */
     }
     const crashed = outcome.type === OUTCOMES.EARTH_IMPACT || outcome.type === OUTCOMES.SATELLITE_COLLISION
-    playSound(success ? 'missionComplete' : crashed ? 'explosion' : 'lose')
+    playSfx(success ? SFX.missionComplete : crashed ? SFX.explosion : SFX.lose)
     setResult({ outcome, success, pct, stars: progressOutcome?.stars ?? 0, unlockedMissionId: progressOutcome?.unlockedMissionId ?? null })
     setStep('result')
   }
@@ -179,7 +176,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   // The draw loop is created once and reads the latest state through this ref.
   const sceneRef = useRef(null)
   useLayoutEffect(() => {
-    sceneRef.current = { step, view, orbitId, orbitsForSite, arrival, aimPoint, prediction, images, finishFlight, canvasSize }
+    sceneRef.current = { step, view, orbitId: orbit.id, orbitsForSite, arrival, aimPoint, prediction, images, finishFlight, canvasSize }
   })
 
   // Resize the canvas to its box (sharp on high-DPI screens).
@@ -258,17 +255,11 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   }
 
   const selectSite = (id) => {
-    playSound('select')
+    playSfx(SFX.select)
     setSiteId(id)
-    setOrbitId(null)
     setArrivalAngle(null)
-  }
-
-  /** Picks an orbit; without a clicked point the arrival starts a little east of the base. */
-  const selectOrbit = (id, angle = null) => {
-    playSound('select')
-    setOrbitId(id)
-    setArrivalAngle(angle ?? siteAngleOf(site) + degreesToRadians(SUGGESTED_ARRIVAL_OFFSET_DEG))
+    setAim(null)
+    setAimPoint(null)
   }
 
   const aimAt = (point) => {
@@ -280,19 +271,10 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   }
 
   const handlePointerDown = (event) => {
-    const point = pointerPosition(event)
-    if (step === 'target' && site) {
-      const distance = Math.hypot(point.x - view.centerX, point.y - view.centerY)
-      const hit = orbitsForSite
-        .filter((candidate) => candidate.available)
-        .map((candidate) => ({ candidate, gap: Math.abs(distance - orbitRingRadius(view, candidate.altitudeKm)) }))
-        .filter(({ gap }) => gap < RING_HIT_PIXELS)
-        .sort((a, b) => a.gap - b.gap)[0]
-      if (hit) selectOrbit(hit.candidate.id, screenToWorldAngle(view, point.x, point.y))
-    } else if (step === 'aim' && site) {
+    if (step === 'aim' && site) {
       draggingRef.current = true
       event.currentTarget.setPointerCapture(event.pointerId)
-      aimAt(point)
+      aimAt(pointerPosition(event))
     }
   }
 
@@ -305,30 +287,36 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   }
 
   // ---------------------------------------------------------------- steps
-  const goToTargets = () => {
-    playSound('confirm')
-    setStep('target')
-  }
   const goToAim = () => {
-    playSound('confirm')
-    setAim(initialAim(site, arrival))
+    if (!site || !siteCheck?.ok) return
+    const angle = siteAngleOf(site) + degreesToRadians(SUGGESTED_ARRIVAL_OFFSET_DEG)
+    const nextArrival = arrivalPosition(orbit.altitudeKm, angle)
+    playSfx(SFX.confirm)
+    setArrivalAngle(angle)
+    setAim(initialAim(site, nextArrival))
     setAimPoint(null)
     setStep('aim')
   }
+  // Launch: first the pad liftoff and the climb (LaunchSequence), then the orbit flight on the canvas.
+  const [liftingOff, setLiftingOff] = useState(false)
   const launch = () => {
-    playSound('liftoff')
-    flightRef.current = { startedAt: performance.now(), endedAt: null }
+    playSfx(SFX.liftoff)
     setTelemetry(null)
     setResult(null)
-    setStep('flight')
+    setLiftingOff(true)
   }
+  const startOrbitFlight = useCallback(() => {
+    setLiftingOff(false)
+    flightRef.current = { startedAt: performance.now(), endedAt: null }
+    setStep('flight')
+  }, [])
   const retry = () => {
     flightRef.current = null
     setResult(null)
     setStep('aim')
   }
   const goBack = (previousStep) => {
-    playSound('cancel')
+    playSfx(SFX.cancel)
     setStep(previousStep)
   }
 
@@ -336,18 +324,27 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
   const predictionSummary = prediction ? describePrediction(prediction) : null
   const visibleSites = step === 'site' ? LAUNCH_SITES : LAUNCH_SITES.filter((candidate) => candidate.id === siteId)
 
+  const hud = (
+    <header className="game__hud orbit-level__hud">
+      <button type="button" className="game__back" onClick={onExit}>
+        Missions
+      </button>
+      <div className="game__mission">
+        <div className="game__num">Level {stageInfo.levelNumber} · {stageInfo.title}</div>
+        <h1>{mission.title}</h1>
+      </div>
+      <div className="game__place">{mission.place}</div>
+    </header>
+  )
+
   return (
     <div className="game orbit-level" style={{ backgroundImage: `url(${ASSETS.spaceBackground.src})` }}>
-      <header className="game__hud orbit-level__hud">
-        <button type="button" className="game__back" onClick={onExit}>
-          Missions
-        </button>
-        <div className="game__mission">
-          <div className="game__num">Level {stageInfo.levelNumber} · {stageInfo.title}</div>
-          <h1>{mission.title}</h1>
+      {hud}
+      {liftingOff && (
+        <div className="orbit-level__liftoff">
+          <LaunchSequence equipped={equipped} hud={hud} onDone={startOrbitFlight} />
         </div>
-        <div className="game__place">{mission.place}</div>
-      </header>
+      )}
 
       <div className="orbit-level__body">
         <div className="orbit-stage">
@@ -397,55 +394,30 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
           {step === 'site' && (
             <>
               <h2 className="orbit-panel__title">1. Choose a launch base</h2>
-              <p className="orbit-panel__hint">Tap a base on the Earth. They are real spaceports.</p>
+              <p className="orbit-panel__hint">
+                Tap a base on the Earth. This level flies to the hardest orbit: {orbit.altitudeKm} km, {orbit.name}.
+              </p>
               {site ? (
                 <div className="orbit-detail">
                   <p className="orbit-detail__name">{site.name}, {site.country}</p>
                   <p className={`orbit-badge orbit-badge--${siteRating.level}`}>{siteRating.label}</p>
                   <p><b>Why here?</b> {site.why}</p>
                   <p><b>What for?</b> {site.whatFor}</p>
+                  {siteCheck && !siteCheck.ok && <p>{siteCheck.reason}</p>}
                 </div>
               ) : (
-                <p className="orbit-detail">Each base is good for different orbits. Your satellite will take pictures of the Earth.</p>
+                <p className="orbit-detail">Pick a base that can reach a steep polar orbit. Your satellite will take pictures of the Earth.</p>
               )}
               <div className="orbit-panel__actions">
                 <button type="button" className="game__back" onClick={onBackToHangar}>Hangar</button>
-                <button type="button" className="ms-btn" disabled={!site} onClick={goToTargets}>Next</button>
-              </div>
-            </>
-          )}
-
-          {step === 'target' && site && (
-            <>
-              <h2 className="orbit-panel__title">2. Choose where to arrive</h2>
-              <p className="orbit-panel__hint">Tap a dotted ring exactly where your satellite should arrive.</p>
-              <ul className="orbit-list">
-                {orbitsForSite.map((candidate) => (
-                  <li key={candidate.id}>
-                    <button
-                      type="button"
-                      className={candidate.id === orbitId ? 'orbit-option is-selected' : 'orbit-option'}
-                      style={{ '--orbit-color': candidate.color }}
-                      aria-pressed={candidate.id === orbitId}
-                      disabled={!candidate.available}
-                      onClick={() => selectOrbit(candidate.id)}
-                    >
-                      <span className="orbit-option__name"><span className="orbit-option__swatch" aria-hidden="true" />{candidate.altitudeKm} km · {candidate.name}</span>
-                      <span className="orbit-option__why">{candidate.available ? candidate.why : candidate.reason}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <div className="orbit-panel__actions">
-                <button type="button" className="game__back" onClick={() => goBack('site')}>Back</button>
-                <button type="button" className="ms-btn" disabled={!arrival} onClick={goToAim}>Next</button>
+                <button type="button" className="ms-btn" disabled={!site || !siteCheck?.ok} onClick={goToAim}>Next</button>
               </div>
             </>
           )}
 
           {step === 'aim' && site && orbit && aim && (
             <>
-              <h2 className="orbit-panel__title">3. Aim and launch</h2>
+              <h2 className="orbit-panel__title">2. Aim and launch</h2>
               <p className="orbit-panel__hint">
                 Hold the click and move. The dots show the real path. Farther from the base = more power.
               </p>
@@ -455,7 +427,7 @@ export function OrbitalLaunchLevel({ mission, stageInfo, equipped, onBackToHanga
               </dl>
               {predictionSummary && <p className={`orbit-prediction is-${predictionSummary.tone}`}>{predictionSummary.text}</p>}
               <div className="orbit-panel__actions">
-                <button type="button" className="game__back" onClick={() => goBack('target')}>Back</button>
+                <button type="button" className="game__back" onClick={() => goBack('site')}>Back</button>
                 <button type="button" className="ms-btn" onClick={launch}>Launch 🚀</button>
               </div>
             </>

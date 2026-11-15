@@ -6,12 +6,12 @@
  * missionFit      how well the orbit serves THIS mission (1 = ideal), used for the score
  * color           color of its ring on the planet and of its card in the panel
  *
- * The arrival point is chosen by the player by clicking on the orbit ring. When the orbit is picked
- * from the panel instead, the arrival point starts SUGGESTED_ARRIVAL_OFFSET_DEG east of the site.
+ * The first level does not ask the player to choose an orbit: it always uses the hardest one.
+ * The arrival point starts SUGGESTED_ARRIVAL_OFFSET_DEG east of the launch site.
  */
 import { TARGET_TOLERANCE_KILOMETERS } from './launchSimulation.js'
 
-/** Default arrival point when the orbit is picked from the panel: degrees east of the site. */
+/** Default arrival point: degrees east of the launch site. */
 export const SUGGESTED_ARRIVAL_OFFSET_DEG = 30
 
 /** Orbits steeper than this need a polar launch direction (north or south). */
@@ -65,6 +65,21 @@ export function checkTargetFromSite(site, target) {
     return { ok: false, reason: 'An eastward launch from here would fly over land and towns.' }
   }
   return { ok: true, reason: '' }
+}
+
+/**
+ * How hard an orbit is to reach. A higher orbit costs more speed, and a steeper tilt gets less
+ * help from the spin of the Earth. Past 90° that spin works against the rocket.
+ */
+export function orbitDifficulty(target) {
+  const spinHelp = Math.cos((target.inclinationDeg * Math.PI) / 180)
+  return target.altitudeKm - spinHelp * 400
+}
+
+/** Hardest arrival orbit. The first level uses this one and does not offer a choice. */
+export function hardestOrbit(targets = ORBIT_TARGETS) {
+  return targets.reduce((hardest, candidate) =>
+    (orbitDifficulty(candidate) > orbitDifficulty(hardest) ? candidate : hardest))
 }
 
 /** How good a site is for this mission: the best orbit it can reach. */

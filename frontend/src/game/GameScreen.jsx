@@ -28,7 +28,7 @@ const TIMED_PHASES = {
 /**
  * Optional props used by MissionFlow:
  *   onLaunch(equipped)  when given, Launch hands the built rocket to the next stage
- *                       instead of playing the liftoff below
+ *                       (the orbit trajectory plays the liftoff itself, see LaunchSequence.jsx)
  *   initialEquipped     loadout to start with (keeps the parts when coming back to the hangar)
  */
 export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
@@ -92,8 +92,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
     });
   }
 
-  const { meters, problems } = rocketStatus(equipped, mission);
-  const ready = problems.length === 0;
+  const { meters } = rocketStatus(equipped, mission);
 
   const hud = (
     <header className="game__hud">
@@ -157,7 +156,6 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           >
             <BulbIcon />
           </button>
-          {storyOpen && <Briefing mission={mission} />}
         </div>
         <Meters meters={meters} />
         <div className="dock">
@@ -197,38 +195,68 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped }) {
           <button
             type="button"
             className="bay__launch"
-            disabled={!ready}
-            aria-label={ready ? 'Launch' : `Launch. ${problems.join('. ')}`}
+            aria-label="Launch"
             onClick={startLaunch}
           >
             Launch
           </button>
         </div>
       </div>
+      {storyOpen && (
+        <Briefing mission={mission} onClose={() => setStoryOpen(false)} />
+      )}
     </div>
   );
 }
 
-/** Story and clues, opened over the rocket with the light bulb. */
-function Briefing({ mission }) {
+/** Story and clues. Opens from the light bulb and stays inside the screen. */
+function Briefing({ mission, onClose }) {
+  const hints = mission.hints ?? [];
+
   return (
-    <section className="brief" role="dialog" aria-labelledby="brief-title">
-      <h2 id="brief-title" className="brief__title">Story</h2>
-      {mission.intro && <p className="brief__intro">{mission.intro}</p>}
-      <div className="brief__story">
-        {(mission.story ?? []).map((line) => (
-          <p key={line}>{line}</p>
-        ))}
+    <div
+      className="brief-modal"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="brief-shell">
+        <section
+          className="brief"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="brief-title"
+        >
+          <header className="brief__head">
+            <div className="brief__heading">
+              <p className="brief__kicker">Mission {mission.number} · {mission.place}</p>
+              <h2 id="brief-title" className="brief__title">Story</h2>
+            </div>
+            <button type="button" className="brief__close" onClick={onClose}>
+              Close
+            </button>
+          </header>
+          {mission.intro && <p className="brief__intro">{mission.intro}</p>}
+          <div className="brief__body">
+            <div className="brief__story">
+              {(mission.story ?? []).map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+            </div>
+            {hints.length > 0 && (
+              <aside className="brief__hints">
+                <h3>Clues</h3>
+                <ol>
+                  {hints.map((hint) => (
+                    <li key={hint}>{hint}</li>
+                  ))}
+                </ol>
+              </aside>
+            )}
+          </div>
+        </section>
       </div>
-      <div className="brief__hints">
-        <h3>Clues</h3>
-        <ol>
-          {(mission.hints ?? []).map((hint) => (
-            <li key={hint}>{hint}</li>
-          ))}
-        </ol>
-      </div>
-    </section>
+    </div>
   );
 }
 
