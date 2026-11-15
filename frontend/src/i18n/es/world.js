@@ -344,6 +344,18 @@ export const world = {
   'The recon dome studies the ground, the air, the ice and the dangers, like dust storms and radiation.': 'La cúpula de reconocimiento estudia el suelo, el aire, el hielo y los peligros, como las tormentas de polvo y la radiación.',
   'With what we learn, in some years people may be able to live on Mars!': '¡Con lo que aprendamos, en algunos años las personas podrían vivir en Marte!',
   'Landing…': 'Aterrizando…',
+  // Mars: asteroid shower (AsteroidShower.jsx)
+  'Asteroid shower!': '¡Lluvia de asteroides!',
+  'Move the mouse left and right to dodge the asteroids.': 'Mueve el mouse a la izquierda y a la derecha para esquivar los asteroides.',
+  'Shields: {{n}}': 'Escudos: {{n}}',
+  '{{seconds}} s left': 'Quedan {{seconds}} s',
+  'Each hit: −{{points}} points': 'Cada golpe: −{{points}} puntos',
+  'Space with falling asteroids and your rocket at the bottom': 'El espacio con asteroides cayendo y tu cohete abajo',
+  'Too many asteroids hit the ship and it broke apart.': 'Demasiados asteroides golpearon la nave y se rompió.',
+  'In the asteroid shower, keep moving and watch where each rock will fall.': 'En la lluvia de asteroides, no dejes de moverte y fíjate dónde va a caer cada roca.',
+  'Asteroid hits': 'Golpes de asteroides',
+  'A belt with lots of room': 'Un cinturón con mucho espacio',
+  'The real asteroid belt is mostly empty: the rocks are so far apart that spacecraft cross it without dodging. A shower of rocks happens when a collision breaks one apart.': 'El cinturón de asteroides de verdad está casi vacío: las rocas están tan lejos unas de otras que las naves lo cruzan sin esquivar. Una lluvia de rocas pasa cuando un choque rompe una.',
   // Mars: grazes and the runaway asteroids (marsLaunch)
   'You meet Mars, but the rocket grazes {{name}}: −{{points}} points.': 'Llegas a Marte, pero el cohete roza {{name}}: −{{points}} puntos.',
   'Grazed {{name}}! −{{points}} points': '¡Rozaste {{name}}! −{{points}} puntos',

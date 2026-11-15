@@ -61,6 +61,7 @@ test('the right path stops for crew choices: close passes plus the two runaway a
     for (const pass of passes) {
       assert.ok(pass.day >= lastDay && pass.day < trip.outcome.day)
       lastDay = pass.day
+      if (pass.shower) continue // the asteroid shower is a dodging game, not a choice card
       const kinds = pass.situation.choices.map((choice) => choice.kind).sort()
       assert.deepEqual(kinds, [CHOICE.BAD, CHOICE.GOOD, CHOICE.MILD].sort())
       assert.ok(!pass.situation.question.includes('{name}'))
@@ -124,4 +125,37 @@ test('a well packed crew does not run out of air, push, food or water', async ()
   assert.equal(short.size, 0)
   // An air filter counts as much as the scrubber.
   assert.ok(forgivenFailures(marsSupplyFacts({ filter: 1 }, maxima, 0, 1000)).has('outOfAir'))
+})
+
+test('the asteroid shower can be survived by dodging, and breaks the ship if you never move', async () => {
+  const S = await import('./asteroidShower.js')
+  const play = (seed, brain) => {
+    const game = S.createShower(seed)
+    while (!game.over) S.stepShower(game, 1 / 60, brain(game))
+    return game
+  }
+  const dodge = (game) => {
+    let best = game.shipX
+    let bestScore = -Infinity
+    for (let x = 6; x <= S.FIELD_W - 6; x += 2) {
+      let danger = 0
+      for (const rock of game.rocks) {
+        const time = (S.SHIP.y - rock.y) / rock.speed
+        if (time < -0.1 || time > 1.2) continue
+        const gap = Math.abs(rock.x + rock.drift * time - x) - rock.r - S.SHIP.halfWidth
+        if (gap < 3 || Math.abs(x - game.shipX) / S.SHIP.speed > time + 0.05) danger += (1.3 - time) * (gap < 3 ? 10 : 1)
+      }
+      const score = -danger - Math.abs(x - game.shipX) * 0.01
+      if (score > bestScore) { bestScore = score; best = x }
+    }
+    return best
+  }
+  let dodged = 0
+  let stood = 0
+  for (let seed = 1; seed <= 20; seed += 1) {
+    if (play(seed * 7919, dodge).survived) dodged += 1
+    if (play(seed * 7919, () => null).survived) stood += 1
+  }
+  assert.ok(dodged >= 19, `dodging survived ${dodged} of 20`)
+  assert.ok(stood <= 12, `standing still survived ${stood} of 20`)
 })

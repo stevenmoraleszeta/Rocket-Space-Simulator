@@ -200,3 +200,38 @@
 .mars-landing__why-text { margin: 0 0 0.75rem; }
 .mars-landing__why-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .mars-landing__count { font-family: var(--ms-font-pixel); font-size: 0.6875rem; color: #e8c07a; }
+
+/* Asteroid shower: dodge the rocks with the mouse (AsteroidShower.jsx). */
+.mars-shower {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(3, 4, 16, 0.92);
+  font-family: var(--ms-font);
+  color: var(--ms-text, #fff);
+}
+.mars-shower__hud { width: min(48rem, 100%); text-align: center; }
+.mars-shower__title { margin: 0 0 0.25rem; font-family: var(--ms-font-pixel); font-size: 1.25rem; color: #ffb27a; }
+.mars-shower__hint { margin: 0 0 0.5rem; font-size: 1.0625rem; }
+.mars-shower__stats { display: flex; justify-content: center; align-items: center; gap: 1.25rem; flex-wrap: wrap; font-size: 1rem; }
+.mars-shower__shields { display: inline-flex; gap: 0.375rem; }
+.mars-shower__shields i { width: 1rem; height: 1rem; background: #2b3352; clip-path: polygon(50% 0, 100% 25%, 85% 85%, 50% 100%, 15% 85%, 0 25%); }
+.mars-shower__shields i.is-on { background: #4fc3ff; }
+.mars-shower__shields.is-hit i.is-on { background: #ff5d73; }
+.mars-shower__time { font-family: var(--ms-font-pixel); font-size: 0.75rem; color: #ffe066; }
+.mars-shower__penalty { color: var(--ms-muted, #b9c2ec); }
+.mars-shower__field {
+  width: min(48rem, 100%, calc((100vh - 9rem) * 4 / 3));
+  aspect-ratio: 4 / 3;
+  border: 3px solid #ffb27a;
+  border-radius: 0.5rem;
+  image-rendering: pixelated;
+  cursor: none;
+  touch-action: none;
+}

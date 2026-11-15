@@ -7,9 +7,10 @@
  *   mild   not great, or it damages the ship: the score drops. The SECOND mild choice blows it up
  *   bad    dangerous: the ship blows up right away
  *
- * The asteroid challenge: two asteroids that escaped the asteroid belt always cross the road, in
- * the second half of the trip. One of them is made of ice, and its card tells how icy asteroids
- * and comets brought water to the young Earth.
+ * The asteroid challenge: two runaway asteroids from the asteroid belt always cross the road, in
+ * the second half of the trip. The first one comes as a whole shower of rocks that the player
+ * dodges with the mouse (AsteroidShower.jsx). The second is made of ice: its card tells how icy
+ * asteroids and comets brought water to the young Earth.
  * Words are for kids: short sentences, no hard terms.
  */
 import { MARS_HAZARDS, hazardPosition } from './marsLaunchRoute.js'
@@ -76,6 +77,8 @@ export const RUNAWAY_ASTEROIDS = [
     kind: 'asteroid',
     name: 'Runaway asteroid',
     icy: false,
+    // A whole shower of rocks: a dodging game instead of a choice card
+    shower: true,
     tripFraction: 0.5,
     summary: 'A rocky asteroid that escaped the asteroid belt, past Mars, after a push from Jupiter.',
   },
@@ -176,6 +179,7 @@ export function tripEncounters(trip) {
       day,
       hazard: { ...asteroid, meetDay: day },
       asteroid: true,
+      shower: Boolean(asteroid.shower),
       situation: { ...base, choices: shuffled(base.choices, day + 31 * (index + 1)) },
     }
   })

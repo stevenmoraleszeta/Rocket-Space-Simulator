@@ -61,6 +61,8 @@ import iceAsteroid from '../../../assets/images/asteroids/ice_asteroid.svg'
 import animatedSun from '../../../assets/images/planets/sun_animated.svg'
 import { PixelSky } from './PixelSky.jsx'
 import { MarsLanding } from './MarsLanding.jsx'
+import { AsteroidShower } from './AsteroidShower.jsx'
+import { HIT_PENALTY as SHOWER_HIT_PENALTY } from './asteroidShower.js'
 import { SitePin } from '../orbit/SitePin.jsx'
 import '../../game.css'
 import '../orbit/orbitalLaunch.css'
@@ -89,6 +91,8 @@ const ANGLE_SLIDER = { min: 120, max: 150, step: 0.05 }
 const POWER_SLIDER = { min: 0.4, max: 1, step: 0.01 }
 /** Outcome when a crew choice blows up the ship. */
 const DECISION_CRASH = 'marsDecision'
+/** Outcome when the asteroid shower breaks every shield. */
+const SHOWER_CRASH = 'marsShower'
 /** Corners where the space facts take turns. */
 const FACT_CORNERS = ['top-left', 'bottom-left']
 const randomFactIndex = (avoid) => {
@@ -136,6 +140,7 @@ function describeTrip(trip, aim) {
 function failureReason(result) {
   const { outcome } = result
   if (result.failure) return t(result.failure.message)
+  if (outcome.type === SHOWER_CRASH) return t('Too many asteroids hit the ship and it broke apart.')
   if (outcome.type === DECISION_CRASH) {
     return outcome.tooManyMild
       ? t('{{explain}} That was the second risky choice, and the ship broke apart.', { explain: t(outcome.choice.explain) })
@@ -162,6 +167,7 @@ function failureReason(result) {
 
 function failureHint(result) {
   if (result.failure) return result.failure.hint
+  if (result.outcome.type === SHOWER_CRASH) return t('In the asteroid shower, keep moving and watch where each rock will fall.')
   if (result.outcome.type === DECISION_CRASH) {
     return 'On the way, pick what real crews do: move away safely and listen to mission control.'
   }
@@ -205,6 +211,10 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
   const grazeRef = useRef(0)
   const [grazeCount, setGrazeCount] = useState(0)
   const [grazeToast, setGrazeToast] = useState(null) // { name, key }
+  // The asteroid shower mini-game, and how many rocks hit the ship in it.
+  const [shower, setShower] = useState(null) // the encounter that started it
+  const showerHitsRef = useRef(0)
+  const [showerHits, setShowerHits] = useState(0)
   // Space fact in a corner, a new one every 20 seconds.
   const [fact, setFact] = useState(() => ({ index: randomFactIndex(-1), corner: 0 }))
   useEffect(() => {
@@ -283,7 +293,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
     const success = outcome.type === MARS_OUTCOMES.REACHED && !failure
     const mild = mildRef.current
     const grazed = grazeRef.current
-    const penalty = mild * MILD_PENALTY + grazed * GRAZE_PENALTY
+    const penalty = mild * MILD_PENALTY + grazed * GRAZE_PENALTY + showerHitsRef.current * SHOWER_HIT_PENALTY
     const pct = success ? Math.max(0, scoreMarsArrival(outcome, trip.angleErrorDeg) - penalty) : 0
     let progress = null
     try {
@@ -295,7 +305,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
     } catch {
       /* mission locked or unknown: show the result anyway */
     }
-    const exploded = (MARS_EXPLODING.includes(outcome.type) || outcome.type === DECISION_CRASH) && !failure
+    const exploded = (MARS_EXPLODING.includes(outcome.type) || outcome.type === DECISION_CRASH || outcome.type === SHOWER_CRASH) && !failure
     playSfx(success ? SFX.missionComplete : exploded ? SFX.explosion : SFX.lose)
     setResult({
       outcome: failure ? { ...outcome, type: failure.id } : outcome,
@@ -310,6 +320,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
       exploded,
       mildMistakes: mild,
       grazes: grazed,
+      asteroidHits: showerHitsRef.current,
     })
     // Reaching Mars first plays the landing of the recon dome (MarsLanding.jsx), then the result.
     setStep(success ? 'landing' : 'result')
@@ -341,8 +352,11 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
     }
     mildRef.current = 0
     grazeRef.current = 0
+    showerHitsRef.current = 0
     setMildMistakes(0)
     setGrazeCount(0)
+    setShowerHits(0)
+    setShower(null)
     setGrazeToast(null)
     setEncounter(null)
     setTelemetryDay(0)
@@ -370,8 +384,30 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
   /** The trip reached a close pass: stop and ask the crew. */
   const openEncounter = useCallback((pass) => {
     playSfx(SFX.select)
-    setEncounter({ ...pass, picked: null })
+    // The rocky runaway asteroid comes as a whole shower: a dodging game instead of a card.
+    if (pass.shower) setShower(pass)
+    else setEncounter({ ...pass, picked: null })
   }, [])
+
+  /** The shower is over: go on with the trip, or the ship broke apart. */
+  const endShower = useCallback(({ survived, hits }) => {
+    const clock = flightRef.current
+    showerHitsRef.current += hits
+    setShowerHits(showerHitsRef.current)
+    const pass = shower
+    setShower(null)
+    if (!clock || !pass) return
+    if (!survived) {
+      const point = tripPointAt(trip.samples, pass.day)
+      clock.crash = { day: pass.day, x: point.x, y: point.y }
+      clock.endedAt = performance.now()
+      finish({ type: SHOWER_CRASH, day: pass.day, x: point.x, y: point.y })
+      return
+    }
+    clock.nextEncounter += 1
+    clock.paused = false
+    clock.last = performance.now()
+  }, [shower, trip, finish])
 
   /** The crew picked an answer. A bad one, or the second mild one, blows up the ship here. */
   const chooseOption = (choice) => {
@@ -590,8 +626,11 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
     flightRef.current = null
     mildRef.current = 0
     grazeRef.current = 0
+    showerHitsRef.current = 0
     setMildMistakes(0)
     setGrazeCount(0)
+    setShowerHits(0)
+    setShower(null)
     setEncounter(null)
     setResult(null)
     setBlastSeen(false)
@@ -629,6 +668,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
           />
         </div>
       )}
+      {shower && <AsteroidShower onEnd={endShower} />}
       {step === 'landing' && <MarsLanding onDone={() => setStep('result')} />}
       {step === 'result' && result?.success && (
         <MissionCompleteScreen
@@ -839,6 +879,7 @@ export function MarsLaunchLevel({ mission, stageInfo, equipped, launchPlace, onL
                 <div><dt>{t('Power')}</dt><dd>{Math.round(aim.power * 100)}%</dd></div>
                 <div><dt>{t('Risky choices')}</dt><dd>{mildMistakes} / {MILD_LIMIT}</dd></div>
                 <div><dt>{t('Grazes')}</dt><dd>{grazeCount}</dd></div>
+                <div><dt>{t('Asteroid hits')}</dt><dd>{showerHits}</dd></div>
               </dl>
               {mildMistakes > 0 && (
                 <p className="orbit-panel__hint">Each risky choice costs {MILD_PENALTY} points. One more and the ship breaks apart.</p>
