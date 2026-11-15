@@ -13,8 +13,8 @@
  * with no medicine, space sickness can stop the crew too.
  */
 import { buildLaunchVehicle } from './levels/orbit/launchVehicle.js';
-import { earliestSupplyEnd, supplyReport } from './lifeSupport.js';
-import { partCount } from './parts.js';
+import { WATTS_PER_ENERGY_POINT, earliestSupplyEnd, supplyReport } from './lifeSupport.js';
+import { PARTS, partCount } from './parts.js';
 
 export const LAUNCH_FAILURES = Object.freeze({
   overBudget: {
@@ -36,6 +36,14 @@ export const LAUNCH_FAILURES = Object.freeze({
     at: 'scrub',
     message: 'There were no astronauts in the rocket, so there was no one to fly it. Mission control called off the launch.',
     hint: 'Go back to the hangar and add an astronaut.',
+  },
+  fewCrew: {
+    id: 'fewCrew',
+    // Some crew, but fewer than the trip needs: called off on the pad like no crew.
+    at: 'scrub',
+    bubble: 'We need more astronauts!',
+    message: 'This trip is too long and too hard for so few astronauts. Mission control called off the launch.',
+    hint: 'Go back to the hangar and add astronauts. More people also need more food, water, and air.',
   },
   noPower: {
     id: 'noPower',
@@ -78,6 +86,29 @@ export const LAUNCH_FAILURES = Object.freeze({
     message: 'Without the heat shield the rocket got too hot in the air and blew up.',
     hint: 'Go back to the hangar and add the heat shield.',
   },
+  // Mission 1 traps (the three extra parts in the Earth-orbit hangar)
+  tooMuchFuel: {
+    id: 'tooMuchFuel',
+    // The extra tanks are dead weight for one short loop: it lifts off, climbs too slowly,
+    // and falls back before it reaches orbit.
+    at: 'climb',
+    message: 'The extra fuel tanks made the rocket too heavy. It climbed too slowly, could not reach orbit, and fell back.',
+    hint: 'One loop around Earth does not need extra fuel. Go back to the hangar and leave the fuel tank.',
+  },
+  radioPower: {
+    id: 'radioPower',
+    at: 'pad',
+    message: 'The radio dish used up the last of the power. Life support shut down before the rocket could leave.',
+    hint: 'Close to Earth the rocket can already talk to mission control. Leave the radio dish in the hangar.',
+  },
+  plantsNoWater: {
+    id: 'plantsNoWater',
+    // Called off on the pad, like no crew: the pad crew walks away and one says why.
+    at: 'scrub',
+    bubble: 'No water for the plants!',
+    message: 'The plant locker needs water, and there is no water on this rocket. The plants would dry up, so mission control called off the launch.',
+    hint: 'Plants are for long trips. Leave the plant locker in the hangar for this short loop.',
+  },
   outOfFood: {
     id: 'outOfFood',
     at: 'flight',
@@ -116,12 +147,29 @@ export function launchFailure(equipped, mission) {
   const vehicle = buildLaunchVehicle(equipped);
   if (report.cost > report.limits.budget) return LAUNCH_FAILURES.overBudget;
   if (report.massKg > report.limits.mass) return LAUNCH_FAILURES.tooHeavy;
-  if (report.crew < report.minCrew) return LAUNCH_FAILURES.noCrew;
-  if (report.drawWatts > report.supplyWatts) return LAUNCH_FAILURES.noPower;
+  if (report.crew <= 0) return LAUNCH_FAILURES.noCrew;
+  if (report.crew < report.minCrew) {
+    return {
+      ...LAUNCH_FAILURES.fewCrew,
+      bubble: `We need ${report.minCrew} astronauts!`,
+      message: `This trip needs ${report.minCrew} astronauts, and only ${report.crew} got on board. Mission control called off the launch.`,
+    };
+  }
+  // Plants drink water: with none on board they cannot fly (mission 1 carries no water).
+  if (partCount(equipped, 'veggie') > 0 && !report.tracksWater) return LAUNCH_FAILURES.plantsNoWater;
+  if (report.drawWatts > report.supplyWatts) {
+    // The radio dish was the part too many
+    const dish = PARTS.find((part) => part.id === 'antenna');
+    const dishWatts = partCount(equipped, 'antenna') * (dish?.energy ?? 0) * WATTS_PER_ENERGY_POINT;
+    if (dishWatts > 0 && report.drawWatts - dishWatts <= report.supplyWatts) return LAUNCH_FAILURES.radioPower;
+    return LAUNCH_FAILURES.noPower;
+  }
   if (report.tracksWater && report.waterKg <= 0) return LAUNCH_FAILURES.noWater;
   if (report.o2Kg <= 0) return LAUNCH_FAILURES.noAir;
   if (partCount(equipped, 'boosters') <= 0 || vehicle.thrustToWeight <= 1) return LAUNCH_FAILURES.noBoosters;
   if (partCount(equipped, 'shield') <= 0 || report.heat < report.limits.heat) return LAUNCH_FAILURES.noShield;
+  // One short loop around Earth: extra fuel tanks are only dead weight.
+  if (mission?.id === 'earth' && partCount(equipped, 'fuel') > 0) return LAUNCH_FAILURES.tooMuchFuel;
   return null;
 }
 

@@ -47,6 +47,8 @@ export function Rocket({
   straining = false,
   returning = false,
   exploding = false,
+  turningBack = false,
+  grown,
 }) {
   if (exploding) {
     return (
@@ -59,14 +61,17 @@ export function Rocket({
     );
   }
 
-  const lit = flying || launching || ascending || straining;
+  const lit = flying || launching || ascending || straining || turningBack;
   const classes = ['rocket'];
   if (flying) classes.push('is-flying');
   if (launching) classes.push('is-launching');
   if (straining) classes.push('is-straining');
   if (returning) classes.push('is-returning');
+  if (turningBack) classes.push('is-turning-back');
   if (ascending) classes.push('is-ascending');
   if (open) classes.push('rocket--open');
+  // Upgraded rocket in the hangar: the sprites scale by --grow (set on .prep__swap)
+  if (grown ?? partCount(equipped, 'upgrade') > 0) classes.push('rocket--grown');
 
   const separated = stage !== 'full';
   const interior = PARTS.filter((part) => part.inside && partCount(equipped, part.id) > 0);
@@ -141,6 +146,22 @@ export function Rocket({
   );
 }
 
+/**
+ * Same sprite cell as sheetStyle, but in percentages of the element instead of pixels,
+ * so the 32px cell always fills its box exactly, whatever size the box ends up being.
+ */
+function fitSheetStyle(part, lit) {
+  const x = lit || part.offX == null ? part.frameX : part.offX;
+  const y = lit || part.offY == null ? part.frameY : part.offY;
+  const cell = ROCKET.frame || 32;
+  const pct = (offset, sheet) => (sheet > cell ? (offset / (sheet - cell)) * 100 : 0);
+  return {
+    backgroundImage: `url(${part.sheet})`,
+    backgroundSize: `${(part.sheetWidth / cell) * 100}% ${(part.sheetHeight / cell) * 100}%`,
+    backgroundPosition: `${pct(x, part.sheetWidth)}% ${pct(y, part.sheetHeight)}%`,
+  };
+}
+
 /** Small preview of one part, used on its icon button. */
 export function PartIcon({ part, lit = false }) {
   if (part.src) {
@@ -148,7 +169,7 @@ export function PartIcon({ part, lit = false }) {
   }
   return (
     <span className="part__icon">
-      <span className="rocket__layer" style={{ ...sheetStyle(part, lit), '--shift-y': part.iconShiftY ?? 0 }} />
+      <span className="rocket__layer" style={{ ...fitSheetStyle(part, lit), '--shift-y': part.iconShiftY ?? 0 }} />
     </span>
   );
 }

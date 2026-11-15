@@ -19,6 +19,7 @@ import {
   LUNAR_ORBIT_ALTITUDE_KM,
   MOON_RADIUS_KM,
   TRANSFER_OUTCOMES,
+  TRIP_DAYS,
   displayRadius,
   moonAt,
   toDisplay,
@@ -447,7 +448,13 @@ export function trafficAtPoint(view, traffic, launchDate, point, seconds = 0) {
 
 function pathColor(outcomeType) {
   if (outcomeType === TRANSFER_OUTCOMES.ARRIVED) return COLORS.pathGood
-  if (outcomeType === TRANSFER_OUTCOMES.SHORT || outcomeType === TRANSFER_OUTCOMES.PAST) return COLORS.pathWarn
+  if (
+    outcomeType === TRANSFER_OUTCOMES.SHORT
+    || outcomeType === TRANSFER_OUTCOMES.PAST
+    || outcomeType === TRANSFER_OUTCOMES.TOO_EARLY
+    || outcomeType === TRANSFER_OUTCOMES.TOO_LATE
+    || outcomeType === TRANSFER_OUTCOMES.LOOP
+  ) return COLORS.pathWarn
   return COLORS.pathBad
 }
 
@@ -727,6 +734,8 @@ function drawShipOn(ctx, view, scene, samples, position, clock, { size = 36, fla
     ctx.restore()
   }
   const image = scene.images.rocket
+  // The upgraded rocket is drawn bigger (rendering/upgradedRocket.js)
+  size *= image?.grow ?? 1
   ctx.save()
   ctx.translate(Math.round(screen.x), Math.round(screen.y))
   ctx.rotate(heading + Math.PI / 2)
@@ -812,7 +821,8 @@ function drawOrbitingShip(ctx, view, moonScreen, arrival, secondsSinceArrival, i
   ctx.rotate(-angle - (arrival.sense > 0 ? 0 : Math.PI))
   if (image?.complete && image.naturalWidth) {
     ctx.imageSmoothingEnabled = false
-    ctx.drawImage(image, -13, -13, 26, 26)
+    const half = 13 * (image.grow ?? 1)
+    ctx.drawImage(image, -half, -half, half * 2, half * 2)
   }
   ctx.restore()
   return { x, y }
@@ -986,10 +996,11 @@ export function drawMoonScene(ctx, view, sceneIn) {
   ctx.save()
   ctx.globalAlpha = planAlpha
   if (prediction && !flying && planAlpha > 0) {
-    // The Moon keeps moving while the ship flies: an arrow along its orbit, from launch to arrival.
-    drawMoonTravel(ctx, view, moonAt(scene.moonTable, 0), moonAt(scene.moonTable, prediction.closest.t))
-    // Where the Moon will be when the ship gets closest: the target to aim at.
-    const meet = moonAt(scene.moonTable, prediction.closest.t)
+    // The Moon keeps moving while the ship flies: an arrow along its orbit, from launch to day 3.
+    const meetSeconds = TRIP_DAYS * 86400
+    drawMoonTravel(ctx, view, moonAt(scene.moonTable, 0), moonAt(scene.moonTable, meetSeconds))
+    // Where the Moon will be on day 3: the spot the ship has to reach at that moment.
+    const meet = moonAt(scene.moonTable, meetSeconds)
     const ghost = drawMoonBody(ctx, view, scene, meet, 0.5)
     const capture = lensDistance(view, scene.captureKm ?? CAPTURE_KM, scene.captureKm ?? CAPTURE_KM)
     ctx.save()
@@ -1001,8 +1012,8 @@ export function drawMoonScene(ctx, view, sceneIn) {
     ctx.arc(ghost.x, ghost.y, capture + 2 + Math.sin(clock * 3) * 1.5, 0, Math.PI * 2)
     ctx.stroke()
     ctx.restore()
-    drawLabel(ctx, 'MOON WHEN YOU ARRIVE', ghost.x, ghost.y + capture + 14, 'center', '#ffd23f', 11)
-    drawLabel(ctx, `(day ${(prediction.closest.t / 86400).toFixed(1)} of the trip)`, ghost.x, ghost.y + capture + 28, 'center', '#ffd23f', 10)
+    drawLabel(ctx, `MOON ON DAY ${TRIP_DAYS}`, ghost.x, ghost.y + capture + 14, 'center', '#ffd23f', 11)
+    drawLabel(ctx, '(meet it here, right then)', ghost.x, ghost.y + capture + 28, 'center', '#ffd23f', 10)
   }
   ctx.restore()
 

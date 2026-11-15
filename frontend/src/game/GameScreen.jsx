@@ -13,10 +13,10 @@ import { PadClouds } from './PadClouds.jsx';
 import { PadFlag } from './PadFlag.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaikaStory, PadLaika } from './PadLaika.jsx';
-import { MissionChecklist } from './MissionChecklist.jsx';
 import { FunFactToast } from './FunFactToast.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
 import { LaunchSequence } from './LaunchSequence.jsx';
+import { UPGRADE_GROW } from './rendering/upgradedRocket.js';
 import { flightNotes } from './flightSummary.js';
 import { MissionFailedScreen } from './levels/orbit/MissionFailedScreen.jsx';
 import { flightSupplyFailure, launchFailure } from './launchFailure.js';
@@ -41,6 +41,10 @@ const TIMED_PHASES = {
   returning: { ms: 3200, next: 'failed' },
 };
 
+/** Upgrade swap: the crane drops its hook and hoists the rocket away, then lowers the new one. */
+const SWAP_OUT_MS = 1400;
+const SWAP_IN_MS = 1700;
+
 /**
  * Optional props used by MissionFlow:
  *   onLaunch(equipped)  when given, Launch hands the built rocket to the next stage
@@ -60,6 +64,18 @@ export function GameScreen({ mission, onExit, onRevise, onLaunch, initialEquippe
   const [equipped, setEquipped] = useState(initialEquipped ?? EMPTY_LOADOUT);
   const [flightSeconds, setFlightSeconds] = useState(0);
   const [flightHeld, setFlightHeld] = useState(false);
+  // Upgrade swap on the pad: a crane hoists the rocket away ('out'), then lowers the new one
+  // ('in'). `big` is the size the rocket ends up. Matches the prep-swap keyframes in game.css.
+  const [swap, setSwap] = useState(null);
+
+  useEffect(() => {
+    if (!swap) return undefined;
+    const timer = setTimeout(
+      () => setSwap(swap.step === 'out' ? { step: 'in', big: swap.big } : null),
+      swap.step === 'out' ? SWAP_OUT_MS : SWAP_IN_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [swap]);
 
   useEffect(() => {
     if (phase !== 'assemble' || (!storyOpen && !openPart)) return undefined;
@@ -108,6 +124,7 @@ export function GameScreen({ mission, onExit, onRevise, onLaunch, initialEquippe
   }
 
   function startLaunch() {
+    if (swap) return;
     if (onLaunch) {
       onLaunch(equipped);
       return;
@@ -199,6 +216,21 @@ export function GameScreen({ mission, onExit, onRevise, onLaunch, initialEquippe
 
   const { meters } = rocketStatus(equipped, mission);
 
+  // Moon and Mars: a bigger rocket for credits (lifeSupport.js, loadout.upgrade)
+  const upgrade = supplies.upgrade;
+  const upgraded = supplies.upgraded;
+  const canUpgrade = upgraded || creditsLeft >= (upgrade?.cost ?? 0);
+  function toggleUpgrade() {
+    if (!upgrade || !canUpgrade || swap) return;
+    playSfx(upgraded ? SFX.unequip : SFX.equip);
+    setEquipped((current) => ({ ...current, upgrade: partCount(current, 'upgrade') > 0 ? 0 : 1 }));
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (!reduceMotion) setSwap({ step: 'out', big: !upgraded });
+  }
+  // While the crane swaps rockets, the old size goes up and the new size comes down
+  const rocketBig = swap ? (swap.step === 'out' ? !swap.big : swap.big) : upgraded;
+
+
   const hud = (
     <header className="game__hud">
       <button type="button" className="game__back" onClick={onExit}>
@@ -282,20 +314,25 @@ export function GameScreen({ mission, onExit, onRevise, onLaunch, initialEquippe
             <div className="prep">
               <LaunchTower launching={launching} />
               <img className="prep__base" src={launchBase} alt="" />
-              <Rocket equipped={equipped} open={!launching} launching={launching} />
+              <div
+                className={swap ? `prep__swap is-${swap.step}` : 'prep__swap'}
+                style={{ '--grow': rocketBig ? UPGRADE_GROW : 1 }}
+              >
+                {swap && <span className="prep__cable" aria-hidden="true" />}
+                <Rocket equipped={equipped} open={!launching && !swap} launching={launching} grown={rocketBig} />
+              </div>
+              {swap?.step === 'in' && <span className="prep__dust" aria-hidden="true" />}
+              {/* Laika only waits on the pad for the Moon mission. Before PadCrew, so at the same
+                  z-index she walks behind the engineers instead of over them. */}
+              {mission.id === 'moon' && (
+                <PadLaika talking={laikaTalking} launching={launching} onTalk={() => setLaikaTalking(true)} />
+              )}
               <PadCrew />
             </div>
           </div>
-          <PadLaika talking={laikaTalking} onTalk={() => setLaikaTalking(true)} />
         </div>
       </div>
       {hud}
-      {/* Packing checklist: top left over the pad, clear of the supplies column on the right. */}
-      {!launching && (
-        <div className="game__checklist">
-          <MissionChecklist mission={mission} equipped={equipped} onOpenPart={(id, button) => { setOpenPart(id); setPartAnchor(button); }} />
-        </div>
-      )}
       <div className="bay" inert={launching}>
         <div className="pad-story">
           <button
@@ -351,6 +388,23 @@ export function GameScreen({ mission, onExit, onRevise, onLaunch, initialEquippe
               onChange={changeCount}
               onClose={() => setOpenPart(null)}
             />
+          )}
+          {upgrade && (
+            <button
+              type="button"
+              className={upgraded ? 'bay__upgrade is-on' : 'bay__upgrade'}
+              aria-pressed={upgraded}
+              disabled={!canUpgrade || Boolean(swap)}
+              title={upgraded
+                ? 'Take the upgrade off and get the credits back'
+                : `A bigger rocket: +${upgrade.pct}% mass and power`}
+              onClick={toggleUpgrade}
+            >
+              <span className="bay__upgrade-name">{upgraded ? 'Upgraded' : 'Upgrade'}</span>
+              <span className="bay__upgrade-info">
+                +{upgrade.pct}% cargo · {upgraded ? 'on' : `${upgrade.cost} cr`}
+              </span>
+            </button>
           )}
           <button
             type="button"

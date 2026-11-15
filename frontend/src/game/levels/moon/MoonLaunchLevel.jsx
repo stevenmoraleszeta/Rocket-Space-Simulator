@@ -31,6 +31,7 @@ import { flightNotes } from '../../flightSummary.js'
 import { planScore } from '../../design/missionPlan.js'
 import { flightSupplyFailure, launchFailure } from '../../launchFailure.js'
 import { partCount } from '../../parts.js'
+import { goldRocketImage, isUpgraded } from '../../rendering/upgradedRocket.js'
 import { LAUNCH_SITES } from '../orbit/launchSites.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
@@ -39,7 +40,7 @@ import {
   CAPTURE_KM,
   CAPTURE_KM_WITH_FUEL,
   EARTH_RADIUS_KM,
-  HOHMANN_POWER,
+  DEFAULT_AIM,
   MOON_TRAFFIC,
   TRANSFER_OUTCOMES,
   arrivalAccuracy,
@@ -144,6 +145,9 @@ const OUTCOME_TEXT = {
   [TRANSFER_OUTCOMES.EARTH_IMPACT]: { tone: 'bad', icon: '💥', text: 'The dots fall back into Earth. Drag the other way.' },
   [TRANSFER_OUTCOMES.SHORT]: { tone: 'warn', icon: '⬆️', text: 'Not enough power. Drag farther from the base.' },
   [TRANSFER_OUTCOMES.PAST]: { tone: 'warn', icon: '🌙', text: 'The dots miss the Moon. Change the hour, or drag in another direction.' },
+  [TRANSFER_OUTCOMES.TOO_EARLY]: { tone: 'warn', icon: '⏩', text: 'Too fast: the ship gets there before day 3, and the Moon is not at the yellow ring yet. Drag closer to the base for less power.' },
+  [TRANSFER_OUTCOMES.LOOP]: { tone: 'warn', icon: '↪️', text: 'The dots swing around Earth. Drag straight out from the base, toward the yellow ring.' },
+  [TRANSFER_OUTCOMES.TOO_LATE]: { tone: 'warn', icon: '⏪', text: 'Too slow: the ship gets there after day 3, and the Moon has already moved on. Drag farther from the base for more power.' },
 }
 
 const FAIL_TEXT = {
@@ -163,10 +167,28 @@ const FAIL_TEXT = {
     reason: 'The ship missed the Moon and kept flying into deep space.',
     hint: 'The Moon moves every hour. Change the hour, or turn the aim, until the path meets the yellow ring.',
   },
+  [TRANSFER_OUTCOMES.TOO_EARLY]: {
+    reason: 'The ship got there too soon. The trip is planned for 3 days, and the ship has to meet the Moon at the yellow ring on day 3, not before.',
+    hint: 'Drag a little closer to the base for less power, until the dots meet the Moon on day 3.',
+  },
+  [TRANSFER_OUTCOMES.TOO_LATE]: {
+    reason: 'The ship got there too late. The trip is planned for 3 days, and by then the Moon had already moved on.',
+    hint: 'Drag a little farther from the base for more power, until the dots meet the Moon on day 3.',
+  },
+  [TRANSFER_OUTCOMES.LOOP]: {
+    reason: 'The ship swung around Earth instead of heading out to the Moon.',
+    hint: 'Drag straight out from the base, toward the yellow ring where the Moon will be on day 3.',
+  },
   noLander: {
     reason: 'The ship reached the Moon, but nothing could slow it down. The Moon has almost no air, so it flew right past.',
     hint: 'Go back to the hangar and pack the lunar lander.',
   },
+}
+
+/** Not enough food: the rocket comes back down during the climb, before it leaves the air. */
+const FOOD_TURN_BACK = {
+  sign: 'Mission control: there is not enough food for the trip! Come back down.',
+  reason: 'There was not enough food for the trip to the Moon and back. Mission control saw it during the climb and called the rocket back. It came down and landed safely, before it ever left the air.',
 }
 
 function loadImage(src) {
@@ -292,7 +314,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, onBackTo
     setTipsOpen(true)
   }  const [siteId, setSiteId] = useState(null)
   const [cycleHours, setCycleHours] = useState(0)
-  const [aim, setAim] = useState({ offset: 0, power: HOHMANN_POWER })
+  const [aim, setAim] = useState(DEFAULT_AIM)
   const [liftingOff, setLiftingOff] = useState(false)
   const [telemetry, setTelemetry] = useState(null)
   const [seenHits, setSeenHits] = useState(0)
@@ -370,6 +392,13 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, onBackTo
 
   const failure = useMemo(() => launchFailure(equipped, mission), [equipped, mission])
   const supplyFailure = useMemo(() => flightSupplyFailure(equipped, mission), [equipped, mission])
+  // Short on food: mission control sees it during the climb and calls the rocket back down,
+  // before it leaves the air. The trip to the Moon never starts.
+  const foodShort = supplyFailure?.id === 'noFood' || supplyFailure?.id === 'outOfFood'
+  const liftoffFailure = useMemo(
+    () => failure ?? (foodShort ? { ...supplyFailure, at: 'turnBack', message: FOOD_TURN_BACK.sign } : null),
+    [failure, foodShort, supplyFailure],
+  )
 
   const view = useMemo(
     () => createMoonView(canvasSize.width / uiScale, canvasSize.height / uiScale),
@@ -384,7 +413,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, onBackTo
   const [images] = useState(() => ({
     earth: loadImage(ASSETS.earthPlanet.src),
     moon: loadImage(ASSETS.moonPlanet.src),
-    rocket: loadImage(ASSETS.rocketLit.src),
+    rocket: goldRocketImage(ASSETS.rocketLit.src, isUpgraded(equipped)),
     explosion: loadImage(ASSETS.explosion.src),
     goldSatellite: loadImage(ASSETS.goldSatellite.src),
     commsSatellite: loadImage(ASSETS.commsSatellite.src),
@@ -627,13 +656,42 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, onBackTo
 
   const failLaunch = useCallback(() => {
     setLiftingOff(false)
-    fail(failure.id, failure.message, failure.hint)
-  }, [fail, failure])
+    if (failure) fail(failure.id, failure.message, failure.hint)
+    else fail(supplyFailure.id, FOOD_TURN_BACK.reason, supplyFailure.hint)
+  }, [fail, failure, supplyFailure])
+
+  /**
+   * One burn home from the Moon, after the stay (seconds) there: the normal day in lunar
+   * orbit, or 0 when the crew turns straight back (no food).
+   */
+  function flyHome(stay) {
+    // The way home: worked out while aiming (after a full stay), or now.
+    let plan = stay === STAY_SECONDS ? returnPrediction : null
+    if (!plan) {
+      plan = simulateReturn({
+        moonTable,
+        arrivalT: prediction.outcome.t,
+        sense: arrivalSense(prediction.samples, moonTable),
+        stay,
+        arrival: prediction.samples[prediction.samples.length - 1],
+      })
+      setHomePlan({ key: homeKey, plan })
+    }
+    if (!plan) {
+      finishHomeRef.current?.()
+      return
+    }
+    playSynth(SYNTH.whoosh)
+    const homeSamples = plan.samples
+    flightRef.current.returnStartedAt = performance.now()
+    flightRef.current.returnPlaySeconds = playSecondsFor(homeSamples[homeSamples.length - 1].t - homeSamples[0].t, 6, 11)
+    setStep('return')
+  }
 
   const finishFlight = () => {
     const outcome = prediction.outcome
     const arrivedAt = outcome.t
-    if (supplyFailure && supplyFailure.atSeconds <= arrivedAt) {
+    if (supplyFailure && !foodShort && supplyFailure.atSeconds <= arrivedAt) {
       fail(supplyFailure.id, supplyFailure.message, supplyFailure.hint)
       return
     }
@@ -737,27 +795,9 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, onBackTo
       fail(supplyFailure.id, supplyFailure.message, supplyFailure.hint)
       return
     }
-    // The way home: worked out while aiming, or now if the player launched very fast.
-    let plan = returnPrediction
-    if (!plan) {
-      plan = simulateReturn({
-        moonTable,
-        arrivalT: prediction.outcome.t,
-        sense: arrivalSense(prediction.samples, moonTable),
-        arrival: prediction.samples[prediction.samples.length - 1],
-      })
-      setHomePlan({ key: homeKey, plan })
-    }
-    if (!plan) {
-      finishHomeRef.current?.()
-      return
-    }
-    playSynth(SYNTH.whoosh)
-    const homeSamples = plan.samples
-    flightRef.current.returnStartedAt = performance.now()
-    flightRef.current.returnPlaySeconds = playSecondsFor(homeSamples[homeSamples.length - 1].t - homeSamples[0].t, 6, 11)
-    setStep('return')
+    flyHome(STAY_SECONDS)
   }
+
 
   // Splashdown: score the maps.
   const finishHome = () => {
@@ -811,7 +851,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, onBackTo
   const acceptSite = () => {
     if (!site || leavingMap) return
     playSfx(SFX.confirm)
-    setAim({ offset: 0, power: HOHMANN_POWER })
+    setAim(DEFAULT_AIM)
     setHelpMessage('')
     // The globe shrinks away into space, then the Earth–Moon map fades in.
     setLeavingMap(true)
@@ -905,7 +945,7 @@ export function MoonLaunchLevel({ mission, stageInfo, equipped, design, onBackTo
       {hud}
       {liftingOff && (
         <div className="orbit-level__liftoff">
-          <LaunchSequence equipped={equipped} hud={hud} onDone={startFlight} failure={failure} onFail={failLaunch} />
+          <LaunchSequence equipped={equipped} hud={hud} onDone={startFlight} failure={liftoffFailure} onFail={failLaunch} />
         </div>
       )}
       {step === 'result' && result?.success && (
