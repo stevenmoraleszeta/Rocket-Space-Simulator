@@ -69,10 +69,10 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
   const tutorialMission = mission.id in TUTORIAL_PREVIOUS;
   // Missions 2 and 3: the new parts the player has already opened once
   const [tutorialSeen, setTutorialSeen] = useState(() => new Set());
+  const [openPart, setOpenPart] = useState(null);
   useEffect(() => {
     if (openPart) setTutorialSeen((seen) => (seen.has(openPart) ? seen : new Set(seen).add(openPart)));
   }, [openPart]);
-  const [openPart, setOpenPart] = useState(null);
   const [partAnchor, setPartAnchor] = useState(null);
   const sidePopout = useWideScreen();
   const [laikaTalking, setLaikaTalking] = useState(false);
