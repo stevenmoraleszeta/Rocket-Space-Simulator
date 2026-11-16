@@ -396,6 +396,15 @@ html:has(.proj) {
   color: var(--ms-muted);
 }
 
+.proj-mark {
+  margin: 0 0 0.6rem;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ms-yellow);
+}
+
 .proj-foot {
   width: min(var(--proj-wide), calc(100% - 2rem));
   margin: 0 auto 1.5rem;

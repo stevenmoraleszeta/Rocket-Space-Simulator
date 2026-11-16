@@ -220,6 +220,21 @@ export function ProjectPage() {
               )}
             </section>
           ))}
+
+          <section id="si" className="proj-section">
+            <p className="proj-mark" aria-hidden="true">{language === 'es' ? 'Hecho con IA (SI)' : 'Made with AI (SI)'}</p>
+            <h2>{copy.siTitle}</h2>
+            <p className="proj-lead">{copy.siLead}</p>
+            <div className="proj-grid">
+              {copy.siMarks.map((mark) => (
+                <article key={mark.title} className="proj-panel">
+                  <h3>{mark.title}</h3>
+                  <p>{mark.text}</p>
+                </article>
+              ))}
+            </div>
+            <p className="proj-note">{copy.siNote}</p>
+          </section>
         </main>
 
         <footer className="proj-foot">

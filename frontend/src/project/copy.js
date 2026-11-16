@@ -26,7 +26,7 @@ const MEMBERS = Object.freeze([
 export const PROJECT_COPY = Object.freeze({
   en: {
     metaTitle: 'Rocket Space Simulator · Space TEC',
-    metaDescription: 'A pixel-art mission trainer for kids ages 8+. Pack a rocket for Earth, the Moon, and Mars, and pay the real cost in air, water, food, power, and the radio.',
+    metaDescription: 'A pixel-art mission trainer for kids ages 8+, made with AI (SI) help. Pack a rocket for Earth, the Moon, and Mars, and pay the real cost in air, water, food, power, and the radio.',
     skip: 'Skip to content',
     langLabel: 'Language',
     play: 'Play',
@@ -40,6 +40,7 @@ export const PROJECT_COPY = Object.freeze({
       { href: '#viability', label: 'Viability' },
       { href: '#prototype', label: 'Prototype' },
       { href: '#presentation', label: 'Presentation' },
+      { href: '#si', label: 'AI use' },
     ],
     kicker: 'NASA Space Apps Challenge 2026',
     thesis: 'The review is in the game',
@@ -174,11 +175,28 @@ export const PROJECT_COPY = Object.freeze({
     teamLink: 'Team page',
     members: MEMBERS,
     stack: 'Built with React, Vite, and pixel art in the browser, a Python FastAPI service, and Firebase Auth and Firestore for each player’s stars. MIT license.',
+    siTitle: 'Use of Super Intelligence (SI)',
+    siLead: 'Space Apps allows chatbots, large language models, and other SI tools when teams say where and how they were used. This build was made with AI help. The team chose the mission, the science limits, and what a player sees. AI helped write code, draft English and Spanish text, and shape the trailer. No NASA logos, flags, or mission marks were generated or changed by SI.',
+    siMarks: [
+      {
+        title: 'Code and data',
+        text: 'AI coding assistants helped write and edit the React and Python code, tests, and mission numbers. NASA rates and facts still come from the published sources listed on this page. This note is the descriptive text and metadata for that help.',
+      },
+      {
+        title: 'Images and video',
+        text: 'The intro trailer and on-screen art were built with AI assistance. A visible “Made with AI (SI)” watermark stays on the trailer and on the mission menu.',
+      },
+      {
+        title: 'Audio',
+        text: 'Trailer music, sound effects, and spoken lines were shaped with AI help. This page and the on-screen watermarks are the descriptive text for that audio.',
+      },
+    ],
+    siNote: 'Judges can open Play to see the same watermarks in the game. Nothing here copies or alters NASA branding.',
     footer: 'Rocket Space Simulator · Space TEC · NASA Space Apps Challenge 2026',
   },
   es: {
     metaTitle: 'Rocket Space Simulator · Space TEC',
-    metaDescription: 'Un entrenador de misiones en pixel art para niños de 8+ años. Empaca un cohete a la Tierra, la Luna y Marte, y paga el costo real en aire, agua, comida, energía y radio.',
+    metaDescription: 'Un entrenador de misiones en pixel art para niños de 8+ años, hecho con ayuda de IA (SI). Empaca un cohete a la Tierra, la Luna y Marte, y paga el costo real en aire, agua, comida, energía y radio.',
     skip: 'Saltar al contenido',
     langLabel: 'Idioma',
     play: 'Jugar',
@@ -192,6 +210,7 @@ export const PROJECT_COPY = Object.freeze({
       { href: '#viability', label: 'Viabilidad' },
       { href: '#prototype', label: 'Prototipo' },
       { href: '#presentation', label: 'Presentación' },
+      { href: '#si', label: 'Uso de IA' },
     ],
     kicker: 'NASA Space Apps Challenge 2026',
     thesis: 'La revisión está en el juego',
@@ -326,6 +345,23 @@ export const PROJECT_COPY = Object.freeze({
     teamLink: 'Página del equipo',
     members: MEMBERS,
     stack: 'Hecho con React, Vite y pixel art en el navegador, un servicio Python con FastAPI, y Firebase Auth y Firestore para las estrellas de cada jugador. Licencia MIT.',
+    siTitle: 'Uso de Superinteligencia (SI)',
+    siLead: 'Space Apps permite chatbots, modelos de lenguaje y otras herramientas de SI cuando el equipo dice dónde y cómo las usó. Este prototipo se hizo con ayuda de IA. El equipo eligió la misión, los límites científicos y lo que ve el jugador. La IA ayudó a escribir código, redactar texto en inglés y español y armar el tráiler. Ningún logo, bandera ni marca de misión de la NASA fue generado o modificado con SI.',
+    siMarks: [
+      {
+        title: 'Código y datos',
+        text: 'Asistentes de código con IA ayudaron a escribir y editar el código React y Python, las pruebas y los números de las misiones. Las cifras y hechos de la NASA siguen saliendo de las fuentes publicadas de esta página. Esta nota es el texto descriptivo y los metadatos de esa ayuda.',
+      },
+      {
+        title: 'Imágenes y vídeo',
+        text: 'El tráiler de entrada y el arte en pantalla se hicieron con ayuda de IA. Una marca de agua visible “Hecho con IA (SI)” permanece en el tráiler y en el menú de misiones.',
+      },
+      {
+        title: 'Audio',
+        text: 'La música del tráiler, los efectos de sonido y las líneas habladas se armaron con ayuda de IA. Esta página y las marcas de agua en pantalla son el texto descriptivo de ese audio.',
+      },
+    ],
+    siNote: 'Un jurado puede pulsar Jugar y ver las mismas marcas de agua en el juego. Nada aquí copia ni altera la marca de la NASA.',
     footer: 'Rocket Space Simulator · Space TEC · NASA Space Apps Challenge 2026',
   },
 })
