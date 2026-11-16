@@ -18,6 +18,7 @@ import {
   stepShower,
 } from './asteroidShower.js'
 import { createShowerSky, drawShowerSky } from './showerSky.js'
+import { TutorialGuide } from '../../tutorial/TutorialGuide.jsx'
 
 /** Keyboard steering speed, in field pixels per second. */
 const KEY_SPEED = 150
@@ -28,7 +29,16 @@ function loadImage(src) {
   return image
 }
 
-export function AsteroidShower({ onEnd }) {
+/** With the Tutorial on, a hand swings left and right over the field for the first seconds. */
+const TUTORIAL_HINT_MS = 3500
+
+export function AsteroidShower({ onEnd, tutorial = false }) {
+  const [hintOn, setHintOn] = useState(tutorial)
+  useEffect(() => {
+    if (!tutorial) return undefined
+    const timer = setTimeout(() => setHintOn(false), TUTORIAL_HINT_MS)
+    return () => clearTimeout(timer)
+  }, [tutorial])
   const canvasRef = useRef(null)
   const targetRef = useRef(null)
   const keysRef = useRef({ left: false, right: false })
@@ -146,6 +156,7 @@ export function AsteroidShower({ onEnd }) {
         onPointerDown={aim}
         aria-label={t('Space with falling asteroids and your rocket at the bottom')}
       />
+      {hintOn && <TutorialGuide slide={{ target: '.mars-shower__field', swing: true }} />}
     </div>
   )
 }

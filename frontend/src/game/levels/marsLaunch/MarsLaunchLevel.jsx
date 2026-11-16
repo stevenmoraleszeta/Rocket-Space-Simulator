@@ -27,6 +27,8 @@ import { forgivenFailures, marsSupplyFacts } from './marsSupplies.js'
 import { PARTS, partCount, partMax } from '../../parts.js'
 import { flightNotes } from '../../flightSummary.js'
 import { MissionCompleteScreen } from '../orbit/MissionCompleteScreen.jsx'
+import { TutorialButton, TutorialGuide } from '../../tutorial/TutorialGuide.jsx'
+import { useTutorial } from '../../tutorial/tutorialStore.js'
 import { MissionFailedScreen } from '../orbit/MissionFailedScreen.jsx'
 import { LAUNCH_SITES } from '../orbit/launchSites.js'
 import { useLaunchRoute } from '../orbit/useLaunchRoute.js'
@@ -192,6 +194,11 @@ function failureHint(result) {
 
 export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace, onBackToHangar, onExit }) {
   const { completeMission } = useProgress()
+  // Optional Tutorial: only shows what is new here (the two sliders, the crew choices and the
+  // asteroid shower). It never picks for the player. A flight launched with it on is practice.
+  const [tutorialOn, setTutorialOn] = useTutorial()
+  const [tutorialUsed, setTutorialUsed] = useState({ angle: false, power: false })
+  const practiceRef = useRef(false)
   const playerName = engineerName(useSettings().playerName)
 
   const { step, setStep, siteId, setSiteId } = useLaunchRoute(launchPlace, onLaunchPlace)
@@ -297,7 +304,7 @@ export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace,
     const pct = success ? Math.max(0, scoreMarsArrival(outcome, trip.angleErrorDeg) - penalty) : 0
     let progress = null
     try {
-      progress = completeMission(mission.id, {
+      if (!practiceRef.current) progress = completeMission(mission.id, {
         pct,
         success,
         flight: flightNotes(equipped, { site: site ? `${site.name}, ${site.country}` : '', orbit: formatAngle(aim.angleDeg) }),
@@ -313,6 +320,7 @@ export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace,
       pct,
       stars: progress?.stars ?? 0,
       unlockedMissionId: progress?.unlockedMissionId ?? null,
+      practice: practiceRef.current,
       aimDeg: aim.angleDeg,
       directionDeg: formatDecimal(aim.angleDeg, 2),
       angleRight: angleInWindow(aim.angleDeg),
@@ -615,6 +623,7 @@ export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace,
   }
 
   const launch = () => {
+    practiceRef.current = tutorialOn
     playSfx(SFX.liftoff)
     setHazardCard(null)
     setResult(null)
@@ -638,13 +647,33 @@ export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace,
   }
 
   const prediction = describeTrip(trip, aim)
+  /** A slider moved: aim there, and the Tutorial goes on to the next new thing. */
+  const moveAim = (next, which) => {
+    setAim(next)
+    setTutorialUsed((used) => (used[which] ? used : { ...used, [which]: true }))
+  }
+  // Tutorial: slide the angle, then the power, then look at the path check. In flight it frames
+  // the crew choices (without picking one). The asteroid shower shows its own swinging hand.
+  let tutorial = null
+  if (tutorialOn && !liftingOff && !shower) {
+    if (step === 'aim') {
+      if (!tutorialUsed.angle) tutorial = { slide: { target: '#mars-angle' } }
+      else if (!tutorialUsed.power) tutorial = { slide: { target: '#mars-power' } }
+      else tutorial = { target: "[data-tutorial='mars-check']", hand: false }
+    } else if (encounter && !encounter.picked) {
+      tutorial = { target: '.mars-encounter__choices', hand: false }
+    }
+  }
   const showFailScreen = step === 'result' && result && !result.success && (!result.exploded || blastSeen)
 
   const hud = (
     <header className="game__hud orbit-level__hud">
-      <button type="button" className="game__back" onClick={onExit}>
-        {t('Missions')}
-      </button>
+      <div className="game__corner">
+        <button type="button" className="game__back" onClick={onExit}>
+          {t('Missions')}
+        </button>
+        {(step === 'site' || step === 'aim') && <TutorialButton on={tutorialOn} onToggle={setTutorialOn} />}
+      </div>
       <div className="game__mission">
         <h1>{t(mission.title)}</h1>
       </div>
@@ -667,7 +696,8 @@ export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace,
           />
         </div>
       )}
-      {shower && <AsteroidShower onEnd={endShower} />}
+      {tutorial && <TutorialGuide target={tutorial.target ?? null} slide={tutorial.slide ?? null} hand={tutorial.hand ?? true} />}
+      {shower && <AsteroidShower onEnd={endShower} tutorial={tutorialOn} />}
       {step === 'landing' && <MarsLanding onDone={() => setStep('result')} />}
       {step === 'result' && result?.success && (
         <MissionCompleteScreen
@@ -676,7 +706,13 @@ export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace,
           directionDeg={result.directionDeg}
           lead={t('Your rocket reached Mars after {{days}} days!', { days: Math.round(result.outcome.day) })}
           onContinue={onExit}
+          continueLabel={result.practice ? t('Missions') : undefined}
           onFlyAgain={retry}
+          practice={result.practice}
+          onFlyForReal={() => {
+            setTutorialOn(false)
+            retry()
+          }}
         />
       )}
       {showFailScreen && (
@@ -830,7 +866,7 @@ export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace,
               <div className="mars-slider">
                 <label htmlFor="mars-angle">{t('Angle')} <b>{formatAngle(aim.angleDeg)}</b></label>
                 <div className="mars-slider__row">
-                  <button type="button" className="mars-slider__step" aria-label={t('Less angle')} onClick={() => setAim(clampAim(aim.angleDeg - ANGLE_SLIDER.step, aim.power))}>−</button>
+                  <button type="button" className="mars-slider__step" aria-label={t('Less angle')} onClick={() => moveAim(clampAim(aim.angleDeg - ANGLE_SLIDER.step, aim.power), 'angle')}>−</button>
                   <input
                     id="mars-angle"
                     type="range"
@@ -838,16 +874,16 @@ export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace,
                     max={ANGLE_SLIDER.max}
                     step={ANGLE_SLIDER.step}
                     value={aim.angleDeg}
-                    onChange={(event) => setAim(clampAim(Number(event.target.value), aim.power))}
+                    onChange={(event) => moveAim(clampAim(Number(event.target.value), aim.power), 'angle')}
                   />
-                  <button type="button" className="mars-slider__step" aria-label={t('More angle')} onClick={() => setAim(clampAim(aim.angleDeg + ANGLE_SLIDER.step, aim.power))}>+</button>
+                  <button type="button" className="mars-slider__step" aria-label={t('More angle')} onClick={() => moveAim(clampAim(aim.angleDeg + ANGLE_SLIDER.step, aim.power), 'angle')}>+</button>
                 </div>
                 <p className="mars-slider__scale"><span>{ANGLE_SLIDER.min}°</span><span>{ANGLE_WINDOW.min}°–{ANGLE_WINDOW.max}°</span><span>{ANGLE_SLIDER.max}°</span></p>
               </div>
               <div className="mars-slider">
                 <label htmlFor="mars-power">{t('Power')} <b>{Math.round(aim.power * 100)}%</b></label>
                 <div className="mars-slider__row">
-                  <button type="button" className="mars-slider__step" aria-label={t('Less power')} onClick={() => setAim(clampAim(aim.angleDeg, aim.power - POWER_SLIDER.step))}>−</button>
+                  <button type="button" className="mars-slider__step" aria-label={t('Less power')} onClick={() => moveAim(clampAim(aim.angleDeg, aim.power - POWER_SLIDER.step), 'power')}>−</button>
                   <input
                     id="mars-power"
                     type="range"
@@ -855,12 +891,12 @@ export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace,
                     max={POWER_SLIDER.max}
                     step={POWER_SLIDER.step}
                     value={aim.power}
-                    onChange={(event) => setAim(clampAim(aim.angleDeg, Number(event.target.value)))}
+                    onChange={(event) => moveAim(clampAim(aim.angleDeg, Number(event.target.value)), 'power')}
                   />
-                  <button type="button" className="mars-slider__step" aria-label={t('More power')} onClick={() => setAim(clampAim(aim.angleDeg, aim.power + POWER_SLIDER.step))}>+</button>
+                  <button type="button" className="mars-slider__step" aria-label={t('More power')} onClick={() => moveAim(clampAim(aim.angleDeg, aim.power + POWER_SLIDER.step), 'power')}>+</button>
                 </div>
               </div>
-              <p className={`orbit-prediction is-${prediction.tone}`} style={{ borderColor: pathColor(trip.outcome) }}>
+              <p className={`orbit-prediction is-${prediction.tone}`} data-tutorial="mars-check" style={{ borderColor: pathColor(trip.outcome) }}>
                 {sayTo(playerName, prediction.text)}
               </p>
               <div className="orbit-panel__actions">

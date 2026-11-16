@@ -4,6 +4,9 @@
  *   <TutorialGuide target="[data-tutorial='part-shield']" />           a hand that taps a button
  *   <TutorialGuide drag={{ from: {x, y}, to: {x, y} }} />               a hand that drags (page pixels)
  *   <TutorialGuide marks={["[data-tutorial-key]"]} />                  small stars on the important things
+ *   <TutorialGuide slide={{ target: '#slider' }} />                    a hand sliding along a slider
+ *   <TutorialGuide slide={{ target: '.field', swing: true }} />        a hand going left and right
+ *   <TutorialGuide target=".panel" hand={false} />                     only a frame and an arrow: "look here"
  *
  * It never blocks clicks (pointer-events: none) and follows the target when the screen moves.
  * Also exports TutorialButton, the small optional "Tutorial" switch.
@@ -115,8 +118,9 @@ function Marks({ selectors }) {
   ))
 }
 
-export function TutorialGuide({ target = null, drag = null, marks = [] }) {
+export function TutorialGuide({ target = null, drag = null, slide = null, marks = [], hand = true }) {
   const box = useTargetBox(target)
+  const slideBox = useTargetBox(slide?.target ?? null)
   let pointer = null
   if (box) {
     const x = box.left + box.width / 2
@@ -131,7 +135,34 @@ export function TutorialGuide({ target = null, drag = null, marks = [] }) {
         <span className={`tut-arrow-wrap${fromBelow ? ' is-below' : ''}`} style={{ left: x, top: fromBelow ? box.top + box.height + 6 : box.top - 6 }}>
           <PixelArrow />
         </span>
-        <span className="tut-tap" style={{ left: x, top: box.top + box.height * 0.6 }}>
+        {hand && (
+          <span className="tut-tap" style={{ left: x, top: box.top + box.height * 0.6 }}>
+            <PixelHand />
+          </span>
+        )}
+      </>
+    )
+  }
+  let slider = null
+  if (slide && slideBox) {
+    const y = slideBox.top + slideBox.height / 2
+    const from = { x: slideBox.left + slideBox.width * 0.25, y: slide.swing ? slideBox.top + slideBox.height * 0.8 : y }
+    const dx = slideBox.width * 0.5
+    slider = (
+      <>
+        {!slide.swing && (
+          <span
+            className="tut-ring"
+            style={{ left: slideBox.left - 6, top: slideBox.top - 6, width: slideBox.width + 12, height: slideBox.height + 12 }}
+          />
+        )}
+        <span className="tut-swing-arrows" style={{ left: slideBox.left + slideBox.width / 2, top: from.y - 34 }}>
+          ◀ ▶
+        </span>
+        <span
+          className={slide.swing ? 'tut-drag is-swing' : 'tut-drag'}
+          style={{ left: from.x, top: from.y, '--tut-dx': `${dx}px`, '--tut-dy': '0px' }}
+        >
           <PixelHand />
         </span>
       </>
@@ -166,6 +197,7 @@ export function TutorialGuide({ target = null, drag = null, marks = [] }) {
       <Marks selectors={marks} />
       {pointer}
       {dragger}
+      {slider}
     </div>
   )
 }

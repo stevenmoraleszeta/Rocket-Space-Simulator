@@ -112,6 +112,27 @@
   90%, 100% { translate: var(--tut-dx) var(--tut-dy); opacity: 0; }
 }
 
+/* Left and right: the hand swings back and forth (sliders, dodging) */
+.tut-drag.is-swing {
+  animation: tut-swing 1.6s steps(12, end) infinite alternate;
+}
+
+@keyframes tut-swing {
+  from { translate: 0 0; }
+  to { translate: var(--tut-dx) 0; }
+}
+
+.tut-swing-arrows {
+  position: fixed;
+  transform: translateX(-50%);
+  color: #ffd64a;
+  font-size: 20px;
+  letter-spacing: 0.5em;
+  line-height: 1;
+  text-shadow: 2px 2px 0 #1a1230, -1px -1px 0 #1a1230, 0 0 8px rgba(255, 214, 74, 0.9);
+  animation: tut-ring 0.8s steps(2, jump-none) infinite;
+}
+
 /* Important things wear a small star */
 .tut-star {
   position: fixed;
@@ -167,11 +188,13 @@
   .tut-dot,
   .tut-star,
   .tut-arrow-wrap,
+  .tut-swing-arrows,
   .tut-tap {
     animation: none;
   }
   /* The drag hand waits at the end of the road instead of sliding */
-  .tut-drag {
+  .tut-drag,
+  .tut-drag.is-swing {
     animation: none;
     translate: var(--tut-dx) var(--tut-dy);
   }

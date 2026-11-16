@@ -64,9 +64,14 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
   // The story starts closed: the light bulb opens it, and blinks until it is tapped once.
   const [storyOpen, setStoryOpen] = useState(false);
   const [storySeen, setStorySeen] = useState(false);
-  // Optional Tutorial (mission 1): hands and arrows over the real buttons, no text
+  // Optional Tutorial (missions 1–3): hands and arrows over the real buttons, no text
   const [tutorialOn, setTutorialOn] = useTutorial();
-  const tutorialMission = mission.id === 'earth';
+  const tutorialMission = mission.id in TUTORIAL_PREVIOUS;
+  // Missions 2 and 3: the new parts the player has already opened once
+  const [tutorialSeen, setTutorialSeen] = useState(() => new Set());
+  useEffect(() => {
+    if (openPart) setTutorialSeen((seen) => (seen.has(openPart) ? seen : new Set(seen).add(openPart)));
+  }, [openPart]);
   const [openPart, setOpenPart] = useState(null);
   const [partAnchor, setPartAnchor] = useState(null);
   const sidePopout = useWideScreen();
@@ -244,16 +249,29 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
   const rocketBig = swap ? (swap.step === 'out' ? !swap.big : swap.big) : upgraded;
 
 
-  // Tutorial: star the parts the trip needs, then point at the next one to pack
+  // Tutorial, mission 1: star the parts the trip needs, then point at the next one to pack
   // (tap it, then tap +), and at Aim once they are all aboard.
-  const neededParts = (mission.checklist?.required ?? []).map((item) => item.part);
-  const tutorialMarks = neededParts.map((id) => `[data-tutorial='part-${id}']`);
-  const missingPart = neededParts.find((id) => partCount(equipped, id) === 0);
-  const tutorialTarget = missingPart
-    ? openPart === missingPart
-      ? "[data-tutorial='part-add']"
-      : `[data-tutorial='part-${missingPart}']`
-    : "[data-tutorial='aim']";
+  // Missions 2 and 3 only show what is NEW (it never says what to pack): stars on the new parts
+  // and the upgrade, and a hand that opens each new part once so the player can read it.
+  let tutorialMarks = [];
+  let tutorialTarget = null;
+  const previousMission = TUTORIAL_PREVIOUS[mission.id];
+  if (previousMission === null) {
+    const neededParts = (mission.checklist?.required ?? []).map((item) => item.part);
+    tutorialMarks = neededParts.map((id) => `[data-tutorial='part-${id}']`);
+    const missingPart = neededParts.find((id) => partCount(equipped, id) === 0);
+    tutorialTarget = missingPart
+      ? openPart === missingPart
+        ? "[data-tutorial='part-add']"
+        : `[data-tutorial='part-${missingPart}']`
+      : "[data-tutorial='aim']";
+  } else if (previousMission) {
+    const before = new Set(partsForMission(previousMission).map((part) => part.id));
+    const newParts = catalog.filter((part) => !before.has(part.id)).map((part) => part.id);
+    tutorialMarks = [...newParts.map((id) => `[data-tutorial='part-${id}']`), "[data-tutorial='upgrade']"];
+    const unseen = newParts.find((id) => !tutorialSeen.has(id));
+    tutorialTarget = unseen && !openPart ? `[data-tutorial='part-${unseen}']` : null;
+  }
 
   const hud = (
     <header className="game__hud">
@@ -420,6 +438,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
             <button
               type="button"
               className={upgraded ? 'bay__upgrade is-on' : 'bay__upgrade'}
+              data-tutorial="upgrade"
               aria-pressed={upgraded}
               disabled={!canUpgrade || Boolean(swap)}
               title={upgraded
@@ -467,6 +486,9 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
     </div>
   );
 }
+
+/** Missions with a Tutorial, and the mission before each (its parts are not new). */
+const TUTORIAL_PREVIOUS = { earth: null, moon: 'earth', mars: 'moon' };
 
 /** Story and clues. Opens from the light bulb and stays inside the screen. */
 function Briefing({ mission, onClose }) {

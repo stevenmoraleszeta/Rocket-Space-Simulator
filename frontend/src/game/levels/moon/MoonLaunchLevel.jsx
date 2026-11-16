@@ -37,6 +37,8 @@ import { LAUNCH_SITES } from '../orbit/launchSites.js'
 import { REAL_SATELLITES } from '../orbit/realSatellites.js'
 import { createView as createEarthView, drawOrbitScene, siteScreenPosition } from '../orbit/orbitRenderer.js'
 import { SitePin } from '../orbit/SitePin.jsx'
+import { TutorialButton, TutorialGuide } from '../../tutorial/TutorialGuide.jsx'
+import { useTutorial } from '../../tutorial/tutorialStore.js'
 import { PixelIcon } from '../../PixelIcon.jsx'
 import { SunRating } from './SunRating.jsx'
 import { useLaunchRoute } from '../orbit/useLaunchRoute.js'
@@ -243,6 +245,11 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
   const [tipsSeen, setTipsSeen] = useState(() => new Set([step]))
   const [helpMessage, setHelpMessage] = useState('')
   const [hasDragged, setHasDragged] = useState(false)
+  // Optional Tutorial: only shows what is new here (the launch day, the hour, the junk in the way).
+  // It never picks for the player. A flight launched with it on is practice and is not saved.
+  const [tutorialOn, setTutorialOn] = useTutorial()
+  const [tutorialUsed, setTutorialUsed] = useState({ day: false, hour: false })
+  const practiceRef = useRef(false)
   const [leavingMap, setLeavingMap] = useState(false)
   // Calm music for the tips, the flight music everywhere else.
   useSoundtrack(
@@ -606,6 +613,7 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
 
   // ---------------------------------------------------------------- results
   const recordResult = useCallback((pct, success) => {
+    if (practiceRef.current) return null
     try {
       return completeMission(mission.id, {
         pct,
@@ -621,7 +629,7 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
   const fail = useCallback((type, reason, hint, extra = {}) => {
     recordResult(0, false)
     playSfx(extra.exploded ? SFX.explosion : SFX.lose)
-    setResult({ outcome: { type }, success: false, pct: 0, stars: 0, reason, hint, ...extra })
+    setResult({ outcome: { type }, success: false, pct: 0, stars: 0, reason, hint, ...extra, practice: practiceRef.current })
     setStep('result')
   }, [recordResult])
 
@@ -788,6 +796,7 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
       success,
       pct,
       stars: progress?.stars ?? 0,
+      practice: practiceRef.current,
       tripDays,
       reason: success
         ? ''
@@ -855,6 +864,7 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
     setHelpMessage(found.hits ? 'This is the best path at this hour, but it still hits something. Try another hour.' : 'Here is a good path. You can still drag it.')
   }
   const launch = () => {
+    practiceRef.current = tutorialOn
     playSfx(SFX.liftoff)
     flightRef.current = null
     setTelemetry(null)
@@ -891,12 +901,14 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
   const launchDay = Math.floor(cycleHours / 24)
   const launchClock = formatDate(date, { hour: 'numeric', minute: '2-digit' })
   const shiftHours = (hours) => {
+    setTutorialUsed((used) => (used.hour ? used : { ...used, hour: true }))
     playSynth(SYNTH.tick)
     setHelpMessage('')
     setCycleHours((value) => Math.min(CYCLE_HOURS, Math.max(0, value + hours)))
   }
   const pickDay = (day) => {
     if (day === launchDay) return
+    setTutorialUsed((used) => (used.day ? used : { ...used, day: true }))
     playSynth(SYNTH.tick)
     setHelpMessage('')
     setCycleHours(Math.min(CYCLE_HOURS, Math.max(0, day * 24 + hourOfDay)))
@@ -905,7 +917,10 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
 
   const hud = (
     <header className="game__hud orbit-level__hud">
-      <button type="button" className="game__back" onClick={onExit}>{t('Missions')}</button>
+      <div className="game__corner">
+        <button type="button" className="game__back" onClick={onExit}>{t('Missions')}</button>
+        {(step === 'site' || step === 'aim') && <TutorialButton on={tutorialOn} onToggle={setTutorialOn} />}
+      </div>
       <div className="game__mission">
         <h1>{t(mission.title)}</h1>
       </div>
@@ -914,6 +929,13 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
   )
 
   const summary = prediction ? OUTCOME_TEXT[prediction.outcome.type] : null
+  // Tutorial (aim only): slide the day strip, then tap the hour, then look at the junk check.
+  let tutorial = null
+  if (tutorialOn && step === 'aim' && site && !tipsOpen && !liftingOff) {
+    if (!tutorialUsed.day) tutorial = { slide: { target: '.moon-days__slider' } }
+    else if (!tutorialUsed.hour) tutorial = { target: "[data-tutorial='moon-hour']" }
+    else tutorial = { target: '.moon-hazards__warn, .moon-hazards__clear', hand: false }
+  }
   const brokenParts = damage.broken
   const blockedReason = (choice) => choiceBlockedReason(choice, equipped, brokenParts)
 
@@ -925,6 +947,7 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
           <LaunchSequence equipped={equipped} hud={hud} onDone={startFlight} failure={liftoffFailure} onFail={failLaunch} />
         </div>
       )}
+      {tutorial && <TutorialGuide target={tutorial.target ?? null} slide={tutorial.slide ?? null} hand={tutorial.hand ?? true} />}
       {step === 'result' && result?.success && !moonStory && (
         <MissionCompleteScreen
           mission={mission}
@@ -933,9 +956,14 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
           lead={result.tripDays
             ? t('Your crew mapped the Moon and came home after {{days}} days.', { days: formatDecimal(result.tripDays, 1) })
             : t('Your crew mapped the Moon and came home.')}
-          onContinue={() => setMoonStory(true)}
-          continueLabel={t('Continue')}
+          onContinue={result.practice ? onExit : () => setMoonStory(true)}
+          continueLabel={result.practice ? t('Missions') : t('Continue')}
           onFlyAgain={retry}
+          practice={result.practice}
+          onFlyForReal={() => {
+            setTutorialOn(false)
+            retry()
+          }}
         />
       )}
       {moonStory && <MoonLandingStory onDone={onExit} />}
@@ -1110,7 +1138,7 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
               <div className="moon-picker" role="group" aria-label={t('Launch hour')}>
                 <button type="button" onClick={() => shiftHours(-1)} disabled={cycleHours === 0} aria-label={t('One hour earlier')}>◀</button>
                 <p><span className="moon-picker__icon" aria-hidden="true"><PixelIcon name="clock" /></span> {launchClock}<small>{t('Earth turns')}</small></p>
-                <button type="button" onClick={() => shiftHours(1)} disabled={cycleHours === CYCLE_HOURS} aria-label={t('One hour later')}>▶</button>
+                <button type="button" data-tutorial="moon-hour" onClick={() => shiftHours(1)} disabled={cycleHours === CYCLE_HOURS} aria-label={t('One hour later')}>▶</button>
               </div>
               {summary && <p className={`orbit-prediction is-${summary.tone}`}><PixelIcon name={summary.icon} /> {sayTo(playerName, t(summary.text))}</p>}
               {prediction?.outcome.type === TRANSFER_OUTCOMES.ARRIVED && !hasLander && (
