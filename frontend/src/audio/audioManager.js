@@ -32,7 +32,7 @@ let lastTick = 0;
 let waitingForGesture = false;
 
 // Mix level on top of the sliders: sceneLevel is set by a screen that should play softer (the
-// intro trailer), duckLevel drops while the trailer voice talks so the words stay clear.
+// intro trailer). duckLevel can still dip scene audio when something needs the mix quieter.
 // The level heard glides to the target in DUCK_MS instead of jumping.
 const DUCK_MS = 300;
 let sceneLevel = 1;

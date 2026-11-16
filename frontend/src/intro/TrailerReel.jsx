@@ -5,8 +5,8 @@
  *   countdown → pad (build, then pack) → aim → launch → orbit → moon → events → mars → fact
  *   → ranks → finale
  *
- * One timeline (SCENE_STARTS and the cues in the effect below) drives the pictures, the sound
- * effects and the voice, so they always stay together. Motion inside a scene is CSS (intro.css).
+ * One timeline (SCENE_STARTS and the cues in the effect below) drives the pictures and the sound
+ * effects, so they always stay together. Motion inside a scene is CSS (intro.css).
  */
 import { useEffect, useRef, useState } from 'react'
 import asteroidSheet from '../assets/images/asteroids/asteroid_sheet.png'
@@ -40,7 +40,6 @@ import { SPRITES } from '../levels/assets/sprites.js'
 import { BlackHoleBackground } from '../levels/components/BlackHoleBackground.jsx'
 import { RANKS } from '../levels/record.js'
 import { CODE } from './trailerAssets.js'
-import { speak, stopSpeaking } from './voice.js'
 
 /** The whole trailer, start to end. It never runs longer than this. */
 const TRAILER_MS = 60000
@@ -147,28 +146,10 @@ const RANK_STARS = Math.max(...RANKS.map((rank) => rank.minStars))
 const FINALE_PLANETS = ['earth', 'moon', 'mars', 'saturn', 'blackHole']
 const BURST_STARS = 12
 
-/** Music and effects in the trailer, as a share of the game's volume (voice not included). */
-const TRAILER_LEVEL = 0.6
+/** Music and effects in the trailer, as a share of the game's volume. */
+const TRAILER_LEVEL = 0.75
 /** The trailer's sound effects on top of that: many of them are loud one-shots. */
 const TRAILER_SFX = 0.5
-
-/** What the voice says in each scene. `who` is "Engineer Sam", or just "Engineer". */
-function trailerLines(who) {
-  return {
-    countdown: t('{{who}}! Space needs you.', { who }),
-    build: t('You design the rocket. Every kilo counts.'),
-    pack: t('Food, water, air. Your crew trusts you.'),
-    aim: t('Pick a real launch base. The spin of the Earth pushes you.'),
-    launch: t('Liftoff! Nothing stops you.'),
-    orbit: t('Orbit! One lap takes ninety minutes.'),
-    moon: t('The Moon. Land softly. Fuel is short.'),
-    events: t('Storms, meteors, radio silence. You decide.'),
-    mars: t('Mars: seven months away. Dodge, brake, explore.'),
-    fact: t('Did you know? On Mars, sunsets are blue.'),
-    ranks: t('Earn stars. Become Star Commander.'),
-    finale: t('You are a legend, {{who}}. Your turn!', { who }),
-  }
-}
 
 function engineerTitle(name) {
   return name ? t('Engineer {{name}}', { name }) : t('Engineer')
@@ -466,10 +447,10 @@ function FinaleScene({ who }) {
 }
 
 /**
- * shownName: the player's name as typed, for the screen. spokenName: how the voice reads it.
- * voiceVolume: 0..1; 0 plays the trailer without the voice. onEnd runs when the minute is up.
+ * shownName: the player's name as typed, for the screen.
+ * onEnd runs when the minute is up.
  */
-export function TrailerReel({ shownName = '', spokenName = '', language = 'en', voiceVolume = 1, onEnd }) {
+export function TrailerReel({ shownName = '', onEnd }) {
   const [scene, setScene] = useState('countdown')
   const [beat, setBeat] = useState('build')
   const [stage, setStage] = useState('full')
@@ -485,7 +466,6 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  // Everything in the trailer plays softer than the game, so the voice is easy to hear.
   useEffect(() => {
     setSceneLevel(TRAILER_LEVEL)
     return () => setSceneLevel(1)
@@ -494,8 +474,6 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
   useEffect(() => {
     const timers = []
     const stops = []
-    // The trailer reached its end by itself: the last words are allowed to finish.
-    let ended = false
     const at = (ms, run) => {
       timers.push(setTimeout(run, ms))
     }
@@ -506,8 +484,6 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
       if (until > ms) at(until - ms, stop)
     })
     const synth = (ms, recipe) => at(ms, () => playSynth(recipe))
-    const say = (ms, text) => at(ms, () => speak(text, { language, volume: voiceVolume, queue: true }))
-    const lines = trailerLines(engineerTitle(spokenName))
     const { pad, aim, launch, orbit, moon, events, mars, fact, ranks, finale } = SCENE_STARTS
 
     for (const [id, start] of Object.entries(SCENE_STARTS)) {
@@ -518,12 +494,10 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     at(UPPER_STAGE_AT, () => setStage('upper'))
 
     // Countdown: 3, 2, 1, ignition.
-    say(0, lines.countdown)
     for (const beep of [0, 800, 1600]) sound(beep, SFX.countdownBeep)
     sound(2450, SFX.ignition, { volume: 0.8, until: pad + 400 })
 
     // Pad, build: the crane lowers the rocket, three parts snap on, the budget runs red and is fixed.
-    say(pad + 700, lines.build)
     synth(pad, SYNTH.whoosh)
     sound(pad + 980, SFX.rockImpact, { volume: 0.5 })
     for (const snap of [1600, 2100, 2600]) sound(pad + snap, SFX.equip, { volume: 0.8 })
@@ -531,7 +505,6 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     sound(pad + 4500, SFX.coinsEarn, { volume: 0.8 })
 
     // Pad, pack: the camera pushes in, the cargo flies aboard, Laika barks.
-    say(PACK_AT + 200, lines.pack)
     synth(PACK_AT, SYNTH.whoosh)
     for (let item = 0; item < 8; item += 1) sound(PACK_AT + 600 + item * 340, SFX.place)
     synth(PACK_AT + 1300, SYNTH.woof)
@@ -539,7 +512,6 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     synth(PACK_AT + 4500, SYNTH.woof)
 
     // Aim: seven real bases pop up, one is picked, the dotted path is dragged to its target.
-    say(aim + 200, lines.aim)
     for (let site = 0; site < SITE_SPOTS.length; site += 1) synth(aim + 300 + site * 220, SYNTH.pop)
     sound(aim + 2000, SFX.select)
     sound(aim + 2600, SFX.aim, { volume: 0.8 })
@@ -549,20 +521,17 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     synth(aim + 5700, SYNTH.sparkle)
 
     // Launch: liftoff, then the rear stage drops away.
-    say(launch + 200, lines.launch)
     sound(launch, SFX.liftoff, { until: orbit })
     sound(SEPARATION_AT, SFX.unequip, { volume: 0.9 })
     sound(SEPARATION_AT + 100, SFX.rocketPass, { volume: 0.7, until: orbit })
 
     // Orbit: radio and satellite beeps.
-    say(orbit + 200, lines.orbit)
     sound(orbit, SFX.radioSignal)
     synth(orbit + 600, SYNTH.chime)
     for (const beep of [500, 1100, 1900, 3100]) sound(orbit + beep, SFX.satelliteBeep)
     synth(orbit + 2500, SYNTH.sparkle)
 
     // Moon: three engine burns on the way down, touchdown, flag.
-    say(moon + 200, lines.moon)
     sound(moon + 100, SFX.scanner, { volume: 0.6 })
     for (const [from, to] of [[320, 900], [1280, 1980], [2370, 3100]]) {
       sound(moon + from, SFX.engineLoop, { volume: 0.8, until: moon + to })
@@ -572,7 +541,6 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     sound(moon + 3550, SFX.starCollect, { volume: 0.8 })
 
     // Events: solar storm, meteor, radio silence, each answered before its clock runs out.
-    say(events + 200, lines.events)
     synth(events + 200, SYNTH.alarm)
     synth(events + 1200, SYNTH.zoom)
     synth(events + 2200, SYNTH.static)
@@ -581,7 +549,6 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     sound(events + 3950, SFX.confirm)
 
     // Mars: alarm, rocks, one of them blows up, then the parachute and the rover.
-    say(mars + 200, lines.mars)
     sound(mars, SFX.alarm, { volume: 0.7 })
     sound(mars + 450, SFX.asteroidShower, { volume: 0.8, until: mars + 3200 })
     sound(mars + 1600, SFX.explosion)
@@ -590,20 +557,17 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     synth(mars + 4100, SYNTH.sparkle)
 
     // Fact: wind on Mars while the sunset turns blue.
-    say(fact + 200, lines.fact)
     synth(fact + 100, SYNTH.chime)
     sound(fact, SFX.planetWind, { volume: 0.8, until: ranks })
     synth(fact + 3000, SYNTH.sparkle)
 
     // Ranks: a star for each step, a badge at stars 1, 4 and 7, then the locked planets.
-    say(ranks + 200, lines.ranks)
     for (let star = 0; star < RANK_STARS; star += 1) sound(ranks + 200 + star * 200, SFX.starCollect, { volume: 0.6 })
     for (const rank of RANKS) sound(ranks + 300 + (rank.minStars - 1) * 200, SFX.gearUpgrade, { volume: 0.7 })
     sound(ranks + 1700, SFX.levelUp, { volume: 0.8 })
     for (const lock of [2300, 2600]) sound(ranks + lock, SFX.unequip, { volume: 0.8 })
 
     // Finale: planets, logo, the player's name.
-    say(finale + 200, lines.finale)
     sound(finale, SFX.unlock, { volume: 0.7 })
     for (let planet = 0; planet < FINALE_PLANETS.length; planet += 1) {
       sound(finale + planet * 150, SFX.coinCollect, { volume: 0.7 })
@@ -612,16 +576,14 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     sound(finale + 2000, SFX.levelUp)
 
     at(TRAILER_MS, () => {
-      ended = true
       onEndRef.current?.()
     })
 
     return () => {
       timers.forEach(clearTimeout)
       stops.forEach((stop) => stop())
-      if (!ended) stopSpeaking()
     }
-  }, [language, spokenName, voiceVolume])
+  }, [])
 
   return (
     <div className="intro-reel" style={{ '--intro-length': `${TRAILER_MS}ms`, ...metrics }} aria-hidden="true" inert>
