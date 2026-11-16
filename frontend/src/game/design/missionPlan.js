@@ -1,5 +1,5 @@
 /**
- * Mission design for players aged 8–12.
+ * Mission design for players aged 8+.
  * One picture-card choice at a time: job, tool, rocket, road, radio.
  * Two different packs can both succeed. A heavy tool or a high road needs the big rocket.
  * Scores and stamps stay in plain words. Hangar kilograms stay inside the flight loadout.

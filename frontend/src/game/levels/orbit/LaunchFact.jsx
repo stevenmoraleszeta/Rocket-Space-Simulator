@@ -1,7 +1,7 @@
 /**
  * "Did you know?" box shown after a launch. The fact depends on what happened in the flight,
  * so a crash explains why it crashed and a win explains why it worked.
- * Written for players aged 7–12.
+ * Written for players aged 8+.
  */
 import { t } from '../../../i18n/index.js'
 import { OUTCOMES } from './launchSimulation.js'

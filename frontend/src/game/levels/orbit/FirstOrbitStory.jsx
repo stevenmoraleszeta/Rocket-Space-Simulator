@@ -4,7 +4,7 @@
  * launch, one loop around Earth, re-entry and a parachute landing.
  * When the last line is read an "Onward!" button appears and takes the player to the missions.
  *
- * History (kept simple and true for ages 8–12):
+ * History (kept simple and true for ages 8+):
  *   On 12 April 1961 Yuri Gagarin flew Vostok 1 once around Earth, the first person ever to do
  *   it. The flight took 108 minutes. Near the end he left the capsule and landed by parachute.
  */

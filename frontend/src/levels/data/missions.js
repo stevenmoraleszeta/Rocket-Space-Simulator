@@ -3,7 +3,7 @@
  * Only Earth starts open. The Moon unlocks when Earth is completed, and Mars when the Moon is.
  * Saturn and the black hole are not in this list; they live in upcomingMissions.js.
  *
- * Text is written for players aged 7–12: short sentences, everyday words.
+ * Text is written for players aged 8+: short sentences, everyday words.
  *
  * @typedef {Object} Mission
  * @property {string} id        stable id, used to save progress and to tell gameplay which mission to load

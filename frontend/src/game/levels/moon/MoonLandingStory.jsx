@@ -5,7 +5,7 @@
  * plant the United States flag, leaving footprints. The Earth hangs in the black sky.
  * Uses the same scene as mission 1 (orbit/PixelStory.jsx).
  *
- * History (kept simple and true for ages 8–12):
+ * History (kept simple and true for ages 8+):
  *   Apollo 11 landed on 20 July 1969. Neil Armstrong and Buzz Aldrin walked on the Moon while
  *   Michael Collins orbited it in the command module. About 600 million people watched on TV.
  *   With no wind, the flag hung from a rod across its top, and the footprints are still there.

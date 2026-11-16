@@ -1,6 +1,6 @@
 # Mission menu
 
-Menu, unlock rules, stars, and saved progress for players aged 7–12.
+Menu, unlock rules, stars, and saved progress for players aged 8+.
 
 Three missions are playable, in this order: **Eye on Earth**, **Moon Mapper**, and **Red Planet Rover**. Only Earth starts open. The Moon opens after Earth, and Mars after the Moon. **Lord of the Rings** and **The Black Hole** are listed in `data/upcomingMissions.js`. They show on the menu as coming soon, give no stars, and are not stored in progress.
 

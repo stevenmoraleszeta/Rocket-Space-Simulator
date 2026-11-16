@@ -2,7 +2,7 @@
 
 ![Logotipo de Rocket Space Simulator: un cohete despega sobre la Tierra](frontend/public/favicon.svg)
 
-Entrenador de misiones en pixel art para niñas y niños de 7 a 12 años. Hay tres misiones jugables:
+Entrenador de misiones en pixel art para niñas y niños de 8+ años. Hay tres misiones jugables:
 
 1. **Eye on Earth**: empacar el cohete y dar una vuelta a la Tierra.
 2. **Moon Mapper**: elegir base, día y hora, volar a la Luna, mapearla y volver.
