@@ -147,13 +147,11 @@ npx firebase deploy --only firestore:rules
 ## Publicación
 
 - **Vercel** (`vercel.json`): framework Vite, Node 24, instala y construye `frontend/`, publica `frontend/dist` y reescribe las rutas sin extensión a `index.html`. Producción: [https://rocket-space-simulator.vercel.app](https://rocket-space-simulator.vercel.app). El origen permitido por la API es ese dominio, además de los dominios de vista previa del mismo proyecto.
-- Para publicar el cliente actual a producción (sin esperar un push de Git):
+- Cada `git push` a `main` publica producción, y un push a `feature/*` o `GamePlay` publica un Preview, con el workflow [`.github/workflows/deploy-vercel.yml`](.github/workflows/deploy-vercel.yml) y los secretos `VERCEL_TOKEN`, `VERCEL_ORG_ID` y `VERCEL_PROJECT_ID`.
+- Publicación manual local:
 
 ```powershell
-npx vercel link --yes --project rocket-space-simulator
-npx vercel deploy --prod --yes
+npm run deploy:web
 ```
-
-- Para que cada `git push` despliegue solo: en la cuenta de Vercel hay que conectar el Login de GitHub ([conexiones de cuenta](https://vercel.com/docs/accounts/create-an-account#login-methods-and-connections)) y luego `npx vercel git connect https://github.com/stevenmoraleszeta/Rocket-Space-Simulator.git`.
 - **Render** (`render.yaml`): servicio `rocket-space-simulator-api`, Python 3.14.10, arranque con uvicorn y revisión en `/health`.
 - **Firebase Hosting** también puede publicar `frontend/dist`. Los emuladores y las reglas siguen en `firebase.json`.

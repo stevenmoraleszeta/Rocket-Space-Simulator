@@ -1,0 +1,56 @@
+# Auto-deploy to Vercel from GitHub (no Vercel↔GitHub Login Connection required).
+# main → Production. Other tracked branches → Preview.
+name: Deploy Vercel
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - GamePlay
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            vercel pull --yes --environment=production
+          else
+            vercel pull --yes --environment=preview
+          fi
+
+      - name: Build
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            vercel build --prod
+          else
+            vercel build
+          fi
+
+      - name: Deploy
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            vercel deploy --prebuilt --prod
+          else
+            vercel deploy --prebuilt
+          fi
