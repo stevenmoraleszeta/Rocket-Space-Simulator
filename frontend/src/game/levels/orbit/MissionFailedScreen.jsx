@@ -42,9 +42,10 @@ export function MissionFailedScreen({ mission, result, reason, hint, onRetry, on
         </h2>
 
         <section className="mission-failed__why">
-          <p className="mission-failed__label">{t('What happened')}</p>
-          <p className="mission-failed__reason">{t(reason)}</p>
-          {hint && <p className="mission-failed__hint">{t(hint)}</p>}
+          {/* Only what to change; the headline above already says what went wrong. */}
+          {hint
+            ? <p className="mission-failed__hint">{t(hint)}</p>
+            : <p className="mission-failed__reason">{t(reason)}</p>}
         </section>
 
         <LaunchFact result={result} mission={mission} label={t('Trivia')} className="mission-complete__fact" />

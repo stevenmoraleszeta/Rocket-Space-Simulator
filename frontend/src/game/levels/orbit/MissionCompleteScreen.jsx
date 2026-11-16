@@ -40,7 +40,7 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
           {playerName ? sayTo(playerName, t('You did it!')) : t('You did it!')}
         </h2>
         <p className="mission-complete__lead">
-          {sayTo(playerName, lead ?? t('Your satellite is flying around the Earth.'))}
+          {lead ?? t('Your satellite is flying around the Earth.')}
         </p>
 
         <div className="mission-complete__stars">

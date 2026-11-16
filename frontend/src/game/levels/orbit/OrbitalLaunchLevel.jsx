@@ -740,9 +740,13 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
             <>
               <h2 className="orbit-panel__title">{t('1. Pick a launch base')}</h2>
               <p className="orbit-panel__hint">
-                {sayTo(playerName, design
-                  ? t('Tap a base that can fly your road, the {{name}}. Dim bases cannot.', { name: t(pathById(design.jobId, design.pathId)?.name ?? orbit.name) })
-                  : t('Tap a base on the Earth. This trip goes {{km}} km up, on the path called {{name}}.', { km: orbit.altitudeKm, name: t(orbit.name) }))}
+                {/* The name greets the player once, in the line under this hint, not twice. */}
+                {(() => {
+                  const hint = design
+                    ? t('Tap a base that can fly your road, the {{name}}. Dim bases cannot.', { name: t(pathById(design.jobId, design.pathId)?.name ?? orbit.name) })
+                    : t('Tap a base on the Earth. This trip goes {{km}} km up, on the path called {{name}}.', { km: orbit.altitudeKm, name: t(orbit.name) })
+                  return site ? sayTo(playerName, hint) : hint
+                })()}
               </p>
               {site ? (
                 <div className="orbit-detail">
