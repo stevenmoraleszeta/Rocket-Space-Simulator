@@ -44,13 +44,15 @@
 .ms-head { display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center; margin-bottom: 1.75rem; }
 .ms-ages { margin: 0; max-width: 18em; font-family: var(--ms-font-pixel); font-size: 0.625rem; line-height: 1.7; color: var(--ms-yellow); }
 .ms-si {
-  margin: 0;
-  max-width: 28em;
+  align-self: center;
+  margin: auto 0 0;
+  max-width: min(28em, 100%);
   padding: 0.45rem 0.7rem;
   font-family: var(--ms-font-pixel);
   font-size: 0.55rem;
   line-height: 1.7;
   letter-spacing: 0.04em;
+  text-align: center;
   text-transform: uppercase;
   color: #241800;
   background: var(--ms-yellow);
