@@ -209,6 +209,7 @@ export function IntroTrailer({ replay = false, onDone }) {
         </BlackHoleBackground>
       )}
 
+      <p className="intro__si" role="note">{t('Made with AI (SI)')}</p>
       <button type="button" className="ms-btn ms-btn--ghost ms-btn--icon intro__skip" onClick={finish}>
         {t('Skip')}
         <PixelIcon name="fastForward" />

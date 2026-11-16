@@ -14,6 +14,24 @@
 /* The .intro prefix on button and input rules beats ms-btn and st-input, which load later. */
 .intro .intro__skip { position: absolute; top: 1rem; right: 1rem; z-index: 40; }
 .intro__skip .pixel-icon { font-size: 1.125rem; }
+.intro__si {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.55rem;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #241800;
+  background: var(--ms-yellow);
+  clip-path: var(--px-clip);
+  box-shadow: 0.2rem 0.2rem 0 #05061a;
+  pointer-events: none;
+}
 
 /* The rocket follows the size of its .intro-ship box (game.css reads --scale).
    --intro-unit is set by TrailerReel.jsx: 1 when the shorter side of the window is 900 px. */

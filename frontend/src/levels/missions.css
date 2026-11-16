@@ -43,6 +43,20 @@
 
 .ms-head { display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center; margin-bottom: 1.75rem; }
 .ms-ages { margin: 0; max-width: 18em; font-family: var(--ms-font-pixel); font-size: 0.625rem; line-height: 1.7; color: var(--ms-yellow); }
+.ms-si {
+  margin: 0;
+  max-width: 28em;
+  padding: 0.45rem 0.7rem;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.55rem;
+  line-height: 1.7;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #241800;
+  background: var(--ms-yellow);
+  clip-path: var(--px-clip);
+  box-shadow: var(--px) var(--px) 0 var(--px-ink);
+}
 .ms-head h1 { font-family: var(--ms-font-pixel); font-weight: 400; font-size: clamp(1.125rem, 3.4vw, 2rem); line-height: 1.4; margin: 0; text-shadow: 0.1875rem 0.1875rem 0 #1a2260; }
 .ms-greet { margin: -0.375rem 0 0; font-size: 1.25rem; color: var(--ms-muted); }
 .ms-card__hello { margin: 0 0 0.5rem; font-size: 1.125rem; color: var(--ms-yellow); }
@@ -334,6 +348,7 @@ a.ms-btn.ms-btn--icon { display: inline-flex; align-items: center; justify-conte
    the planets a step so that line stays in the dark gap. */
 @media (max-height: 760px) and (min-width: 721px) {
   .ms-ages { display: none; }
+  .ms-si { font-size: 0.5rem; padding: 0.35rem 0.55rem; }
   .ms-stop .ms-planet,
   .ms-stop .ms-sprite { width: 6rem !important; height: 6rem !important; }
   .ms-path::before { top: 3.5rem; }

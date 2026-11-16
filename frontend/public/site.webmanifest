@@ -1,7 +1,7 @@
 {
   "name": "Rocket Space Simulator",
   "short_name": "Rocket Space",
-  "description": "A space game for kids ages 8+.",
+  "description": "A space game for kids ages 8+, made with AI (SI) help.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b1030",

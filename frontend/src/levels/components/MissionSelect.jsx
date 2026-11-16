@@ -89,6 +89,7 @@ export function MissionSelect({ onStartMission, onWatchTrailer, googleSignedIn =
       <header className="ms-head">
         <AppLogo size={64} wordmark bare />
         <p className="ms-ages">{t('A space game for kids ages 8+')}</p>
+        <p className="ms-si" role="note">{t('Made with AI (SI). Code, text, trailer, and audio used AI help.')}</p>
         <h1>{t('Choose your mission!')}</h1>
         <p className="ms-greet">
           {playerName

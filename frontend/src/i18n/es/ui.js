@@ -39,6 +39,8 @@ export const ui = {
   'Become admin': 'Modo juez',
   'A space game for kids ages 8+': 'Un juego espacial para niños de 8+ años',
   'A space game for kids ages 8+.': 'Un juego espacial para niños de 8+ años.',
+  'Made with AI (SI). Code, text, trailer, and audio used AI help.': 'Hecho con IA (SI). El código, el texto, el tráiler y el audio usaron ayuda de IA.',
+  'Made with AI (SI)': 'Hecho con IA (SI)',
   'Choose your mission!': '¡Elige tu misión!',
   'Engineer': 'Ingeniero',
   ', the rockets are waiting for you.': ', los cohetes te están esperando.',
