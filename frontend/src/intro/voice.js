@@ -8,6 +8,8 @@
  */
 
 // Accents tried in order for each game language.
+import { duckAudio } from '../audio/audioManager.js'
+
 const LOCALES = {
   en: ['en-US', 'en-GB', 'en'],
   es: ['es-MX', 'es-US', 'es-419', 'es-ES', 'es'],
@@ -19,9 +21,27 @@ const CATCH_UP = 1.2
 const PITCH = 1.05
 // Some browsers never report the end of a sentence; forget it after this long.
 const FORGET_AFTER_MS = 10000
+// While the voice talks, music and effects play at this share of their volume.
+const DUCK_UNDER_VOICE = 0.3
+// Wait this long after the last word before the music comes back up, so it does not pump
+// up and down between two lines said one after the other.
+const UNDUCK_AFTER_MS = 350
+let unduckTimer = 0
 
 // Sentences being spoken. Chrome can cut one off if nothing holds on to it.
 const speaking = new Set()
+
+function duckForVoice() {
+  clearTimeout(unduckTimer)
+  duckAudio(DUCK_UNDER_VOICE)
+}
+
+function unduckSoon() {
+  clearTimeout(unduckTimer)
+  unduckTimer = setTimeout(() => {
+    if (speaking.size === 0 && !engine()?.speaking) duckAudio(1)
+  }, UNDUCK_AFTER_MS)
+}
 
 function engine() {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null
@@ -88,15 +108,22 @@ export function speak(text, { language = 'en', volume = 1, queue = false } = {})
   const forget = () => {
     clearTimeout(timer)
     speaking.delete(sentence)
+    unduckSoon()
   }
   const timer = setTimeout(forget, FORGET_AFTER_MS)
+  sentence.onstart = duckForVoice
   sentence.onend = forget
   sentence.onerror = forget
   speaking.add(sentence)
+  // Duck right away too: some browsers report the start late
+  duckForVoice()
   synth.speak(sentence)
 }
 
 /** Stops talking right now. */
 export function stopSpeaking() {
   engine()?.cancel()
+  speaking.clear()
+  clearTimeout(unduckTimer)
+  duckAudio(1)
 }

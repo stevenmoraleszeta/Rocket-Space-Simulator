@@ -119,13 +119,11 @@ export function MissionSelect({ onStartMission, onWatchTrailer, googleSignedIn =
                 onClick={() => setOpen(m)}
                 aria-label={
                   state === 'locked'
-                    ? t('Mission {{number}}, {{title}}. Locked. Finish mission {{prev}} to unlock it.', {
-                      number: m.number,
+                    ? t('{{title}}. Locked. Finish {{prev}} to unlock it.', {
                       title: t(m.title),
-                      prev: prev.number,
+                      prev: t(prev.title),
                     })
-                    : t('Mission {{number}}, {{title}}{{done}}{{review}}', {
-                      number: m.number,
+                    : t('{{title}}{{done}}{{review}}', {
                       title: t(m.title),
                       done: state === 'completed' ? t(', done, {{stars}} out of 3 stars', { stars: getStars(m.id) }) : '',
                       review: reviewOpen && state !== 'completed' ? t('. Open for review.') : '',
@@ -140,10 +138,9 @@ export function MissionSelect({ onStartMission, onWatchTrailer, googleSignedIn =
                 )}
                 {state === 'completed' && <span className="ms-check" aria-hidden="true"><PixelIcon name="check" /></span>}
               </button>
-              <div className="ms-stop__num">{t('Mission {{number}}', { number: m.number })}</div>
               <div className="ms-stop__title">{t(m.title)}</div>
               <StarRating stars={getStars(m.id)} />
-              {state === 'locked' && <div className="ms-stop__hint">{t('Finish Mission {{number}} to unlock', { number: prev.number })}</div>}
+              {state === 'locked' && <div className="ms-stop__hint">{t('Finish {{title}} to unlock', { title: t(prev.title) })}</div>}
               {reviewOpen && state !== 'completed' && <div className="ms-stop__hint">{t('Open for review')}</div>}
             </li>
           );
@@ -156,7 +153,7 @@ export function MissionSelect({ onStartMission, onWatchTrailer, googleSignedIn =
               type="button"
               className="ms-stop__btn"
               aria-disabled="true"
-              aria-label={t('Mission {{number}}, {{title}}. Locked. Coming soon.', { number: m.number, title: t(m.title) })}
+              aria-label={t('{{title}}. Locked. Coming soon.', { title: t(m.title) })}
               onClick={() => showSoon(m.id)}
             >
               <Planet planet={m.planet} size={130} locked />
@@ -166,7 +163,6 @@ export function MissionSelect({ onStartMission, onWatchTrailer, googleSignedIn =
                 </span>
               )}
             </button>
-            <div className="ms-stop__num">{t('Mission {{number}}', { number: m.number })}</div>
             <div className="ms-stop__title">{t(m.title)}</div>
           </li>
         ))}
@@ -210,7 +206,7 @@ export function MissionCard({ mission, stars, completed, onClose, onLaunch }) {
     <div className="ms-modal" role="dialog" aria-modal="true" aria-labelledby="ms-card-title" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="ms-card">
         <Planet planet={mission.planet} size={110} />
-        <div className="ms-card__num">{t('Mission {{number}}', { number: mission.number })} · {t(mission.place)}</div>
+        <div className="ms-card__num">{t(mission.place)}</div>
         <h2 id="ms-card-title">{t(mission.title)}</h2>
         {playerName && <p className="ms-card__hello">{sayTo(playerName, t('This job is yours.'))}</p>}
         {mission.intro && <p className="ms-card__intro">{t(mission.intro)}</p>}

@@ -681,12 +681,11 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
         <MissionFailedScreen
           mission={mission}
           result={result}
-          reason={sayTo(
-            playerName,
+          reason={
             result.outcome.type === OUTCOMES.SATELLITE_COLLISION
               ? t('The rocket hit {{name}}.', { name: t(result.outcome.satelliteName) })
-              : t(OUTCOME_MESSAGES[result.outcome.type] || ''),
-          )}
+              : t(OUTCOME_MESSAGES[result.outcome.type] || '')
+          }
           hint={
             result.failure?.hint ??
             (result.outcome.type === OUTCOMES.NO_LIFTOFF ? 'Go back to the hangar. Add boosters or carry less.' : null)
@@ -786,9 +785,13 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
             <>
               <h2 className="orbit-panel__title">{t('1. Pick a launch base')}</h2>
               <p className="orbit-panel__hint">
-                {sayTo(playerName, design
-                  ? t('Tap a base that can fly your road, the {{name}}. Dim bases cannot.', { name: t(pathById(design.jobId, design.pathId)?.name ?? orbit.name) })
-                  : t('Tap a base on the Earth. This trip goes {{km}} km up, on the path called {{name}}.', { km: orbit.altitudeKm, name: t(orbit.name) }))}
+                {/* The name greets the player once, in the line under this hint, not twice. */}
+                {(() => {
+                  const hint = design
+                    ? t('Tap a base that can fly your road, the {{name}}. Dim bases cannot.', { name: t(pathById(design.jobId, design.pathId)?.name ?? orbit.name) })
+                    : t('Tap a base on the Earth. This trip goes {{km}} km up, on the path called {{name}}.', { km: orbit.altitudeKm, name: t(orbit.name) })
+                  return site ? sayTo(playerName, hint) : hint
+                })()}
               </p>
               {site ? (
                 <div className="orbit-detail">
@@ -858,7 +861,7 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
           {step === 'result' && result?.success && (
             <>
               <h2 className="orbit-panel__title">{sayTo(playerName, t('Mission complete!'))}</h2>
-              <p className="orbit-prediction is-good">{sayTo(playerName, t(OUTCOME_MESSAGES[result.outcome.type] || ''))}</p>
+              <p className="orbit-prediction is-good">{t(OUTCOME_MESSAGES[result.outcome.type] || '')}</p>
               <div className="orbit-result__stars"><StarRating stars={result.stars} size={36} /></div>
               <dl className="orbit-stats">
                 <div><dt>{t('Score')}</dt><dd>{result.pct}%</dd></div>
@@ -871,7 +874,7 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
               )}
               {result.unlockedMissionId && (
                 <p className="orbit-panel__hint">
-                  {sayTo(playerName, t('New mission unlocked: {{title}}!', { title: t(getMission(result.unlockedMissionId)?.title || '') }))}
+                  {t('New mission unlocked: {{title}}!', { title: t(getMission(result.unlockedMissionId)?.title || '') })}
                 </p>
               )}
               <div className="orbit-panel__actions">

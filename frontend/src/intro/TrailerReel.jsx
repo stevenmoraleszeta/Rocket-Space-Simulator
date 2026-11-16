@@ -24,7 +24,7 @@ import pilotBadge from '../assets/images/ranks/pilot.svg'
 import explosionSheet from '../assets/images/rockets/animations/explosion_sheet.png'
 import launchBase from '../assets/images/rockets/launch_base.png'
 import goldSatelliteSheet from '../assets/images/satellites/gold_satellite_sheet.png'
-import { SFX, SYNTH, playSynth, startSfx } from '../audio'
+import { SFX, SYNTH, playSynth, setSceneLevel, startSfx } from '../audio'
 import { AppLogo } from '../brand/AppLogo.jsx'
 import { LaunchTower } from '../game/LaunchTower.jsx'
 import { PadClouds } from '../game/PadClouds.jsx'
@@ -146,6 +146,11 @@ const RANK_BADGES = { cadet: cadetBadge, pilot: pilotBadge, commander: commander
 const RANK_STARS = Math.max(...RANKS.map((rank) => rank.minStars))
 const FINALE_PLANETS = ['earth', 'moon', 'mars', 'saturn', 'blackHole']
 const BURST_STARS = 12
+
+/** Music and effects in the trailer, as a share of the game's volume (voice not included). */
+const TRAILER_LEVEL = 0.6
+/** The trailer's sound effects on top of that: many of them are loud one-shots. */
+const TRAILER_SFX = 0.5
 
 /** What the voice says in each scene. `who` is "Engineer Sam", or just "Engineer". */
 function trailerLines(who) {
@@ -480,6 +485,12 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
+  // Everything in the trailer plays softer than the game, so the voice is easy to hear.
+  useEffect(() => {
+    setSceneLevel(TRAILER_LEVEL)
+    return () => setSceneLevel(1)
+  }, [])
+
   useEffect(() => {
     const timers = []
     const stops = []
@@ -490,7 +501,7 @@ export function TrailerReel({ shownName = '', spokenName = '', language = 'en', 
     }
     // until: the moment (on the trailer clock) a long sound is cut, so it ends with its scene.
     const sound = (ms, src, { volume = 1, until = 0 } = {}) => at(ms, () => {
-      const stop = startSfx([{ src, volume }])
+      const stop = startSfx([{ src, volume: volume * TRAILER_SFX }])
       stops.push(stop)
       if (until > ms) at(until - ms, stop)
     })

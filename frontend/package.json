@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
+    "test": "node --test src/levels/progression.test.js src/lib/appRoute.test.js src/i18n/coverage.test.js src/project/copy.test.js src/project/projectRoute.test.js src/game/design/missionPlan.test.js src/game/levels/moon/moonLaunchPlanning.test.js src/game/levels/moon/moonTransfer.test.js src/game/levels/moon/moonOrbitEvents.test.js src/game/levels/marsLaunch/marsLaunchRoute.test.js",
     "test:moon": "node --test src/game/levels/moon/moonLaunchPlanning.test.js src/game/levels/moon/moonTransfer.test.js src/game/levels/moon/moonOrbitEvents.test.js",
     "test:plan": "node --test src/game/design/missionPlan.test.js",
     "test:route": "node --test src/lib/appRoute.test.js",

@@ -1,8 +1,9 @@
 /**
- * The 3 missions of the first prototype, in the order they are played.
- * The order of this array IS the progression: mission i unlocks when mission i-1 is completed.
+ * The 3 playable missions, in menu order: Earth, Moon, Mars.
+ * Earth and the Moon start open. Mars unlocks when the Moon is completed.
+ * Saturn and the black hole are not in this list; they live in upcomingMissions.js.
  *
- * Text is written for players aged 8–12: short sentences, everyday words.
+ * Text is written for players aged 7–12: short sentences, everyday words.
  *
  * @typedef {Object} Mission
  * @property {string} id        stable id, used to save progress and to tell gameplay which mission to load
@@ -37,15 +38,10 @@ export const MISSIONS = [
     goal: 'Pack a rocket and fly once around Earth.',
     intro: 'A short trip around Earth.',
     story: [
-      'You are the engineer. Fly once around Earth and look down.',
-      'One loop takes about 99 minutes, plus the climb up.',
-      'Someone has to fly. An empty rocket cannot finish the trip.',
-      'The trip is short, but the crew gets hungry. With nothing to eat, the trip stops.',
-      'The crew gets thirsty too. People drink water every day.',
-      'Going up gets very hot. Too much heat can break the rocket.',
-      'The rocket needs a bigger push to reach space.',
-      'The cabin already has air for this short trip.',
-      'Money is tight. Pack only what this trip needs.',
+      'You are the engineer. Fly once around Earth. It takes less than two hours.',
+      'Someone must fly the rocket, and they will get hungry and thirsty.',
+      'Going up is very hot, and the rocket needs a big push to reach space.',
+      'The cabin already has air. Money is tight, so pack only what you need.',
     ],
     hints: [
       'What could stop the trip: no one aboard, hunger, heat, a weak push, or no power?',
@@ -80,19 +76,16 @@ export const MISSIONS = [
     goal: 'Fly a crew to the Moon, slow down into orbit, and map the dark craters.',
     intro: 'A long trip to the Moon.',
     story: [
-      'You fly a crew to the Moon and map it from orbit.',
-      'Pick a base on Earth. Then pick the day: the Moon moves around Earth every day.',
-      'Drag the dotted line to the Moon. Fly around satellites and space junk.',
+      'You fly a crew to the Moon and map it from orbit. Pick a base and a day.',
+      'Drag the dotted line to the Moon, away from satellites and space junk.',
       'The crew eats, drinks, and breathes for days. Pack enough for the whole trip.',
-      'The Moon has almost no air. Only a rocket engine can slow the ship down there.',
+      'The Moon has almost no air, so only a rocket engine can slow the ship.',
     ],
     hints: [
-      'Two astronauts fly this trip. Each one eats, drinks, and breathes.',
-      'The Moon is about 384,400 km away. The trip takes about 5 days.',
-      'Space junk can break the computer and lose data. A shield helps.',
-      'Hitting a satellite hurts it, and it hurts your ship too.',
-      'The gas the crew breathes out has to be cleaned on a long trip.',
-      'The ice is in a crater the Sun never reaches. Something has to roll in and look.',
+      'Two astronauts fly for about 5 days. Each one eats, drinks, and breathes.',
+      'Space junk can break the computer. A shield helps.',
+      'On a long trip, the air the crew breathes out must be cleaned.',
+      'The ice hides in a dark crater. Something has to roll in and look.',
     ],
     funFact: 'Apollo 11 took about 3 days to reach the Moon. In 2009 NASA found ice in a dark crater at the south pole.',
     passPct: 60,
@@ -132,23 +125,14 @@ export const MISSIONS = [
     goal: 'Fly a crew to Mars and set a rover on the red rocks.',
     intro: 'A long cruise to Mars.',
     story: [
-      'You send a crew to Mars. It is much farther than the Moon.',
-      'A real cruise lasts about 7 months. Perseverance flew for 203 days.',
-      'The crew eats every day of those months. A few meals will not last.',
-      'They drink every day too. A few bottles will not last seven months.',
-      'They breathe out the whole way. The air in the cabin has to stay clean.',
-      'On a flight this long, someone can feel sick.',
-      'The Sun can throw a storm of fast particles. The crew needs a safe room.',
-      'Mars has air, but it is very thin. The ship is still going very fast at the end.',
-      'You came to look at the red rocks. Something has to roll out and look.',
-      'On some days the Sun sits between Earth and Mars, and the radio goes quiet.',
-      'Money, weight, and power can run out. Packing extra can leave you short.',
+      'You send a crew to Mars. The trip takes about 7 months!',
+      'Every day the crew eats, drinks, and breathes. Pack enough, keep the air clean, and bring medicine.',
+      'The Sun can send storms and hide Earth from the radio. Bring a safe room and a way to call home.',
+      'Mars has thin air, so the ship needs help to slow down. Then something must roll out and look at the red rocks.',
     ],
     hints: [
-      'Three astronauts fly to Mars. Each one eats, drinks, and breathes for months.',
-      'This trip lasts many months. What has to last, and what has to be cleaned?',
-      'A second person needs more air, more meals, more water, and more power.',
-      'The big asteroid belt is past Mars. A few rocks still share this road.',
+      'Three astronauts fly for months. Each one eats, drinks, and breathes.',
+      'A few rocks share the road to Mars. The big asteroid belt is past it.',
       'A shorter path needs fewer meals. A path behind the Sun needs a way to call home.',
       'Red money means you packed more than you can pay for.',
     ],

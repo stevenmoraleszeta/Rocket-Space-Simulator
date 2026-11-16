@@ -36,12 +36,12 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
       </div>
 
       <div className="mission-complete__card">
-        <p className="mission-complete__kicker">{t('Mission {{number}} · {{place}}', { number: mission.number, place: t(mission.title) })}</p>
+        <p className="mission-complete__kicker">{t(mission.title)}</p>
         <h2 id="mission-complete-title" className="mission-complete__title">
           {playerName ? sayTo(playerName, t('You did it!')) : t('You did it!')}
         </h2>
         <p className="mission-complete__lead">
-          {sayTo(playerName, lead ?? t('Your satellite is flying around the Earth.'))}
+          {lead ?? t('Your satellite is flying around the Earth.')}
         </p>
 
         {!practice && (
@@ -75,9 +75,8 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
           <div className="mission-complete__unlock">
             <Planet planet={nextMission.planet} size={72} />
             <div>
-              <p className="mission-complete__unlock-label">{t('Next level unlocked!')}</p>
-              <p className="mission-complete__unlock-name">
-                {t('Mission {{number}} · {{place}}', { number: nextMission.number, place: t(nextMission.title) })}
+              <p className="mission-complete__unlock-label">
+                {t('New mission unlocked: {{title}}!', { title: t(nextMission.title) })}
               </p>
             </div>
           </div>

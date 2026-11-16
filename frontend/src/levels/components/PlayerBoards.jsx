@@ -152,7 +152,7 @@ export function HistoryBoard({ progress, missions, onClose }) {
               <div className="ms-trip__head">
                 <Planet planet={card.mission.planet} size={56} />
                 <div className="ms-trip__meta">
-                  <p className="ms-log__num">{t('Mission {{number}} · {{place}}', { number: card.mission.number, place: t(card.mission.place) })}</p>
+                  <p className="ms-log__num">{t(card.mission.place)}</p>
                   <h3 className="ms-log__title">{t(card.mission.title)}</h3>
                   <p className="ms-trip__when">{flightWhen(card.at)}</p>
                 </div>

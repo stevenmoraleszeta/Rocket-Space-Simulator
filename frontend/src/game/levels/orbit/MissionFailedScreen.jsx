@@ -32,7 +32,7 @@ export function MissionFailedScreen({ mission, result, reason, hint, onRetry, on
   return (
     <div className={`mission-complete mission-failed is-${look.tone}`} role="dialog" aria-modal="true" aria-labelledby="mission-failed-title">
       <div className="mission-complete__card mission-failed__card">
-        <p className="mission-complete__kicker">{t('Mission {{number}} · {{place}}', { number: mission.number, place: t(mission.title) })}</p>
+        <p className="mission-complete__kicker">{t(mission.title)}</p>
         <div className={`mission-failed__art is-${look.motion}`} aria-hidden="true">
           <span><PixelIcon name={look.art} className="mission-failed__sprite" /></span>
         </div>
@@ -42,9 +42,10 @@ export function MissionFailedScreen({ mission, result, reason, hint, onRetry, on
         </h2>
 
         <section className="mission-failed__why">
-          <p className="mission-failed__label">{t('What happened')}</p>
-          <p className="mission-failed__reason">{t(reason)}</p>
-          {hint && <p className="mission-failed__hint">{t(hint)}</p>}
+          {/* Only what to change; the headline above already says what went wrong. */}
+          {hint
+            ? <p className="mission-failed__hint">{t(hint)}</p>
+            : <p className="mission-failed__reason">{t(reason)}</p>}
         </section>
 
         <LaunchFact result={result} mission={mission} label={t('Trivia')} className="mission-complete__fact" />

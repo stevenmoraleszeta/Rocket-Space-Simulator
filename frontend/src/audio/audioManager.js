@@ -31,14 +31,37 @@ let rafId = 0;
 let lastTick = 0;
 let waitingForGesture = false;
 
+// Mix level on top of the sliders: sceneLevel is set by a screen that should play softer (the
+// intro trailer), duckLevel drops while the trailer voice talks so the words stay clear.
+// The level heard glides to the target in DUCK_MS instead of jumping.
+const DUCK_MS = 300;
+let sceneLevel = 1;
+let duckLevel = 1;
+let mix = 1;
+// Effects still playing, so a change of the mix level reaches them too: { el, base }
+const liveSfx = new Set();
+
 function applyVolume(channel, el, fade) {
-  el.volume = Math.min(1, Math.max(0, loudness(channel.volume * channel.maxLevel) * fade));
+  el.volume = Math.min(1, Math.max(0, loudness(channel.volume * channel.maxLevel) * fade * mix));
+}
+
+function applySfxVolume(sfx) {
+  sfx.el.volume = Math.min(1, Math.max(0, sfx.base * mix));
 }
 
 function tick(now) {
-  const step = lastTick ? (now - lastTick) / FADE_MS : 0;
+  const elapsed = lastTick ? now - lastTick : 0;
+  const step = elapsed / FADE_MS;
   lastTick = now;
   let busy = false;
+
+  const target = sceneLevel * duckLevel;
+  if (mix !== target) {
+    const move = elapsed / DUCK_MS;
+    mix = mix < target ? Math.min(target, mix + move) : Math.max(target, mix - move);
+    liveSfx.forEach(applySfxVolume);
+    busy = true;
+  }
 
   for (const channel of Object.values(channels)) {
     if (channel.el && channel.fade < 1) {
@@ -151,7 +174,12 @@ export function startSfx(sound) {
   const stops = [];
   for (const step of steps) {
     const el = new Audio(step.src);
-    el.volume = Math.min(1, volume * (step.volume ?? 1));
+    const sfx = { el, base: volume * (step.volume ?? 1) };
+    applySfxVolume(sfx);
+    liveSfx.add(sfx);
+    const forget = () => liveSfx.delete(sfx);
+    el.addEventListener('ended', forget);
+    el.addEventListener('error', forget);
     const start = () => el.play().catch(() => { /* blocked or interrupted: effects are optional */ });
     let timer = 0;
     if (step.at > 0) timer = setTimeout(start, step.at * 1000);
@@ -159,6 +187,7 @@ export function startSfx(sound) {
     stops.push(() => {
       clearTimeout(timer);
       el.pause();
+      forget();
     });
   }
   return () => stops.forEach((stop) => stop());
@@ -166,5 +195,17 @@ export function startSfx(sound) {
 
 /** Effects loudness (0..1) from the settings, for sounds built in code (synth.js). */
 export function effectsLoudness() {
-  return loudness(channels.ambient.volume);
+  return loudness(channels.ambient.volume) * mix;
+}
+
+/** How loud this screen plays everything, 0..1 (1 = as the sliders say). The trailer uses it. */
+export function setSceneLevel(level) {
+  sceneLevel = Math.min(1, Math.max(0, Number(level) || 0));
+  startFading();
+}
+
+/** Lowers music and effects (0..1) while a voice talks; 1 brings them back. */
+export function duckAudio(level) {
+  duckLevel = Math.min(1, Math.max(0, Number(level) || 0));
+  startFading();
 }

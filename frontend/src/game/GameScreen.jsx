@@ -299,7 +299,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
           <MissionFailedScreen
             mission={mission}
             result={{ outcome: { type: failure?.id }, success: false }}
-            reason={sayTo(playerName, failureMessage(failure))}
+            reason={failureMessage(failure)}
             hint={failureHint(failure)}
             onHangar={returnToHangar}
           />
@@ -491,9 +491,7 @@ function Briefing({ mission, onClose }) {
           <header className="brief__head">
             <div className="brief__heading">
               <p className="brief__kicker">
-                {playerName
-                  ? t('Engineer {{name}}', { name: playerName })
-                  : t('Mission {{number}}', { number: mission.number })} · {t(mission.place)}
+                {playerName ? t('Engineer {{name}}', { name: playerName }) : t(mission.title)}
               </p>
               <h2 id="brief-title" className="brief__title">{t('Story')}</h2>
             </div>

@@ -683,7 +683,7 @@ export function MarsLaunchLevel({ mission, equipped, launchPlace, onLaunchPlace,
         <MissionFailedScreen
           mission={mission}
           result={result}
-          reason={sayTo(playerName, failureReason(result))}
+          reason={failureReason(result)}
           hint={failureHint(result)}
           onHangar={onBackToHangar}
           onRetry={result.failure ? undefined : retry}
