@@ -1,6 +1,6 @@
 /**
  * The 3 playable missions, in menu order: Earth, Moon, Mars.
- * Earth and the Moon start open. Mars unlocks when the Moon is completed.
+ * Only Earth starts open. The Moon unlocks when Earth is completed, and Mars when the Moon is.
  * Saturn and the black hole are not in this list; they live in upcomingMissions.js.
  *
  * Text is written for players aged 7–12: short sentences, everyday words.

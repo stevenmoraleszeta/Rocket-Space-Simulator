@@ -68,7 +68,7 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
             <PixelHand className="mission-complete__practice-hand" />
             <div>
               <p className="mission-complete__unlock-label">{t('Practice flight')}</p>
-              <p className="mission-complete__unlock-name">{t('Practice is not saved. Fly without the Tutorial to earn your stars.')}</p>
+              <p className="mission-complete__unlock-name">{t('Practice is not saved. Fly without the Tutorial to earn your stars and open the next mission.')}</p>
             </div>
           </div>
         ) : nextMission ? (

@@ -67,7 +67,7 @@ function VolumeSlider({ label, value, onChange }) {
 
 export function SettingsMenu({ googleSignedIn = false, authError: redirectError = '', onReset }) {
   const { musicVolume, ambientVolume, playerName, language, update } = useSettings();
-  const { resetProgress } = useProgress();
+  const { resetProgress, setAdminMode } = useProgress();
   const [open, setOpen] = useState(false);
   // Start over: first tap asks, the second one empties the progress
   const [confirmReset, setConfirmReset] = useState(false);
@@ -75,6 +75,8 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
   const startOver = async () => {
     setConfirmReset(false);
     setTutorial(false);
+    // Judge mode opens every mission, so starting over turns it off: the locks come back
+    setAdminMode(false);
     await resetProgress();
     setResetDone(true);
     onReset?.();

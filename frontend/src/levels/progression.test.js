@@ -18,33 +18,31 @@ test('detects duplicate ids and unknown planets', () => {
   assert.equal(errs.some((e) => e.includes('unknown planet')), true);
 });
 
-test('starts with Earth and Moon unlocked, while Mars stays locked', () => {
+test('starts with only Earth unlocked: the Moon and Mars wear a lock', () => {
   const p = P.createEmptyProgress();
   assert.equal(P.getMissionState(p, 'earth'), 'current');
-  assert.equal(P.getMissionState(p, 'moon'), 'current');
+  assert.equal(P.getMissionState(p, 'moon'), 'locked');
   assert.equal(P.getMissionState(p, 'mars'), 'locked');
   assert.equal(P.getCurrentMission(p).id, 'earth');
 });
 
-test('finishing Earth does not report Moon as newly unlocked', () => {
+test('finishing Earth unlocks the Moon', () => {
   const { progress, outcome } = P.applyResult(P.createEmptyProgress(), 'earth', win(70));
-  assert.equal(outcome.unlockedMissionId, null);
+  assert.equal(outcome.unlockedMissionId, 'moon');
   assert.equal(P.getMissionState(progress, 'earth'), 'completed');
   assert.equal(P.getMissionState(progress, 'moon'), 'current');
   assert.equal(P.getMissionState(progress, 'mars'), 'locked');
 });
 
-test('a failed Earth attempt leaves Moon available but does not unlock Mars', () => {
+test('a failed Earth attempt keeps the Moon and Mars locked', () => {
   const { progress, outcome } = P.applyResult(P.createEmptyProgress(), 'earth', { pct: 100, success: false });
   assert.equal(outcome.completed, false);
-  assert.equal(P.isUnlocked(progress, 'moon'), true);
+  assert.equal(P.isUnlocked(progress, 'moon'), false);
   assert.equal(P.isUnlocked(progress, 'mars'), false);
 });
 
-test('allows Moon to be completed before Earth', () => {
-  const { progress } = P.applyResult(P.createEmptyProgress(), 'moon', win());
-  assert.equal(P.getMissionState(progress, 'moon'), 'completed');
-  assert.equal(P.getMissionState(progress, 'mars'), 'current');
+test('the Moon cannot be played before Earth', () => {
+  assert.throws(() => P.applyResult(P.createEmptyProgress(), 'moon', win()));
 });
 
 test('refuses to play a locked mission', () => {

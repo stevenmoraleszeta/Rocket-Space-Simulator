@@ -132,7 +132,7 @@ export const ui = {
   'Yes, start over': 'Sí, empezar de nuevo',
   'Done! Every mission starts from zero.': '¡Listo! Todas las misiones empiezan desde cero.',
   'Practice flight': 'Vuelo de práctica',
-  'Practice is not saved. Fly without the Tutorial to earn your stars.': 'La práctica no se guarda. Vuela sin el Tutorial para ganar tus estrellas.',
+  'Practice is not saved. Fly without the Tutorial to earn your stars and open the next mission.': 'La práctica no se guarda. Vuela sin el Tutorial para ganar tus estrellas y abrir la siguiente misión.',
   'Fly without the Tutorial': 'Volar sin el Tutorial',
   'Close the story': 'Cerrar la historia',
   'Open the story': 'Abrir la historia',

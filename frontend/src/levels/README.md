@@ -2,7 +2,7 @@
 
 Menu, unlock rules, stars, and saved progress for players aged 7–12.
 
-Three missions are playable, in this order: **Eye on Earth**, **Moon Mapper**, and **Red Planet Rover**. Earth and the Moon start open. Mars opens after the Moon is completed. **Lord of the Rings** and **The Black Hole** are listed in `data/upcomingMissions.js`. They show on the menu as coming soon, give no stars, and are not stored in progress.
+Three missions are playable, in this order: **Eye on Earth**, **Moon Mapper**, and **Red Planet Rover**. Only Earth starts open. The Moon opens after Earth, and Mars after the Moon. **Lord of the Rings** and **The Black Hole** are listed in `data/upcomingMissions.js`. They show on the menu as coming soon, give no stars, and are not stored in progress.
 
 **Become admin** opens every locked mission in this browser only. It does not rewrite saved stars.
 
@@ -58,7 +58,7 @@ Mission copy for the player is in `src/i18n/`. The judge page is `src/project/`,
 
 | Rule | Value |
 |---|---|
-| Unlocking | Earth and the Moon start open. Mars opens after the Moon is completed. |
+| Unlocking | Only Earth starts open. The Moon opens after Earth, and Mars after the Moon. |
 | Completing | Gameplay reports `success: true` and a score at or above the mission `passPct` (60). |
 | Stars | 1 at 60 %, 2 at 80 %, 3 at 95 %. |
 | Records | Only the best result is kept. A later failure never locks a mission again. |
