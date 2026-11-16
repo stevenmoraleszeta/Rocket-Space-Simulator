@@ -1,8 +1,9 @@
 /**
- * The 3 missions of the first prototype, in the order they are played.
- * The order of this array IS the progression: mission i unlocks when mission i-1 is completed.
+ * The 3 playable missions, in menu order: Earth, Moon, Mars.
+ * Earth and the Moon start open. Mars unlocks when the Moon is completed.
+ * Saturn and the black hole are not in this list; they live in upcomingMissions.js.
  *
- * Text is written for players aged 8–12: short sentences, everyday words.
+ * Text is written for players aged 7–12: short sentences, everyday words.
  *
  * @typedef {Object} Mission
  * @property {string} id        stable id, used to save progress and to tell gameplay which mission to load

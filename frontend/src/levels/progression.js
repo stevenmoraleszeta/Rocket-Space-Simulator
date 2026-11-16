@@ -56,7 +56,7 @@ const indexOf = (id, missions) => missions.findIndex((m) => m.id === id);
 export const getNextMission = (id, missions = MISSIONS) => missions[indexOf(id, missions) + 1] || null;
 const mp = (progress, id) => progress.missions[id] || null;
 
-/** The mission can be played. */
+/** The mission can be played. Earth and the Moon start open. Mars opens after the Moon. */
 export function isUnlocked(progress, id, missions = MISSIONS) {
   const i = indexOf(id, missions);
   if (i < 0) return false;
