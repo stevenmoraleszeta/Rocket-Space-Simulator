@@ -29,6 +29,8 @@ test('the team, the links, and the playable facts stay checkable', () => {
   assert.equal(PROJECT_COPY.en.members[0].name, 'Steven Morales Fallas')
   assert.equal(PROJECT_COPY.en.members.some((member) => member.owner), false)
   assert.deepEqual(PROJECT_COPY.en.rubric.map((item) => item.weight), ['30%', '20%', '20%', '20%', '10%'])
+  assert.deepEqual(PROJECT_COPY.en.rubric.map((item) => item.id), ['impact', 'creativity', 'viability', 'prototype', 'presentation'])
+  assert.deepEqual(PROJECT_COPY.en.nav.map((item) => item.href), ['#impact', '#creativity', '#viability', '#prototype', '#presentation'])
   assert.equal(PROJECT_COPY.en.members, PROJECT_COPY.es.members)
   assert.equal(PROJECT_LINKS.play, '/')
   assert.match(PROJECT_LINKS.challenge, /^https:\/\/www\.spaceappschallenge\.org\/2026\/challenges\/junior-astronaut-mission-trainer\/$/)
