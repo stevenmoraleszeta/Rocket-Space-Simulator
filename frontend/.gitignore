@@ -20,6 +20,11 @@ coverage
 !.env.example
 *.local
 
+# Tool caches
+.cache
+.oxlintcache
+*.tsbuildinfo
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

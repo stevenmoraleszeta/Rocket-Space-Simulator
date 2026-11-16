@@ -81,7 +81,7 @@ export function DesignWizard({ mission, initial, onDone, onExit }) {
           <p className="dw__count">{t('Step {{step}} of {{total}}', { step: index + 1, total: steps.length })}</p>
         </header>
         <div className="dw__card">
-          <p className="dw__kicker">{t('Mission {{number}}', { number: mission.number })}</p>
+          <p className="dw__kicker">{t(mission.title)}</p>
           <h1 className="dw__title">{t(STEP_TITLES[step])}</h1>
           {step === 'job' && (
             <>

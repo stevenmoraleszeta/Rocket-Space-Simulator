@@ -299,7 +299,6 @@ export const world = {
   'The rocket hit {{name}}.': 'El cohete chocó con {{name}}.',
   'Go back to the hangar. Add boosters or carry less.': 'Vuelve al hangar. Añade impulsores o lleva menos.',
   'New mission unlocked: {{title}}!': '¡Nueva misión desbloqueada: {{title}}!',
-  'Level {{number}} · {{title}}': 'Nivel {{number}} · {{title}}',
   '1. Pick a launch base': '1. Elige una base de lanzamiento',
   '2. Aim and launch': '2. Apunta y lanza',
   'Tap a base that can fly your road, the {{name}}. Dim bases cannot.': 'Toca una base que pueda volar tu camino, el {{name}}. Las bases oscuras no pueden.',
