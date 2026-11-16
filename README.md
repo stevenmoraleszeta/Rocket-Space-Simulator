@@ -14,6 +14,8 @@ La Tierra y la Luna empiezan abiertas. Marte se abre al completar la Luna. **Bec
 
 La primera visita puede mostrar un tráiler. Skip o Esc lo cierra. La página para el jurado está en `/project` y también en `#/project`. `?lang=es` la abre en español.
 
+El prototipo se hizo con ayuda de IA (SI). Hay una sección **Uso de IA** en `/project`, y marcas de agua visibles en el menú y en el tráiler, según la política de Superinteligencia de Space Apps.
+
 Licencia MIT. El texto completo está en [LICENSE](LICENSE). El aviso de copyright es de Steven Morales Fallas, 2026.
 
 ## Stack
