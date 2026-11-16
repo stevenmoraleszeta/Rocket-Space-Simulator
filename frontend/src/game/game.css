@@ -167,6 +167,15 @@
   padding-right: 12.75rem;
 }
 
+/* Top-left corner: the Missions button with the story light bulb under it */
+.game__corner {
+  justify-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 .game__back {
   position: relative;
   isolation: isolate;
@@ -390,6 +399,20 @@
   box-shadow:
     inset var(--px) var(--px) 0 #fff1a8,
     inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #a88412;
+}
+
+/* Not opened yet: the bulb lights up and off so players find the story */
+.bulb.is-new {
+  animation: bulb-call 1.2s steps(2, jump-none) infinite;
+}
+
+@keyframes bulb-call {
+  from { color: var(--ms-yellow); filter: none; }
+  to { color: #fff7c2; filter: drop-shadow(0 0 6px rgba(255, 214, 74, 0.85)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bulb.is-new { animation: none; filter: drop-shadow(0 0 4px rgba(255, 214, 74, 0.7)); }
 }
 
 .bulb:active {
@@ -2362,6 +2385,11 @@
   .game__back,
   .game__place {
     justify-self: center;
+  }
+
+  .game__corner {
+    justify-self: center;
+    align-items: center;
   }
 
   .stage__frame {

@@ -13,6 +13,8 @@ import { PadClouds } from './PadClouds.jsx';
 import { PadFlag } from './PadFlag.jsx';
 import { PadCrew } from './PadCrew.jsx';
 import { LaikaStory, PadLaika } from './PadLaika.jsx';
+import { TutorialButton, TutorialGuide } from './tutorial/TutorialGuide.jsx';
+import { useTutorial } from './tutorial/tutorialStore.js';
 import { FunFactToast } from './FunFactToast.jsx';
 import { LaunchTower } from './LaunchTower.jsx';
 import { LaunchSequence } from './LaunchSequence.jsx';
@@ -59,7 +61,12 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
   const { completeMission } = useProgress();
   const loggedTrip = useRef(false);
   const [phase, setPhase] = useState('assemble');
-  const [storyOpen, setStoryOpen] = useState(true);
+  // The story starts closed: the light bulb opens it, and blinks until it is tapped once.
+  const [storyOpen, setStoryOpen] = useState(false);
+  const [storySeen, setStorySeen] = useState(false);
+  // Optional Tutorial (mission 1): hands and arrows over the real buttons, no text
+  const [tutorialOn, setTutorialOn] = useTutorial();
+  const tutorialMission = mission.id === 'earth';
   const [openPart, setOpenPart] = useState(null);
   const [partAnchor, setPartAnchor] = useState(null);
   const sidePopout = useWideScreen();
@@ -237,11 +244,41 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
   const rocketBig = swap ? (swap.step === 'out' ? !swap.big : swap.big) : upgraded;
 
 
+  // Tutorial: star the parts the trip needs, then point at the next one to pack
+  // (tap it, then tap +), and at Aim once they are all aboard.
+  const neededParts = (mission.checklist?.required ?? []).map((item) => item.part);
+  const tutorialMarks = neededParts.map((id) => `[data-tutorial='part-${id}']`);
+  const missingPart = neededParts.find((id) => partCount(equipped, id) === 0);
+  const tutorialTarget = missingPart
+    ? openPart === missingPart
+      ? "[data-tutorial='part-add']"
+      : `[data-tutorial='part-${missingPart}']`
+    : "[data-tutorial='aim']";
+
   const hud = (
     <header className="game__hud">
-      <button type="button" className="game__back" onClick={onExit}>
-        {t('Missions')}
-      </button>
+      {/* Missions, and under it the story light bulb: the story only opens when it is tapped. */}
+      <div className="game__corner">
+        <button type="button" className="game__back" onClick={onExit}>
+          {t('Missions')}
+        </button>
+        {phase === 'assemble' && (
+          <button
+            type="button"
+            className={storyOpen ? 'bulb is-on' : storySeen ? 'bulb' : 'bulb is-new'}
+            aria-pressed={storyOpen}
+            aria-label={storyOpen ? t('Close the story') : t('Open the story')}
+            onClick={() => {
+              setStorySeen(true);
+              setStoryOpen((open) => !open);
+            }}
+          >
+            <BulbIcon />
+            <span className="bulb__label">{t('Story')}</span>
+          </button>
+        )}
+        {phase === 'assemble' && tutorialMission && <TutorialButton on={tutorialOn} onToggle={setTutorialOn} />}
+      </div>
       <div className="game__mission">
         <h1>{t(mission.title)}</h1>
         {playerName && <p className="game__engineer">{t('Engineer {{name}}', { name: playerName })}</p>}
@@ -339,18 +376,6 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
       </div>
       {hud}
       <div className="bay" inert={launching}>
-        <div className="pad-story">
-          <button
-            type="button"
-            className={storyOpen ? 'bulb is-on' : 'bulb'}
-            aria-pressed={storyOpen}
-            aria-label={storyOpen ? t('Close the story') : t('Open the story')}
-            onClick={() => setStoryOpen((open) => !open)}
-          >
-            <BulbIcon />
-            <span className="bulb__label">{t('Story')}</span>
-          </button>
-        </div>
         <Meters meters={meters} />
         <div className="dock">
           <ul className={catalog.length > 6 ? 'parts parts--wrap' : 'parts'}>
@@ -368,6 +393,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
                     ].filter(Boolean).join(' ')}
                     aria-expanded={open}
                     aria-controls={open ? 'part-dialog' : undefined}
+                    data-tutorial={`part-${part.id}`}
                     aria-label={t('{{name}}. {{count}} packed.', { name: t(part.name), count })}
                     onClick={(event) => {
                       setOpenPart(open ? null : part.id);
@@ -412,6 +438,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
           <button
             type="button"
             className="bay__launch"
+            data-tutorial="aim"
             aria-label={onLaunch ? t('Aim the rocket') : t('Launch')}
             onClick={startLaunch}
           >
@@ -433,7 +460,10 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
         <Briefing mission={mission} onClose={() => setStoryOpen(false)} />
       )}
       {laikaTalking && !launching && <LaikaStory onClose={() => setLaikaTalking(false)} />}
-      <FunFactToast paused={launching || storyOpen || laikaTalking} />
+      <FunFactToast paused={launching || storyOpen || laikaTalking || tutorialOn} />
+      {tutorialMission && tutorialOn && phase === 'assemble' && !storyOpen && !laikaTalking && !swap && (
+        <TutorialGuide target={tutorialTarget} marks={tutorialMarks} />
+      )}
     </div>
   );
 }
@@ -635,6 +665,7 @@ function PartDialog({ part, count, creditsLeft, onChange, onClose, anchor = null
           className={denied ? 'step-btn is-denied' : 'step-btn'}
           disabled={count >= max}
           title={broke && count < max ? t('Not enough money') : undefined}
+          data-tutorial="part-add"
           aria-label={t('Add one {{name}}', { name: t(part.name) })}
           onClick={tryAdd}
         >

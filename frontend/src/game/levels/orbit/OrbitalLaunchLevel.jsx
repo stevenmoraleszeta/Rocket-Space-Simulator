@@ -52,6 +52,8 @@ import {
 import { REAL_SATELLITES, SATELLITE_KIND_COLORS } from './realSatellites.js'
 import { useUiScale } from '../../../lib/uiScale.js'
 import { SitePin } from './SitePin.jsx'
+import { TutorialButton, TutorialGuide } from '../../tutorial/TutorialGuide.jsx'
+import { useTutorial } from '../../tutorial/tutorialStore.js'
 import { FirstOrbitStory } from './FirstOrbitStory.jsx'
 import { PixelIcon } from '../../PixelIcon.jsx'
 import '../../game.css'
@@ -160,6 +162,12 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
   const [aimPoint, setAimPoint] = useState(null)
   // "Help me aim": '' until pressed, then 'found' or 'none'
   const [aimHelp, setAimHelp] = useState('')
+  // Optional Tutorial (mission 1): hands and arrows. `tutorialDragged` once the player moved the aim.
+  const [tutorialOn, setTutorialOn] = useTutorial()
+  const tutorialMission = mission.id === 'earth'
+  const [tutorialDragged, setTutorialDragged] = useState(false)
+  // A flight launched with the Tutorial on is practice: it is not saved and unlocks nothing.
+  const practiceRef = useRef(false)
   const [result, setResult] = useState(null)
   // Mission 1 won: the first-orbit story plays after the Congratulations screen
   const [firstOrbitStory, setFirstOrbitStory] = useState(false)
@@ -264,13 +272,13 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
 
   const failLaunch = useCallback(() => {
     try {
-      completeMission(mission.id, { pct: 0, success: false, flight: tripNotes() })
+      if (!practiceRef.current) completeMission(mission.id, { pct: 0, success: false, flight: tripNotes() })
     } catch {
       /* mission locked or unknown: show the result anyway */
     }
     playSfx(SFX.lose)
     setLiftingOff(false)
-    setResult({ outcome: { type: failure.id }, success: false, pct: 0, stars: 0, unlockedMissionId: null, failure })
+    setResult({ outcome: { type: failure.id }, success: false, pct: 0, stars: 0, unlockedMissionId: null, failure, practice: practiceRef.current })
     setStep('result')
   }, [completeMission, mission.id, failure, tripNotes])
 
@@ -297,7 +305,7 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
     const craft = craftShort(outcome.satelliteName)
     let progressOutcome = null
     try {
-      progressOutcome = completeMission(mission.id, {
+      if (!practiceRef.current) progressOutcome = completeMission(mission.id, {
         pct,
         success,
         flight: tripNotes(craft ? { craft } : {}),
@@ -313,6 +321,7 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
       pct,
       stars: progressOutcome?.stars ?? 0,
       unlockedMissionId: progressOutcome?.unlockedMissionId ?? null,
+      practice: practiceRef.current,
       directionDeg: aim ? radiansToDegrees(aim.tiltRadians) : null,
       // It got close to the arrival point, but too fast or too slow to stay in orbit there.
       reachedArrival: Boolean(prediction.bestInsertion),
@@ -539,6 +548,7 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
   }
 
   const handlePointerUp = () => {
+    if (draggingRef.current) setTutorialDragged(true)
     draggingRef.current = false
   }
 
@@ -575,6 +585,7 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
   }
 
   const launch = () => {
+    practiceRef.current = tutorialMission && tutorialOn
     playSfx(SFX.liftoff)
     setTelemetry(null)
     setResult(null)
@@ -602,15 +613,43 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
 
   const hud = (
     <header className="game__hud orbit-level__hud">
-      <button type="button" className="game__back" onClick={onExit}>
-        {t('Missions')}
-      </button>
+      <div className="game__corner">
+        <button type="button" className="game__back" onClick={onExit}>
+          {t('Missions')}
+        </button>
+        {tutorialMission && (step === 'site' || step === 'aim') && (
+          <TutorialButton on={tutorialOn} onToggle={setTutorialOn} />
+        )}
+      </div>
       <div className="game__mission">
         <h1>{t(mission.title)}</h1>
       </div>
       <div className="game__place">{t(mission.place)}</div>
     </header>
   )
+
+  // Tutorial steps, all with hands and arrows over the real controls:
+  //   site  tap a base that works (the first one that can reach the orbit), then Next
+  //   aim   hold on the base and drag out, then Launch (or Help me aim if the path misses)
+  const tutorialSiteId = LAUNCH_SITES.find((candidate) => checkTargetFromSite(candidate, orbit).ok)?.id
+  let tutorial = null
+  if (tutorialMission && tutorialOn && !liftingOff && !shownSatellite) {
+    if (step === 'site') {
+      tutorial = { target: site && siteCheck?.ok ? "[data-tutorial='site-next']" : "[data-tutorial='site-best']" }
+    } else if (step === 'aim' && site && aim) {
+      const box = canvasRef.current?.getBoundingClientRect()
+      if (!tutorialDragged && box) {
+        // From the base on the rim, straight out from the Earth
+        const base = siteScreenPosition(view, site, true)
+        const out = Math.atan2(base.y - view.centerY, base.x - view.centerX)
+        const reach = Math.min(110, view.aimMaxPixels ?? 110) * uiScale
+        const from = { x: box.left + base.x * uiScale, y: box.top + base.y * uiScale }
+        tutorial = { drag: { from, to: { x: from.x + Math.cos(out) * reach, y: from.y + Math.sin(out) * reach } } }
+      } else {
+        tutorial = { target: predictionSummary?.tone === 'good' ? "[data-tutorial='launch']" : "[data-tutorial='help']" }
+      }
+    }
+  }
 
   return (
     <div className="game orbit-level" style={{ backgroundImage: `url(${ASSETS.spaceBackground.src})` }}>
@@ -620,15 +659,21 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
           <LaunchSequence equipped={equipped} hud={hud} onDone={startOrbitFlight} failure={failure} onFail={failLaunch} />
         </div>
       )}
+      {tutorial && <TutorialGuide target={tutorial.target ?? null} drag={tutorial.drag ?? null} />}
       {step === 'result' && result?.success && !firstOrbitStory && (
         <MissionCompleteScreen
           mission={mission}
           result={result}
           design={design}
           directionDeg={design ? null : result.directionDeg}
-          onContinue={mission.id === 'earth' ? () => setFirstOrbitStory(true) : onExit}
-          continueLabel={mission.id === 'earth' ? t('Continue') : undefined}
+          onContinue={result.practice ? onExit : mission.id === 'earth' ? () => setFirstOrbitStory(true) : onExit}
+          continueLabel={result.practice ? t('Missions') : mission.id === 'earth' ? t('Continue') : undefined}
           onFlyAgain={retry}
+          practice={result.practice}
+          onFlyForReal={() => {
+            setTutorialOn(false)
+            retry()
+          }}
         />
       )}
       {step === 'result' && result?.success && firstOrbitStory && <FirstOrbitStory onDone={onExit} />}
@@ -720,6 +765,7 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
                   className={className}
                   style={style}
                   aria-pressed={selected}
+                  data-tutorial={candidate.id === tutorialSiteId ? 'site-best' : undefined}
                   disabled={!siteOk}
                   title={siteOk ? t(candidate.name) : siteBlockText(checkTargetFromSite(candidate, orbit), candidate)}
                   onClick={() => selectSite(candidate.id)}
@@ -758,7 +804,7 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
               )}
               <div className="orbit-panel__actions">
                 <button type="button" className="game__back" onClick={onBackToHangar}>{t('Hangar')}</button>
-                <button type="button" className="ms-btn" disabled={!site || !siteCheck?.ok} onClick={goToAim}>{t('Next')}</button>
+                <button type="button" className="ms-btn" data-tutorial="site-next" disabled={!site || !siteCheck?.ok} onClick={goToAim}>{t('Next')}</button>
               </div>
             </>
           )}
@@ -779,7 +825,7 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
               )}
               {predictionSummary && <p className={`orbit-prediction is-${predictionSummary.tone}`}>{sayTo(playerName, predictionSummary.text)}</p>}
               {!design && (
-                <button type="button" className="game__back orbit-help" onClick={helpAim} disabled={aimHelp === 'busy'}>
+                <button type="button" className="game__back orbit-help" data-tutorial="help" onClick={helpAim} disabled={aimHelp === 'busy'}>
                   {aimHelp === 'busy' ? t('Looking for a path…') : t('Help me aim')}
                 </button>
               )}
@@ -787,7 +833,7 @@ export function OrbitalLaunchLevel({ mission, equipped, design, launchPlace, onL
               {aimHelp === 'none' && <p className="orbit-panel__hint">{t('No aim reaches this orbit from this base. Go back and try another base.')}</p>}
               <div className="orbit-panel__actions">
                 <button type="button" className="game__back" onClick={() => goBack('site')}>{t('Back')}</button>
-                <button type="button" className="ms-btn" onClick={launch}>{t('Launch')}</button>
+                <button type="button" className="ms-btn" data-tutorial="launch" onClick={launch}>{t('Launch')}</button>
               </div>
             </>
           )}

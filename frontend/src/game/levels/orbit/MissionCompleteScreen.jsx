@@ -11,13 +11,14 @@ import { useSettings } from '../../../settings/SettingsContext.jsx'
 import { engineerName, sayTo } from '../../../settings/settingsStore.js'
 import { MissionReport } from '../../design/MissionReport.jsx'
 import { LaunchFact } from './LaunchFact.jsx'
+import { PixelHand } from '../../tutorial/TutorialGuide.jsx'
 
 function nextMissionAfter(missionId) {
   const index = MISSIONS.findIndex((candidate) => candidate.id === missionId)
   return index >= 0 ? (MISSIONS[index + 1] ?? null) : null
 }
 
-export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain, lead, design, continueLabel }) {
+export function MissionCompleteScreen({ mission, result, directionDeg, onContinue, onFlyAgain, lead, design, continueLabel, practice = false, onFlyForReal }) {
   const playerName = engineerName(useSettings().playerName)
   const nextMission = nextMissionAfter(mission.id)
   const continueRef = useRef(null)
@@ -43,9 +44,11 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
           {sayTo(playerName, lead ?? t('Your satellite is flying around the Earth.'))}
         </p>
 
-        <div className="mission-complete__stars">
-          <StarRating stars={result.stars} size={40} />
-        </div>
+        {!practice && (
+          <div className="mission-complete__stars">
+            <StarRating stars={result.stars} size={40} />
+          </div>
+        )}
 
         <dl className="orbit-stats mission-complete__stats">
           <div><dt>{t('Score')}</dt><dd>{result.pct}%</dd></div>
@@ -59,7 +62,16 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
 
         <LaunchFact result={result} className="mission-complete__fact" />
 
-        {nextMission ? (
+        {practice ? (
+          // Flown with the Tutorial: practice only. The next mission opens after a flight without it.
+          <div className="mission-complete__unlock mission-complete__practice">
+            <PixelHand className="mission-complete__practice-hand" />
+            <div>
+              <p className="mission-complete__unlock-label">{t('Practice flight')}</p>
+              <p className="mission-complete__unlock-name">{t('Fly without the Tutorial to unlock the next mission.')}</p>
+            </div>
+          </div>
+        ) : nextMission ? (
           <div className="mission-complete__unlock">
             <Planet planet={nextMission.planet} size={72} />
             <div>
@@ -76,10 +88,21 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
         )}
 
         <div className="mission-complete__actions">
-          <button type="button" className="game__back" onClick={onFlyAgain}>{t('Fly again')}</button>
-          <button ref={continueRef} type="button" className="ms-btn" onClick={onContinue}>
-            {continueLabel ?? (nextMission ? t('Next mission') : t('Missions'))}
-          </button>
+          {practice ? (
+            <>
+              <button type="button" className="game__back" onClick={onContinue}>{continueLabel ?? t('Missions')}</button>
+              <button ref={continueRef} type="button" className="ms-btn" onClick={onFlyForReal ?? onFlyAgain}>
+                {t('Fly without the Tutorial')}
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" className="game__back" onClick={onFlyAgain}>{t('Fly again')}</button>
+              <button ref={continueRef} type="button" className="ms-btn" onClick={onContinue}>
+                {continueLabel ?? (nextMission ? t('Next mission') : t('Missions'))}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,0 +1,178 @@
+/* Tutorial: pixel hands, arrows and frames over the real buttons. Never blocks clicks. */
+.tut-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+}
+
+.tut-hand {
+  display: block;
+  width: 34px;
+  height: 37px;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.45));
+}
+
+/* Glowing frame around the thing to press */
+.tut-ring {
+  position: fixed;
+  border: 3px dashed #ffd64a;
+  box-shadow: 0 0 0 3px rgba(26, 18, 48, 0.7), 0 0 14px rgba(255, 214, 74, 0.8);
+  animation: tut-ring 1s steps(2, jump-none) infinite;
+}
+
+@keyframes tut-ring {
+  from { border-color: #ffd64a; }
+  to { border-color: #fff7c2; box-shadow: 0 0 0 3px rgba(26, 18, 48, 0.7), 0 0 22px rgba(255, 214, 74, 1); }
+}
+
+/* Arrow above the target, bouncing down toward it */
+.tut-arrow-wrap {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  animation: tut-bounce 0.8s steps(4, jump-none) infinite alternate;
+}
+
+.tut-arrow-wrap.is-below {
+  transform: translate(-50%, 0) rotate(180deg);
+  animation-name: tut-bounce-up;
+}
+
+.tut-arrow {
+  display: block;
+  width: 27px;
+  height: 30px;
+  filter: drop-shadow(0 0 6px rgba(255, 214, 74, 0.7));
+}
+
+@keyframes tut-bounce {
+  from { margin-top: -10px; }
+  to { margin-top: 0; }
+}
+
+@keyframes tut-bounce-up {
+  from { margin-top: 10px; }
+  to { margin-top: 0; }
+}
+
+/* Hand tapping: presses down and lifts again */
+.tut-tap {
+  position: fixed;
+  /* fingertip (column 4.5 of 13) on the point */
+  transform: translate(-12px, 0);
+  animation: tut-tap 1s steps(1, end) infinite;
+}
+
+@keyframes tut-tap {
+  0% { margin-top: 8px; }
+  50% { margin-top: 0; }
+}
+
+/* Drag: a dot where to hold, a dotted road, and a hand sliding along it */
+.tut-dot {
+  position: fixed;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 3px solid #ffd64a;
+  background: rgba(255, 214, 74, 0.25);
+  animation: tut-ring 0.8s steps(2, jump-none) infinite;
+}
+
+.tut-path {
+  position: fixed;
+  height: 0;
+  border-top: 4px dashed #ffd64a;
+  margin-top: -2px;
+  transform-origin: 0 50%;
+  filter: drop-shadow(0 0 4px rgba(255, 214, 74, 0.8));
+}
+
+.tut-path__head {
+  position: absolute;
+  right: -6px;
+  top: -10px;
+  width: 0;
+  height: 0;
+  border-left: 14px solid #ffd64a;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+}
+
+.tut-drag {
+  position: fixed;
+  transform: translate(-12px, 0);
+  animation: tut-drag 2s steps(16, end) infinite;
+}
+
+@keyframes tut-drag {
+  0%, 10% { translate: 0 0; opacity: 1; }
+  80% { translate: var(--tut-dx) var(--tut-dy); opacity: 1; }
+  90%, 100% { translate: var(--tut-dx) var(--tut-dy); opacity: 0; }
+}
+
+/* Important things wear a small star */
+.tut-star {
+  position: fixed;
+  transform: translate(-60%, -40%);
+  color: #ffd64a;
+  font-size: 18px;
+  line-height: 1;
+  text-shadow: 0 0 0 #1a1230, 2px 2px 0 #1a1230, -1px -1px 0 #1a1230, 0 0 8px rgba(255, 214, 74, 0.9);
+  animation: tut-ring 1.2s steps(2, jump-none) infinite;
+}
+
+/* The optional switch, in the same pixel frame as the HUD buttons */
+.tut-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.75rem 0.25rem 0.5rem;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+  color: var(--ms-text, #fff);
+  background: rgba(11, 16, 48, 0.94);
+  border: 0;
+  box-shadow:
+    inset 3px 3px 0 var(--px-edge, #7d9cf0),
+    inset -3px -3px 0 var(--px-edge-dim, #3f5fb8),
+    0 3px 0 var(--px-ink, #05060f);
+  cursor: pointer;
+}
+
+.tut-btn.is-on {
+  color: #2a2000;
+  background: var(--ms-yellow, #ffd64a);
+  box-shadow: inset 3px 3px 0 #fff1a8, inset -3px -3px 0 #a88412, 0 3px 0 #6b520a;
+}
+
+.tut-btn:active { transform: translateY(3px); box-shadow: none; }
+
+.tut-btn:focus-visible {
+  outline: 3px solid var(--ms-yellow, #ffd64a);
+  outline-offset: 3px;
+}
+
+.tut-btn__hand {
+  width: 18px;
+  height: 20px;
+  filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tut-ring,
+  .tut-dot,
+  .tut-star,
+  .tut-arrow-wrap,
+  .tut-tap {
+    animation: none;
+  }
+  /* The drag hand waits at the end of the road instead of sliding */
+  .tut-drag {
+    animation: none;
+    translate: var(--tut-dx) var(--tut-dy);
+  }
+}
