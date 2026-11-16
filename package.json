@@ -10,6 +10,7 @@
     "dev:api": "backend\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --app-dir backend --host 127.0.0.1 --port 8000",
     "emulators": "firebase emulators:start",
     "build:web": "npm run build --prefix frontend",
+    "deploy:web": "npx vercel deploy --prod --yes",
     "lint": "npm run lint --prefix frontend",
     "test": "npm run test --prefix frontend",
     "test:moon": "npm run test:moon --prefix frontend",
