@@ -188,7 +188,7 @@ export const PROJECT_COPY = Object.freeze({
       },
       {
         title: 'Audio',
-        text: 'Trailer music, sound effects, and spoken lines were shaped with AI help. This page and the on-screen watermarks are the descriptive text for that audio.',
+        text: 'Trailer music and sound effects were shaped with AI help. This page and the on-screen watermarks are the descriptive text for that audio.',
       },
     ],
     siNote: 'Judges can open Play to see the same watermarks in the game. Nothing here copies or alters NASA branding.',
@@ -358,7 +358,7 @@ export const PROJECT_COPY = Object.freeze({
       },
       {
         title: 'Audio',
-        text: 'La música del tráiler, los efectos de sonido y las líneas habladas se armaron con ayuda de IA. Esta página y las marcas de agua en pantalla son el texto descriptivo de ese audio.',
+        text: 'La música del tráiler y los efectos de sonido se armaron con ayuda de IA. Esta página y las marcas de agua en pantalla son el texto descriptivo de ese audio.',
       },
     ],
     siNote: 'Un jurado puede pulsar Jugar y ver las mismas marcas de agua en el juego. Nada aquí copia ni altera la marca de la NASA.',
