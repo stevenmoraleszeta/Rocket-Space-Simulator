@@ -113,7 +113,7 @@ export default function App() {
             so the music settings are available on every screen (fixed in the top-right corner). */}
         {mission && (
           <div className="st-floating">
-            <SettingsMenu googleSignedIn={session.google} authError={session.authError} />
+            <SettingsMenu googleSignedIn={session.google} authError={session.authError} onReset={() => navigate(menuRoute())} />
           </div>
         )}
       </ProgressProvider>

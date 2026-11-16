@@ -53,6 +53,27 @@ export function ProgressProvider({ userId = 'guest', storage = localStorageAdapt
       .catch(() => { /* keep playing even if saving fails */ });
   }, [storage, userId]);
 
+  /** Start over from zero: no stars, no unlocks (Settings → Start over). */
+  const resetProgress = useCallback(async () => {
+    const empty = P.createEmptyProgress();
+    saveCount.current += 1;
+    setProgress(empty);
+    if (typeof storage.reset === 'function') {
+      try {
+        await storage.reset(userId);
+      } catch {
+        /* the cloud could not be emptied: this device starts over anyway */
+      }
+      return;
+    }
+    try {
+      await storage.save(userId, empty);
+      if (userId !== 'guest') await storage.save('guest', empty);
+    } catch {
+      /* keep playing even if saving fails */
+    }
+  }, [storage, userId]);
+
   /** Called by gameplay when a mission ends. Returns the outcome (stars, unlocks…). */
   const completeMission = useCallback((missionId, result) => {
     const { progress: next, outcome } = P.applyResult(progressRef.current, missionId, result, missions, {
@@ -83,8 +104,8 @@ export function ProgressProvider({ userId = 'guest', storage = localStorageAdapt
     maxStars: P.maxStars(missions),
     allCompleted: P.allCompleted(progress, missions),
     completeMission,
-    resetProgress: () => persist(P.createEmptyProgress()),
-  }), [progress, loading, missions, adminMode, setAdminMode, completeMission, persist]);
+    resetProgress,
+  }), [progress, loading, missions, adminMode, setAdminMode, completeMission, persist, resetProgress]);
 
   return (
     <ProgressContext.Provider value={value}>

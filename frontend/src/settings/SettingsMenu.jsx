@@ -9,6 +9,8 @@ import { loadGoogleSignIn, renderGoogleButton } from '../lib/googleSignIn.js';
 import { googleSignInMessage } from '../lib/playerSession.js';
 import { LANGUAGES, t } from '../i18n/index.js';
 import { useSettings } from './SettingsContext.jsx';
+import { useProgress } from '../levels/ProgressContext.jsx';
+import { setTutorial } from '../game/tutorial/tutorialStore.js';
 import { engineerName, MAX_NAME_LENGTH } from './settingsStore.js';
 
 function GoogleMark() {
@@ -63,9 +65,20 @@ function VolumeSlider({ label, value, onChange }) {
   );
 }
 
-export function SettingsMenu({ googleSignedIn = false, authError: redirectError = '' }) {
+export function SettingsMenu({ googleSignedIn = false, authError: redirectError = '', onReset }) {
   const { musicVolume, ambientVolume, playerName, language, update } = useSettings();
+  const { resetProgress } = useProgress();
   const [open, setOpen] = useState(false);
+  // Start over: first tap asks, the second one empties the progress
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
+  const startOver = async () => {
+    setConfirmReset(false);
+    setTutorial(false);
+    await resetProgress();
+    setResetDone(true);
+    onReset?.();
+  };
   const [authError, setAuthError] = useState('');
   const onGoogleError = useCallback((message) => setAuthError(message), []);
   const panelRef = useRef(null);
@@ -90,6 +103,8 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
     window.addEventListener('pointerdown', onPointer);
     nameRef.current?.focus();
     return () => {
+      setConfirmReset(false);
+      setResetDone(false);
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('pointerdown', onPointer);
     };
@@ -183,6 +198,28 @@ export function SettingsMenu({ googleSignedIn = false, authError: redirectError 
 
           <VolumeSlider label={t('Music')} value={musicVolume} onChange={(v) => update({ musicVolume: v })} />
           <VolumeSlider label={t('Sounds')} value={ambientVolume} onChange={(v) => update({ ambientVolume: v })} />
+
+          <div className="st-field st-reset">
+            <p className="st-label">{t('Start over')}</p>
+            {resetDone ? (
+              <p className="st-hint" role="status">{t('Done! Every mission starts from zero.')}</p>
+            ) : confirmReset ? (
+              <>
+                <p className="st-reset__ask" role="alert">{t('Delete all your stars and start again from the first mission?')}</p>
+                <div className="st-reset__row">
+                  <button type="button" className="ms-btn st-reset__yes" onClick={startOver}>{t('Yes, start over')}</button>
+                  <button type="button" className="ms-btn ms-btn--ghost" onClick={() => setConfirmReset(false)}>{t('No')}</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="st-hint">{t('Erase your stars and play every mission again from zero.')}</p>
+                <button type="button" className="ms-btn ms-btn--ghost st-reset__open" onClick={() => setConfirmReset(true)}>
+                  {t('Start over from zero')}
+                </button>
+              </>
+            )}
+          </div>
 
           <button className="ms-btn st-done" onClick={() => setOpen(false)}>{t('Done')}</button>
         </div>

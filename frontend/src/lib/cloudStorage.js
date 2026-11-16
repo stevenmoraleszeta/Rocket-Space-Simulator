@@ -152,6 +152,20 @@ export function createCloudProgressStorage() {
       }
     },
 
+    /**
+     * Start over: empty progress here and in Firestore. save() keeps the best of both copies,
+     * so it would bring the old stars back; this overwrites them instead. The guest copy on this
+     * device is emptied too (load merges it in). Flight logs in Firestore cannot be deleted
+     * (firestore.rules), so the cloud history stays.
+     */
+    async reset(userId) {
+      const empty = localRecord({ version: 1, missions: {}, flights: [] })
+      await localStorageAdapter.save(userId, empty)
+      if (userId !== 'guest') await localStorageAdapter.save('guest', empty)
+      await remote.save(userId, progressStamp(empty))
+      return empty
+    },
+
     async save(userId, progress) {
       const immediate = localRecord(progress)
       await localStorageAdapter.save(userId, immediate)

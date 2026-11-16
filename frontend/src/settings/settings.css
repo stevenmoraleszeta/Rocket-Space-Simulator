@@ -91,5 +91,10 @@
 }
 
 .st-done { width: 100%; margin-top: 0.25rem; }
+.st-reset__open, .st-reset__yes { width: 100%; margin-top: 0.5rem; }
+.st-reset__ask { margin: 0.25rem 0 0; font-size: 1rem; line-height: 1.35; color: #ffd0d0; }
+.st-reset__row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.st-reset__row .ms-btn { flex: 1; margin-top: 0; }
+.st-reset__yes { background: #b8323a; border-color: #ff8a8a; }
 
 @media (prefers-reduced-motion: reduce) { .st-toggle, .st-panel, .st-dot { animation: none; transition: none; } }
