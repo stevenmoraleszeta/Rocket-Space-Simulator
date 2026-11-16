@@ -43,6 +43,12 @@ firebase-debug.*.log
 .dataconnect/
 firebase-export-*/
 
+# Deploy tooling and caches
+.vercel/
+.cache/
+.oxlintcache
+*.tsbuildinfo
+
 # Editors and OS
 .vscode/*
 !.vscode/extensions.json

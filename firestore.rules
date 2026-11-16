@@ -1,6 +1,8 @@
 rules_version = '2';
 
-// Player data. Mission ids must stay in sync with frontend/src/levels/data/missions.js.
+// Player data.
+// Mission ids stay in sync with frontend/src/levels/data/missions.js.
+// Settings fields stay in sync with frontend/src/settings/settingsStore.js.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedInAs(userId) {
@@ -8,7 +10,7 @@ service cloud.firestore {
     }
 
     function validSettings(data) {
-      return data.keys().hasOnly(['musicVolume', 'ambientVolume', 'playerName', 'updatedAt'])
+      return data.keys().hasOnly(['musicVolume', 'ambientVolume', 'playerName', 'language', 'updatedAt'])
         && data.musicVolume is number
         && data.musicVolume >= 0
         && data.musicVolume <= 1
@@ -17,6 +19,7 @@ service cloud.firestore {
         && data.ambientVolume <= 1
         && data.playerName is string
         && data.playerName.size() <= 16
+        && (data.language == 'en' || data.language == 'es')
         && data.updatedAt is string
         && data.updatedAt.size() > 0
         && data.updatedAt.size() <= 40;
