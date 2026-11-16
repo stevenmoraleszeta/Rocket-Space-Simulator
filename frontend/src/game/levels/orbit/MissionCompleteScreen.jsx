@@ -63,12 +63,12 @@ export function MissionCompleteScreen({ mission, result, directionDeg, onContinu
         <LaunchFact result={result} className="mission-complete__fact" />
 
         {practice ? (
-          // Flown with the Tutorial: practice only. The next mission opens after a flight without it.
+          // Flown with the Tutorial: practice only, nothing is saved (no stars, no unlock).
           <div className="mission-complete__unlock mission-complete__practice">
             <PixelHand className="mission-complete__practice-hand" />
             <div>
               <p className="mission-complete__unlock-label">{t('Practice flight')}</p>
-              <p className="mission-complete__unlock-name">{t('Fly without the Tutorial to unlock the next mission.')}</p>
+              <p className="mission-complete__unlock-name">{t('Practice is not saved. Fly without the Tutorial to earn your stars.')}</p>
             </div>
           </div>
         ) : nextMission ? (

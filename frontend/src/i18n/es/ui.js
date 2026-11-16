@@ -126,7 +126,7 @@ export const ui = {
   'Story': 'Historia',
   'Tutorial': 'Tutorial',
   'Practice flight': 'Vuelo de práctica',
-  'Fly without the Tutorial to unlock the next mission.': 'Vuela sin el Tutorial para desbloquear la siguiente misión.',
+  'Practice is not saved. Fly without the Tutorial to earn your stars.': 'La práctica no se guarda. Vuela sin el Tutorial para ganar tus estrellas.',
   'Fly without the Tutorial': 'Volar sin el Tutorial',
   'Close the story': 'Cerrar la historia',
   'Open the story': 'Abrir la historia',
