@@ -26,7 +26,7 @@ const MEMBERS = Object.freeze([
 export const PROJECT_COPY = Object.freeze({
   en: {
     metaTitle: 'Rocket Space Simulator · Space TEC',
-    metaDescription: 'A pixel-art mission trainer for kids ages 7 to 12. Pack a rocket for Earth, the Moon, and Mars, and pay the real cost in air, water, food, power, and the radio.',
+    metaDescription: 'A pixel-art mission trainer for kids ages 8+. Pack a rocket for Earth, the Moon, and Mars, and pay the real cost in air, water, food, power, and the radio.',
     skip: 'Skip to content',
     langLabel: 'Language',
     play: 'Play',
@@ -43,7 +43,7 @@ export const PROJECT_COPY = Object.freeze({
     ],
     kicker: 'NASA Space Apps Challenge 2026',
     thesis: 'The review is in the game',
-    lead: 'Space TEC built a mission trainer for kids ages 7 to 12. The review asks about impact, creativity, viability, the prototype, and the presentation. Each mark is answered below, and each answer is something a judge can click.',
+    lead: 'Space TEC built a mission trainer for kids ages 8+. The review asks about impact, creativity, viability, the prototype, and the presentation. Each mark is answered below, and each answer is something a judge can click.',
     chips: [
       'Team Space TEC',
       'San José, Costa Rica',
@@ -58,7 +58,7 @@ export const PROJECT_COPY = Object.freeze({
         weight: '30%',
         title: 'Impact',
         ask: 'How much impact can this have, and does it help many kids or a few?',
-        answer: 'The challenge is for kids ages 7 to 12. A space game usually hides the cost of staying alive. This one makes food, water, air, power, and a call home run out, so a class can feel a real mission. It opens in a browser, in English or Spanish, with nothing to install. Any kid with the link can play, and a judge can open every mission.',
+        answer: 'The challenge is for kids ages 8+. A space game usually hides the cost of staying alive. This one makes food, water, air, power, and a call home run out, so a class can feel a real mission. It opens in a browser, in English or Spanish, with nothing to install. Any kid with the link can play, and a judge can open every mission.',
       },
       {
         id: 'creativity',
@@ -95,7 +95,7 @@ export const PROJECT_COPY = Object.freeze({
       'This prototype puts that cost in the hangar, and again during the flight. The player cannot pack every part. On the way, a solar storm, a silent radio, or an empty pantry shows what was left behind.',
     ],
     challengeLink: 'Official challenge',
-    agesNote: 'The menu calls it a space game for ages 8 to 12. Sentences stay short, buttons stay large, and a science word is explained in the same sentence.',
+    agesNote: 'The menu calls it a space game for ages 8+. Sentences stay short, buttons stay large, and a science word is explained in the same sentence.',
     missionsTitle: 'Three missions',
     missionsIntro: 'This is the build a judge can fly. Earth and the Moon are open. Mars opens after the Moon, or right away with Become admin.',
     missions: [
@@ -178,7 +178,7 @@ export const PROJECT_COPY = Object.freeze({
   },
   es: {
     metaTitle: 'Rocket Space Simulator · Space TEC',
-    metaDescription: 'Un entrenador de misiones en pixel art para niños de 7 a 12 años. Empaca un cohete a la Tierra, la Luna y Marte, y paga el costo real en aire, agua, comida, energía y radio.',
+    metaDescription: 'Un entrenador de misiones en pixel art para niños de 8+ años. Empaca un cohete a la Tierra, la Luna y Marte, y paga el costo real en aire, agua, comida, energía y radio.',
     skip: 'Saltar al contenido',
     langLabel: 'Idioma',
     play: 'Jugar',
@@ -195,7 +195,7 @@ export const PROJECT_COPY = Object.freeze({
     ],
     kicker: 'NASA Space Apps Challenge 2026',
     thesis: 'La revisión está en el juego',
-    lead: 'Space TEC hizo un entrenador de misiones para niños de 7 a 12 años. La revisión pregunta por el impacto, la creatividad, la viabilidad, el prototipo y la presentación. Cada punto se responde abajo, y cada respuesta es algo que un jurado puede pulsar.',
+    lead: 'Space TEC hizo un entrenador de misiones para niños de 8+ años. La revisión pregunta por el impacto, la creatividad, la viabilidad, el prototipo y la presentación. Cada punto se responde abajo, y cada respuesta es algo que un jurado puede pulsar.',
     chips: [
       'Equipo Space TEC',
       'San José, Costa Rica',
@@ -210,7 +210,7 @@ export const PROJECT_COPY = Object.freeze({
         weight: '30%',
         title: 'Impacto',
         ask: '¿Cuánto impacto puede tener, y ayuda a muchos niños o a pocos?',
-        answer: 'El reto es para niños de 7 a 12 años. Un juego espacial suele esconder el costo de seguir con vida. Este hace que se acaben la comida, el agua, el aire, la energía y la llamada a casa, para que un grupo sienta una misión de verdad. Se abre en el navegador, en inglés o en español, sin instalar nada. Cualquier niño con el enlace puede jugar, y un jurado puede abrir todas las misiones.',
+        answer: 'El reto es para niños de 8+ años. Un juego espacial suele esconder el costo de seguir con vida. Este hace que se acaben la comida, el agua, el aire, la energía y la llamada a casa, para que un grupo sienta una misión de verdad. Se abre en el navegador, en inglés o en español, sin instalar nada. Cualquier niño con el enlace puede jugar, y un jurado puede abrir todas las misiones.',
       },
       {
         id: 'creativity',
@@ -247,7 +247,7 @@ export const PROJECT_COPY = Object.freeze({
       'Este prototipo pone ese costo en el hangar y otra vez durante el vuelo. El jugador no puede empacar todas las piezas. En el camino, una tormenta solar, una radio en silencio o una despensa vacía muestran lo que se quedó afuera.',
     ],
     challengeLink: 'Reto oficial',
-    agesNote: 'El menú lo llama un juego espacial para edades de 8 a 12 años. Las frases son cortas, los botones son grandes y una palabra de ciencia se explica en la misma oración.',
+    agesNote: 'El menú lo llama un juego espacial para edades 8+. Las frases son cortas, los botones son grandes y una palabra de ciencia se explica en la misma oración.',
     missionsTitle: 'Tres misiones',
     missionsIntro: 'Esto es lo que un jurado puede volar. La Tierra y la Luna están abiertas. Marte se abre al terminar la Luna, o de inmediato con Modo juez.',
     missions: [
