@@ -262,7 +262,7 @@ export function GameScreen({ mission, onExit, onLaunch, initialEquipped, onEquip
           <MissionFailedScreen
             mission={mission}
             result={{ outcome: { type: failure?.id }, success: false }}
-            reason={sayTo(playerName, failureMessage(failure))}
+            reason={failureMessage(failure)}
             hint={failureHint(failure)}
             onHangar={returnToHangar}
           />

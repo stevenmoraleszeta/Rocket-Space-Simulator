@@ -943,7 +943,7 @@ export function MoonLaunchLevel({ mission, equipped, design, launchPlace, onLaun
         <MissionFailedScreen
           mission={mission}
           result={result}
-          reason={sayTo(playerName, t(result.reason))}
+          reason={t(result.reason)}
           hint={result.hint}
           onHangar={onBackToHangar}
           onRetry={retry}
