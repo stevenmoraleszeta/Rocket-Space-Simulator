@@ -65,6 +65,26 @@
   color: var(--ms-muted);
 }
 
+/* Mission menu: the game name is the biggest words on the screen, above "Choose your mission!" */
+.ms-head .brand--wordmark {
+  gap: 1.25rem;
+}
+
+.ms-head .brand__mark {
+  width: 7.5rem;
+  height: 7.5rem;
+}
+
+.ms-head .brand__name {
+  font-size: clamp(1.375rem, 4.4vw, 2.625rem);
+  line-height: 1.35;
+  text-shadow: 0.25rem 0.25rem 0 #1a2260;
+}
+
+.ms-head .brand__name span {
+  font-size: clamp(1.125rem, 3.6vw, 2.125rem);
+}
+
 @media (max-width: 560px) {
   .ms-head .brand--wordmark {
     flex-direction: column;
@@ -72,12 +92,17 @@
     gap: 10px;
   }
 
+  .ms-head .brand__mark {
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+
   .ms-head .brand__name {
     text-align: center;
-    font-size: 11px;
+    font-size: clamp(1.25rem, 6.4vw, 1.75rem);
   }
 
   .ms-head .brand__name span {
-    font-size: 10px;
+    font-size: clamp(1rem, 5.2vw, 1.5rem);
   }
 }
