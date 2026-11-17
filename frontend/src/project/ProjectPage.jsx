@@ -209,16 +209,21 @@ export function ProjectPage() {
                   <h3>{copy.teamTitle}</h3>
                   <p>{copy.teamLead}</p>
                   <ul className="proj-team">
-                    {copy.members.map((member) => (
-                      <li key={member.name} className={member.role === 'lead' ? 'proj-panel is-lead' : 'proj-panel'}>
+                    {copy.members.map((member) => {
+                      const roles = member.roles ?? [member.role]
+                      return (
+                      <li key={member.name} className={roles.includes('lead') ? 'proj-panel is-lead' : 'proj-panel'}>
                         {member.photo ? (
                           <img className="proj-photo" src={member.photo} alt="" />
                         ) : (
                           <span className="proj-badge" aria-hidden="true">{initials(member.name)}</span>
                         )}
                         <p className="proj-member">{member.name}</p>
-                        {member.role === 'lead' && <p className="proj-role">{copy.roleLead}</p>}
-                        {member.role === 'engineer' && <p className="proj-role">{copy.roleEngineer}</p>}
+                        {roles.map((role) => (
+                          <p key={role} className="proj-role">
+                            {role === 'lead' ? copy.roleLead : copy.roleEngineer}
+                          </p>
+                        ))}
                         {member.links?.length > 0 && (
                           <ul className="proj-links">
                             {member.links.map((link) => (
@@ -232,7 +237,8 @@ export function ProjectPage() {
                           </ul>
                         )}
                       </li>
-                    ))}
+                      )
+                    })}
                   </ul>
                   <p>
                     <a className="proj-out" href={PROJECT_LINKS.team} target="_blank" rel="noreferrer">

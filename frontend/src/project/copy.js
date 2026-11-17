@@ -19,6 +19,7 @@ const MEMBERS = Object.freeze([
   {
     name: 'Steven Morales Fallas',
     role: 'lead',
+    roles: ['lead', 'engineer'],
     photo: '/team/steven-morales.jpg',
     links: [
       { id: 'linkedin', href: 'https://www.linkedin.com/in/stevenmoralesfallas' },

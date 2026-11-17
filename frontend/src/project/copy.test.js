@@ -28,6 +28,7 @@ test('the team, the links, and the playable facts stay checkable', () => {
   assert.equal(PROJECT_COPY.en.members.length, 5)
   assert.equal(PROJECT_COPY.en.members[0].name, 'Steven Morales Fallas')
   assert.equal(PROJECT_COPY.en.members[0].role, 'lead')
+  assert.deepEqual(PROJECT_COPY.en.members[0].roles, ['lead', 'engineer'])
   assert.equal(PROJECT_COPY.en.members[0].photo, '/team/steven-morales.jpg')
   assert.equal(PROJECT_COPY.en.roleLead, 'Team lead')
   assert.equal(PROJECT_COPY.es.roleLead, 'Líder del equipo')
