@@ -43,23 +43,25 @@ test('the team, the links, and the playable facts stay checkable', () => {
   assert.deepEqual(PROJECT_COPY.en.members.map((member) => member.links.find((link) => link.id === 'github').href), [
     'https://github.com/stevenmoraleszeta',
     'https://github.com/emanuel-astorga-fernandez',
+    'https://github.com/nayllelreyes7-creator',
     'https://github.com/kimb-torres',
     'https://github.com/DeykellRC',
-    'https://github.com/nayllelreyes7-creator',
   ])
   assert.equal(
     PROJECT_COPY.en.members[1].links.find((link) => link.id === 'linkedin').href,
     'https://www.linkedin.com/in/emanuel-astorga-909962434/',
   )
-  assert.equal(PROJECT_COPY.en.members[2].photo, '/team/kimberly-torres.jpg')
+  assert.equal(PROJECT_COPY.en.members[2].name, 'Nayllel Reyes')
+  assert.equal(PROJECT_COPY.en.members[2].photo, '/team/nayllel-reyes.jpg')
   assert.equal(
     PROJECT_COPY.en.members[2].links.find((link) => link.id === 'linkedin').href,
-    'https://www.linkedin.com/in/kimberly-torres-b2549244a/',
-  )
-  assert.equal(PROJECT_COPY.en.members[4].photo, '/team/nayllel-reyes.jpg')
-  assert.equal(
-    PROJECT_COPY.en.members[4].links.find((link) => link.id === 'linkedin').href,
     'https://www.linkedin.com/in/nayllel-reyes/',
+  )
+  assert.equal(PROJECT_COPY.en.members[3].name, 'Kimberly Torres Gonzalez')
+  assert.equal(PROJECT_COPY.en.members[3].photo, '/team/kimberly-torres.jpg')
+  assert.equal(
+    PROJECT_COPY.en.members[3].links.find((link) => link.id === 'linkedin').href,
+    'https://www.linkedin.com/in/kimberly-torres-b2549244a/',
   )
   assert.equal(PROJECT_COPY.en.members.some((member) => member.owner), false)
   assert.deepEqual(PROJECT_COPY.en.rubric.map((item) => item.weight), ['30%', '20%', '20%', '20%', '10%'])

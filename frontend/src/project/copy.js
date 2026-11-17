@@ -36,6 +36,15 @@ const MEMBERS = Object.freeze([
     ],
   },
   {
+    name: 'Nayllel Reyes',
+    role: 'engineer',
+    photo: '/team/nayllel-reyes.jpg',
+    links: [
+      { id: 'linkedin', href: 'https://www.linkedin.com/in/nayllel-reyes/' },
+      { id: 'github', href: 'https://github.com/nayllelreyes7-creator' },
+    ],
+  },
+  {
     name: 'Kimberly Torres Gonzalez',
     role: 'engineer',
     photo: '/team/kimberly-torres.jpg',
@@ -48,15 +57,6 @@ const MEMBERS = Object.freeze([
     name: 'Deykell Reyes Campos',
     role: 'engineer',
     links: [{ id: 'github', href: 'https://github.com/DeykellRC' }],
-  },
-  {
-    name: 'Nayllel Reyes',
-    role: 'engineer',
-    photo: '/team/nayllel-reyes.jpg',
-    links: [
-      { id: 'linkedin', href: 'https://www.linkedin.com/in/nayllel-reyes/' },
-      { id: 'github', href: 'https://github.com/nayllelreyes7-creator' },
-    ],
   },
 ])
 
