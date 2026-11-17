@@ -27,6 +27,21 @@ test('English and Spanish describe the same page', () => {
 test('the team, the links, and the playable facts stay checkable', () => {
   assert.equal(PROJECT_COPY.en.members.length, 5)
   assert.equal(PROJECT_COPY.en.members[0].name, 'Steven Morales Fallas')
+  assert.equal(PROJECT_COPY.en.members[0].role, 'lead')
+  assert.equal(PROJECT_COPY.en.members[0].photo, '/team/steven-morales.jpg')
+  assert.equal(PROJECT_COPY.en.roleLead, 'Team lead')
+  assert.equal(PROJECT_COPY.es.roleLead, 'Líder del equipo')
+  assert.deepEqual(PROJECT_COPY.en.members[0].links.map((link) => link.href), [
+    'https://www.linkedin.com/in/stevenmoralesfallas',
+    'https://www.instagram.com/stevenmorales.novaera/',
+    'https://github.com/stevenmoraleszeta',
+  ])
+  assert.deepEqual(PROJECT_COPY.en.members.slice(1).map((member) => member.links[0].href), [
+    'https://github.com/emanuel-astorga-fernandez',
+    'https://github.com/kimb-torres',
+    'https://github.com/DeykellRC',
+    'https://github.com/nayllelreyes7-creator',
+  ])
   assert.equal(PROJECT_COPY.en.members.some((member) => member.owner), false)
   assert.deepEqual(PROJECT_COPY.en.rubric.map((item) => item.weight), ['30%', '20%', '20%', '20%', '10%'])
   assert.deepEqual(PROJECT_COPY.en.rubric.map((item) => item.id), ['impact', 'creativity', 'viability', 'prototype', 'presentation'])

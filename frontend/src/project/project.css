@@ -288,6 +288,7 @@ html:has(.proj) {
 
 .proj-team {
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  align-items: start;
 }
 
 .proj-grid {
@@ -371,6 +372,11 @@ html:has(.proj) {
 
 .proj-team .proj-panel {
   text-align: center;
+  padding-bottom: 0.9rem;
+}
+
+.proj-team .is-lead::before {
+  box-shadow: inset var(--px) var(--px) 0 #ffe38a, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #6a5410;
 }
 
 .proj-badge {
@@ -387,9 +393,42 @@ html:has(.proj) {
   filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink));
 }
 
-.proj-member {
+.proj-photo {
+  display: block;
+  width: 7.5rem;
+  height: 7.5rem;
+  margin: 0.15rem auto 0.75rem;
+  object-fit: cover;
+  clip-path: var(--px-clip);
+  filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink));
+}
+
+.proj-team .proj-member {
   margin: 0;
   font-size: 1.25rem;
+}
+
+.proj-team .proj-role {
+  margin: 0.45rem 0 0;
+  font-family: var(--ms-font-pixel);
+  font-size: 0.5625rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ms-yellow);
+}
+
+.proj-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 0.75rem;
+  margin: 0.55rem 0 0.15rem;
+  padding: 0;
+  list-style: none;
+}
+
+.proj-links .proj-out {
+  font-size: 0.95rem;
 }
 
 .proj-stack {

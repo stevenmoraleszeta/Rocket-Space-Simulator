@@ -8,6 +8,12 @@ import { readProjectLanguage } from './projectRoute.js'
 import '../levels/missions.css'
 import './project.css'
 
+const LINK_LABELS = {
+  linkedin: 'LinkedIn',
+  instagram: 'Instagram',
+  github: 'GitHub',
+}
+
 function initials(name) {
   return name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? '').join('')
 }
@@ -204,9 +210,26 @@ export function ProjectPage() {
                   <p>{copy.teamLead}</p>
                   <ul className="proj-team">
                     {copy.members.map((member) => (
-                      <li key={member.name} className="proj-panel">
-                        <span className="proj-badge" aria-hidden="true">{initials(member.name)}</span>
+                      <li key={member.name} className={member.role === 'lead' ? 'proj-panel is-lead' : 'proj-panel'}>
+                        {member.photo ? (
+                          <img className="proj-photo" src={member.photo} alt="" />
+                        ) : (
+                          <span className="proj-badge" aria-hidden="true">{initials(member.name)}</span>
+                        )}
                         <p className="proj-member">{member.name}</p>
+                        {member.role === 'lead' && <p className="proj-role">{copy.roleLead}</p>}
+                        {member.links?.length > 0 && (
+                          <ul className="proj-links">
+                            {member.links.map((link) => (
+                              <li key={link.id}>
+                                <a className="proj-out" href={link.href} target="_blank" rel="noreferrer">
+                                  {LINK_LABELS[link.id]}
+                                  <span className="proj-sr">{copy.openTab}</span>
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </li>
                     ))}
                   </ul>

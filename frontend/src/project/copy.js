@@ -16,11 +16,32 @@ export const PROJECT_LINKS = Object.freeze({
 })
 
 const MEMBERS = Object.freeze([
-  { name: 'Steven Morales Fallas' },
-  { name: 'Emanuel Astorga Fernandez' },
-  { name: 'Kimberly Torres Gonzalez' },
-  { name: 'Deykell Reyes Campos' },
-  { name: 'Nayllel Reyes' },
+  {
+    name: 'Steven Morales Fallas',
+    role: 'lead',
+    photo: '/team/steven-morales.jpg',
+    links: [
+      { id: 'linkedin', href: 'https://www.linkedin.com/in/stevenmoralesfallas' },
+      { id: 'instagram', href: 'https://www.instagram.com/stevenmorales.novaera/' },
+      { id: 'github', href: 'https://github.com/stevenmoraleszeta' },
+    ],
+  },
+  {
+    name: 'Emanuel Astorga Fernandez',
+    links: [{ id: 'github', href: 'https://github.com/emanuel-astorga-fernandez' }],
+  },
+  {
+    name: 'Kimberly Torres Gonzalez',
+    links: [{ id: 'github', href: 'https://github.com/kimb-torres' }],
+  },
+  {
+    name: 'Deykell Reyes Campos',
+    links: [{ id: 'github', href: 'https://github.com/DeykellRC' }],
+  },
+  {
+    name: 'Nayllel Reyes',
+    links: [{ id: 'github', href: 'https://github.com/nayllelreyes7-creator' }],
+  },
 ])
 
 export const PROJECT_COPY = Object.freeze({
@@ -172,6 +193,7 @@ export const PROJECT_COPY = Object.freeze({
     ],
     teamTitle: 'Team Space TEC',
     teamLead: 'Local event: San José, Costa Rica.',
+    roleLead: 'Team lead',
     teamLink: 'Team page',
     members: MEMBERS,
     stack: 'Built with React, Vite, and pixel art in the browser, a Python FastAPI service, and Firebase Auth and Firestore for each player’s stars. MIT license.',
@@ -342,6 +364,7 @@ export const PROJECT_COPY = Object.freeze({
     ],
     teamTitle: 'Equipo Space TEC',
     teamLead: 'Evento local: San José, Costa Rica.',
+    roleLead: 'Líder del equipo',
     teamLink: 'Página del equipo',
     members: MEMBERS,
     stack: 'Hecho con React, Vite y pixel art en el navegador, un servicio Python con FastAPI, y Firebase Auth y Firestore para las estrellas de cada jugador. Licencia MIT.',
