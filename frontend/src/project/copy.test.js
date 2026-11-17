@@ -31,6 +31,9 @@ test('the team, the links, and the playable facts stay checkable', () => {
   assert.equal(PROJECT_COPY.en.members[0].photo, '/team/steven-morales.jpg')
   assert.equal(PROJECT_COPY.en.roleLead, 'Team lead')
   assert.equal(PROJECT_COPY.es.roleLead, 'Líder del equipo')
+  assert.equal(PROJECT_COPY.en.roleEngineer, 'Software engineer')
+  assert.equal(PROJECT_COPY.es.roleEngineer, 'Ingeniero de software')
+  assert.deepEqual(PROJECT_COPY.en.members.slice(1).map((member) => member.role), ['engineer', 'engineer', 'engineer', 'engineer'])
   assert.deepEqual(PROJECT_COPY.en.members[0].links.map((link) => link.href), [
     'https://www.linkedin.com/in/stevenmoralesfallas',
     'https://www.instagram.com/stevenmorales.novaera/',
@@ -43,6 +46,7 @@ test('the team, the links, and the playable facts stay checkable', () => {
     'https://github.com/DeykellRC',
     'https://github.com/nayllelreyes7-creator',
   ])
+  assert.equal(PROJECT_COPY.en.members[2].photo, '/team/kimberly-torres.jpg')
   assert.equal(
     PROJECT_COPY.en.members[2].links.find((link) => link.id === 'linkedin').href,
     'https://www.linkedin.com/in/kimberly-torres-b2549244a/',

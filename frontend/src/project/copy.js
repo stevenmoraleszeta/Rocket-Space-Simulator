@@ -28,10 +28,13 @@ const MEMBERS = Object.freeze([
   },
   {
     name: 'Emanuel Astorga Fernandez',
+    role: 'engineer',
     links: [{ id: 'github', href: 'https://github.com/emanuel-astorga-fernandez' }],
   },
   {
     name: 'Kimberly Torres Gonzalez',
+    role: 'engineer',
+    photo: '/team/kimberly-torres.jpg',
     links: [
       { id: 'linkedin', href: 'https://www.linkedin.com/in/kimberly-torres-b2549244a/' },
       { id: 'github', href: 'https://github.com/kimb-torres' },
@@ -39,10 +42,12 @@ const MEMBERS = Object.freeze([
   },
   {
     name: 'Deykell Reyes Campos',
+    role: 'engineer',
     links: [{ id: 'github', href: 'https://github.com/DeykellRC' }],
   },
   {
     name: 'Nayllel Reyes',
+    role: 'engineer',
     links: [{ id: 'github', href: 'https://github.com/nayllelreyes7-creator' }],
   },
 ])
@@ -197,6 +202,7 @@ export const PROJECT_COPY = Object.freeze({
     teamTitle: 'Team Space TEC',
     teamLead: 'Local event: San José, Costa Rica.',
     roleLead: 'Team lead',
+    roleEngineer: 'Software engineer',
     teamLink: 'Team page',
     members: MEMBERS,
     stack: 'Built with React, Vite, and pixel art in the browser, a Python FastAPI service, and Firebase Auth and Firestore for each player’s stars. MIT license.',
@@ -368,6 +374,7 @@ export const PROJECT_COPY = Object.freeze({
     teamTitle: 'Equipo Space TEC',
     teamLead: 'Evento local: San José, Costa Rica.',
     roleLead: 'Líder del equipo',
+    roleEngineer: 'Ingeniero de software',
     teamLink: 'Página del equipo',
     members: MEMBERS,
     stack: 'Hecho con React, Vite y pixel art en el navegador, un servicio Python con FastAPI, y Firebase Auth y Firestore para las estrellas de cada jugador. Licencia MIT.',

@@ -218,6 +218,7 @@ export function ProjectPage() {
                         )}
                         <p className="proj-member">{member.name}</p>
                         {member.role === 'lead' && <p className="proj-role">{copy.roleLead}</p>}
+                        {member.role === 'engineer' && <p className="proj-role">{copy.roleEngineer}</p>}
                         {member.links?.length > 0 && (
                           <ul className="proj-links">
                             {member.links.map((link) => (
