@@ -36,12 +36,17 @@ test('the team, the links, and the playable facts stay checkable', () => {
     'https://www.instagram.com/stevenmorales.novaera/',
     'https://github.com/stevenmoraleszeta',
   ])
-  assert.deepEqual(PROJECT_COPY.en.members.slice(1).map((member) => member.links[0].href), [
+  assert.deepEqual(PROJECT_COPY.en.members.map((member) => member.links.find((link) => link.id === 'github').href), [
+    'https://github.com/stevenmoraleszeta',
     'https://github.com/emanuel-astorga-fernandez',
     'https://github.com/kimb-torres',
     'https://github.com/DeykellRC',
     'https://github.com/nayllelreyes7-creator',
   ])
+  assert.equal(
+    PROJECT_COPY.en.members[2].links.find((link) => link.id === 'linkedin').href,
+    'https://www.linkedin.com/in/kimberly-torres-b2549244a/',
+  )
   assert.equal(PROJECT_COPY.en.members.some((member) => member.owner), false)
   assert.deepEqual(PROJECT_COPY.en.rubric.map((item) => item.weight), ['30%', '20%', '20%', '20%', '10%'])
   assert.deepEqual(PROJECT_COPY.en.rubric.map((item) => item.id), ['impact', 'creativity', 'viability', 'prototype', 'presentation'])

@@ -32,7 +32,10 @@ const MEMBERS = Object.freeze([
   },
   {
     name: 'Kimberly Torres Gonzalez',
-    links: [{ id: 'github', href: 'https://github.com/kimb-torres' }],
+    links: [
+      { id: 'linkedin', href: 'https://www.linkedin.com/in/kimberly-torres-b2549244a/' },
+      { id: 'github', href: 'https://github.com/kimb-torres' },
+    ],
   },
   {
     name: 'Deykell Reyes Campos',
