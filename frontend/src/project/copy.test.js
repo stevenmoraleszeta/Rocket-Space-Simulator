@@ -52,6 +52,11 @@ test('the team, the links, and the playable facts stay checkable', () => {
     PROJECT_COPY.en.members[2].links.find((link) => link.id === 'linkedin').href,
     'https://www.linkedin.com/in/kimberly-torres-b2549244a/',
   )
+  assert.equal(PROJECT_COPY.en.members[4].photo, '/team/nayllel-reyes.jpg')
+  assert.equal(
+    PROJECT_COPY.en.members[4].links.find((link) => link.id === 'linkedin').href,
+    'https://www.linkedin.com/in/nayllel-reyes/',
+  )
   assert.equal(PROJECT_COPY.en.members.some((member) => member.owner), false)
   assert.deepEqual(PROJECT_COPY.en.rubric.map((item) => item.weight), ['30%', '20%', '20%', '20%', '10%'])
   assert.deepEqual(PROJECT_COPY.en.rubric.map((item) => item.id), ['impact', 'creativity', 'viability', 'prototype', 'presentation'])

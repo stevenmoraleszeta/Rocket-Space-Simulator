@@ -49,7 +49,11 @@ const MEMBERS = Object.freeze([
   {
     name: 'Nayllel Reyes',
     role: 'engineer',
-    links: [{ id: 'github', href: 'https://github.com/nayllelreyes7-creator' }],
+    photo: '/team/nayllel-reyes.jpg',
+    links: [
+      { id: 'linkedin', href: 'https://www.linkedin.com/in/nayllel-reyes/' },
+      { id: 'github', href: 'https://github.com/nayllelreyes7-creator' },
+    ],
   },
 ])
 
