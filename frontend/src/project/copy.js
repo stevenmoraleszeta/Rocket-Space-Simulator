@@ -30,7 +30,10 @@ const MEMBERS = Object.freeze([
   {
     name: 'Emanuel Astorga Fernandez',
     role: 'engineer',
-    links: [{ id: 'github', href: 'https://github.com/emanuel-astorga-fernandez' }],
+    links: [
+      { id: 'linkedin', href: 'https://www.linkedin.com/in/emanuel-astorga-909962434/' },
+      { id: 'github', href: 'https://github.com/emanuel-astorga-fernandez' },
+    ],
   },
   {
     name: 'Kimberly Torres Gonzalez',

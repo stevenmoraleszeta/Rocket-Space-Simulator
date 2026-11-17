@@ -47,6 +47,10 @@ test('the team, the links, and the playable facts stay checkable', () => {
     'https://github.com/DeykellRC',
     'https://github.com/nayllelreyes7-creator',
   ])
+  assert.equal(
+    PROJECT_COPY.en.members[1].links.find((link) => link.id === 'linkedin').href,
+    'https://www.linkedin.com/in/emanuel-astorga-909962434/',
+  )
   assert.equal(PROJECT_COPY.en.members[2].photo, '/team/kimberly-torres.jpg')
   assert.equal(
     PROJECT_COPY.en.members[2].links.find((link) => link.id === 'linkedin').href,
