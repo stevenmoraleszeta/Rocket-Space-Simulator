@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AppLogo } from './brand/AppLogo.jsx'
-import { BlackHoleBackground, MISSIONS, MissionSelect, ProgressProvider } from './levels'
+import { LoadingScreen } from './brand/LoadingScreen.jsx'
+import { MISSIONS, MissionSelect, ProgressProvider } from './levels'
 import { MissionFlow } from './game/MissionFlow.jsx'
 import { SettingsMenu, SettingsProvider } from './settings'
 import { AMBIENCE, AudioVolumeSync, MUSIC, useSoundtrack } from './audio'
 import { IntroTrailer, introSeen } from './intro'
 import { menuRoute, missionRoute, readAppRoute, routesEqual, writeAppRoute } from './lib/appRoute.js'
-import { t } from './i18n/index.js'
 import { createCloudProgressStorage, createCloudSettingsStorage } from './lib/cloudStorage.js'
 import { usePlayerSession } from './lib/playerSession.js'
 import { ProjectPage } from './project/ProjectPage.jsx'
@@ -72,16 +71,7 @@ export default function App() {
 
   if (projectPage) return <ProjectPage />
 
-  if (!session.ready) {
-    return (
-      <BlackHoleBackground>
-        <div className="brand-splash">
-          <AppLogo size={96} wordmark bare />
-          <p className="brand-splash__status">{t('Loading…')}</p>
-        </div>
-      </BlackHoleBackground>
-    )
-  }
+  if (!session.ready) return <LoadingScreen />
 
   return (
     <SettingsProvider userId={session.uid} storage={settingsStorage}>

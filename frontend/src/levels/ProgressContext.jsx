@@ -12,6 +12,7 @@ import { readAdminMode, writeAdminMode } from './adminMode.js';
 import { MISSIONS } from './data/missions.js';
 import * as P from './progression.js';
 import { localStorageAdapter } from './storage.js';
+import { LoadingScreen } from '../brand/LoadingScreen.jsx';
 
 const ProgressContext = createContext(null);
 
@@ -109,7 +110,7 @@ export function ProgressProvider({ userId = 'guest', storage = localStorageAdapt
 
   return (
     <ProgressContext.Provider value={value}>
-      {loading ? null : children}
+      {loading ? <LoadingScreen /> : children}
     </ProgressContext.Provider>
   );
 }

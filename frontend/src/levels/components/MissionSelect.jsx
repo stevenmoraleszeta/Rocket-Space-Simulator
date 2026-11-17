@@ -13,6 +13,7 @@ import { Planet } from './Planet.jsx';
 import { HistoryBoard, RankBadge, RecordButtons, StatsBoard } from './PlayerBoards.jsx';
 import { StarRating } from './StarRating.jsx';
 import { BlackHoleBackground } from './BlackHoleBackground.jsx';
+import { LoadingScreen } from '../../brand/LoadingScreen.jsx';
 import { SPRITES } from '../assets/sprites.js';
 import { UPCOMING_MISSIONS } from '../data/upcomingMissions.js';
 import { SettingsMenu } from '../../settings/SettingsMenu.jsx';
@@ -41,16 +42,7 @@ export function MissionSelect({ onStartMission, onWatchTrailer, googleSignedIn =
   const { playerName: savedName, language } = useSettings();
   const playerName = engineerName(savedName);
 
-  if (loading) {
-    return (
-      <BlackHoleBackground>
-        <div className="brand-splash">
-          <AppLogo size={96} wordmark bare />
-          <p className="brand-splash__status">{t('Loading…')}</p>
-        </div>
-      </BlackHoleBackground>
-    );
-  }
+  if (loading) return <LoadingScreen />;
 
   return (
     <BlackHoleBackground>
