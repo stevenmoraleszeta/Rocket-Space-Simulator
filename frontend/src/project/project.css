@@ -287,8 +287,8 @@ html:has(.proj) {
 }
 
 .proj-team {
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  align-items: stretch;
 }
 
 .proj-grid {
@@ -371,6 +371,10 @@ html:has(.proj) {
 }
 
 .proj-team .proj-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
   text-align: center;
   padding-bottom: 0.9rem;
 }
@@ -379,12 +383,19 @@ html:has(.proj) {
   box-shadow: inset var(--px) var(--px) 0 #ffe38a, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #6a5410;
 }
 
+.proj-avatar {
+  display: grid;
+  place-items: center;
+  width: 7.5rem;
+  height: 7.5rem;
+  margin: 0.15rem auto 0.75rem;
+}
+
 .proj-badge {
   display: grid;
   place-items: center;
   width: 3.2rem;
   height: 3.2rem;
-  margin: 0.2rem auto 0.7rem;
   font-family: var(--ms-font-pixel);
   font-size: 0.7rem;
   color: #04213a;
@@ -397,19 +408,29 @@ html:has(.proj) {
   display: block;
   width: 7.5rem;
   height: 7.5rem;
-  margin: 0.15rem auto 0.75rem;
   object-fit: cover;
   clip-path: var(--px-clip);
   filter: drop-shadow(var(--px) var(--px) 0 var(--px-ink));
 }
 
 .proj-team .proj-member {
+  display: grid;
+  align-items: center;
+  min-height: 3.7rem;
   margin: 0;
   font-size: 1.25rem;
 }
 
+.proj-roles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.7rem;
+}
+
 .proj-team .proj-role {
-  margin: 0.45rem 0 0;
+  margin: 0.2rem 0 0;
   font-family: var(--ms-font-pixel);
   font-size: 0.5625rem;
   letter-spacing: 0.04em;
@@ -420,9 +441,12 @@ html:has(.proj) {
 .proj-links {
   display: flex;
   flex-wrap: wrap;
+  align-content: center;
   justify-content: center;
   gap: 0.35rem 0.75rem;
-  margin: 0.55rem 0 0.15rem;
+  width: 100%;
+  min-height: 4.2rem;
+  margin: 0.45rem 0 0.15rem;
   padding: 0;
   list-style: none;
 }

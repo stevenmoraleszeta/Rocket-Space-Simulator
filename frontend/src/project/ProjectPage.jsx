@@ -213,17 +213,21 @@ export function ProjectPage() {
                       const roles = member.roles ?? [member.role]
                       return (
                       <li key={member.name} className={roles.includes('lead') ? 'proj-panel is-lead' : 'proj-panel'}>
-                        {member.photo ? (
-                          <img className="proj-photo" src={member.photo} alt="" />
-                        ) : (
-                          <span className="proj-badge" aria-hidden="true">{initials(member.name)}</span>
-                        )}
+                        <div className="proj-avatar">
+                          {member.photo ? (
+                            <img className="proj-photo" src={member.photo} alt="" />
+                          ) : (
+                            <span className="proj-badge" aria-hidden="true">{initials(member.name)}</span>
+                          )}
+                        </div>
                         <p className="proj-member">{member.name}</p>
-                        {roles.map((role) => (
-                          <p key={role} className="proj-role">
-                            {role === 'lead' ? copy.roleLead : copy.roleEngineer}
-                          </p>
-                        ))}
+                        <div className="proj-roles">
+                          {roles.map((role) => (
+                            <p key={role} className="proj-role">
+                              {role === 'lead' ? copy.roleLead : copy.roleEngineer}
+                            </p>
+                          ))}
+                        </div>
                         {member.links?.length > 0 && (
                           <ul className="proj-links">
                             {member.links.map((link) => (
