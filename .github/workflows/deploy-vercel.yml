@@ -26,6 +26,9 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
       - name: Refresh Vercel token
         env:
           VERCEL_REFRESH_TOKEN: ${{ secrets.VERCEL_REFRESH_TOKEN }}
@@ -60,12 +63,9 @@ jobs:
             console.log("Vercel login refreshed")
           '
           if [ -f vercel-refresh-token.txt ]; then
-            gh secret set VERCEL_REFRESH_TOKEN < vercel-refresh-token.txt
+            gh secret set VERCEL_REFRESH_TOKEN --repo "${{ github.repository }}" < vercel-refresh-token.txt
             rm -f vercel-refresh-token.txt
           fi
-
-      - name: Check out
-        uses: actions/checkout@v4
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
