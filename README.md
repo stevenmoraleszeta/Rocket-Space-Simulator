@@ -147,7 +147,7 @@ npx firebase deploy --only firestore:rules
 ## Publicación
 
 - **Vercel** (`vercel.json`): framework Vite, Node 24, instala y construye `frontend/`, publica `frontend/dist` y reescribe las rutas sin extensión a `index.html`. Producción: [https://rocket-space-simulator.vercel.app](https://rocket-space-simulator.vercel.app). El origen permitido por la API es ese dominio, además de los dominios de vista previa del mismo proyecto.
-- Cada `git push` a `main` publica producción, y un push a `feature/*` o `GamePlay` publica un Preview, con el workflow [`.github/workflows/deploy-vercel.yml`](.github/workflows/deploy-vercel.yml) y los secretos `VERCEL_TOKEN`, `VERCEL_ORG_ID` y `VERCEL_PROJECT_ID`.
+- Cada `git push` a `main` publica producción, y un push a `feature/*` o `GamePlay` publica un Preview, con el workflow [`.github/workflows/deploy-vercel.yml`](.github/workflows/deploy-vercel.yml). El inicio de sesión de Vercel dura unas horas, así que el workflow lo renueva en cada corrida. Los secretos son `VERCEL_REFRESH_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` y `GH_TOKEN` (este último guarda el inicio renovado).
 - Publicación manual local:
 
 ```powershell

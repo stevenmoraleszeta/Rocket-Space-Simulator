@@ -1,5 +1,7 @@
 # Auto-deploy to Vercel from GitHub (no Vercel↔GitHub Login Connection required).
 # main → Production. Other tracked branches → Preview.
+# The Vercel login lasts a few hours and rotates on every refresh, so each run
+# mints a fresh access token and stores the new refresh token before deploying.
 name: Deploy Vercel
 
 on:
@@ -11,13 +13,12 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: vercel-${{ github.ref }}
-  cancel-in-progress: true
+  group: vercel-deploy
+  cancel-in-progress: false
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
   deploy:
@@ -25,6 +26,44 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Refresh Vercel token
+        env:
+          VERCEL_REFRESH_TOKEN: ${{ secrets.VERCEL_REFRESH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          response=$(curl -sS -X POST https://api.vercel.com/login/oauth/token \
+            -H 'Content-Type: application/x-www-form-urlencoded' \
+            -H 'User-Agent: rocket-space-simulator-deploy' \
+            --data-urlencode 'client_id=cl_HYyOPBNtFMfHhaUn9L4QPfTZz6TP47bp' \
+            --data-urlencode 'grant_type=refresh_token' \
+            --data-urlencode "refresh_token=${VERCEL_REFRESH_TOKEN}")
+          printf '%s' "$response" | node --input-type=module -e '
+            import { appendFileSync, writeFileSync } from "node:fs"
+            const raw = await new Promise((resolve) => {
+              let body = ""
+              process.stdin.setEncoding("utf8")
+              process.stdin.on("data", (chunk) => { body += chunk })
+              process.stdin.on("end", () => resolve(body))
+            })
+            const json = JSON.parse(raw)
+            if (!json.access_token) {
+              console.error("Vercel refresh failed:", json.error || "unknown", json.error_description || "")
+              process.exit(1)
+            }
+            console.log(`::add-mask::${json.access_token}`)
+            appendFileSync(process.env.GITHUB_ENV, `VERCEL_TOKEN<<EOF\n${json.access_token}\nEOF\n`)
+            if (json.refresh_token) {
+              console.log(`::add-mask::${json.refresh_token}`)
+              writeFileSync("vercel-refresh-token.txt", json.refresh_token)
+            }
+            console.log("Vercel login refreshed")
+          '
+          if [ -f vercel-refresh-token.txt ]; then
+            gh secret set VERCEL_REFRESH_TOKEN < vercel-refresh-token.txt
+            rm -f vercel-refresh-token.txt
+          fi
+
       - name: Check out
         uses: actions/checkout@v4
 
